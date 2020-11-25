@@ -1,7 +1,41 @@
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
+import LineChart from './LineChart.js'
+import useFetch from 'use-http'
+
+const spec_old = {
+    width: 800,
+    height: 600,
+    mark: { type: 'bar', tooltip: true},
+    encoding: {
+        x: { field: 'a', type: 'ordinal' },
+        y: { field: 'b', type: 'quantitative' },
+    },
+    data: { name: 'table' }, // note: vega-lite data attribute is a plain object instead of an array
+};
+
+const spec = {
+    width: 800,
+    height: 600,
+    mark: { type: 'line', tooltip: true},
+    encoding: {
+        x: { field: 'year', type: 'temporal' },
+        y: { field: '1_unit_units', type: 'quantitative' },
+        color: { field: 'state_name', type: 'nominal' },
+    },
+    data: { name: 'table' }, // note: vega-lite data attribute is a plain object instead of an array
+};
 
 export default function Home() {
+  const [request, response] = useFetch(
+      '/state_annual.json',
+      { data: [] }, // Default value, until the data is loaded.
+      []
+  );
+
+  console.log(response.data);
+  const data = { table: response.data};
+
   return (
     <div className={styles.container}>
       <Head>
@@ -49,6 +83,8 @@ export default function Home() {
           </a>
         </div>
       </main>
+
+      <LineChart spec={spec} data={data} />
 
       <footer className={styles.footer}>
         <a

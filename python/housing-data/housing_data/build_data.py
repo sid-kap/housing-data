@@ -8,7 +8,7 @@ def main():
     for year in range(1980, 2020):
         data = bps.load_data(
             scale="state", time_scale="annual", year=year, month=None, region=None
-        ).assign(year=year)
+        ).assign(year=str(year))
         dfs.append(data)
 
     pd.concat(dfs).to_json("../../public/state_annual.json", orient="records")

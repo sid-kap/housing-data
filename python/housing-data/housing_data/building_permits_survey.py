@@ -180,4 +180,20 @@ def load_data(
     df = pd.read_csv(csv_handle, header=None, index_col=False)
     df.columns = _fix_column_names(itertools.zip_longest(*header_rows, fillvalue=""))
 
+    if scale == "state":
+        df["state_name"] = df["state_name"].str.title()
+
+        def fix_state(s):
+            if isinstance(s, str):
+                return (
+                    s.replace("Division", "")
+                    .replace("Divisi", "")
+                    .replace("Region", "")
+                    .strip()
+                )
+            else:
+                return s
+
+        df["state_name"] = df["state_name"].apply(fix_state)
+
     return df
