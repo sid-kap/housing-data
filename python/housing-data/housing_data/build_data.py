@@ -11,7 +11,7 @@ def main():
         ).assign(year=year)
         dfs.append(data)
 
-    pd.concat(dfs).to_json("state_annual.json", orient="records")
+    pd.concat(dfs).to_json("../../public/state_annual.json", orient="records")
 
 
 if __name__ == "__main__":
