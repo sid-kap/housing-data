@@ -5,3 +5,4 @@ cd python/housing-data
 export PATH=$PATH:$HOME/.poetry/bin
 poetry install
 poetry run python -m building_data.build_data
+ls
