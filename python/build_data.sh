@@ -1,5 +1,4 @@
 yum install -y python3
-yum install -y which
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 cd python/housing-data
 PATH=PATH:$HOME/.poetry/bin
