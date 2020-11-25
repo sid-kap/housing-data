@@ -1,12 +1,13 @@
 from __future__ import annotations
+
+import itertools
+from io import StringIO
 from typing import TYPE_CHECKING
+from urllib.parse import quote
 
 import pandas as pd
-import itertools
 import requests
 from typing_extensions import Literal
-from urllib.parse import quote
-from io import StringIO
 
 if TYPE_CHECKING:
     from typing import List, Optional
