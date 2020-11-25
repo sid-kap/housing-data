@@ -36,3 +36,5 @@ yarn-error.log*
 # python
 __pycache__
 .ipynb_checkpoints
+*.ipynb
+python/housing-data/*.json
