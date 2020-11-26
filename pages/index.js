@@ -1,45 +1,94 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
-import LineChart from './LineChart.js'
-import useFetch from 'use-http'
-
-const spec_old = {
-    width: 800,
-    height: 600,
-    mark: { type: 'bar', tooltip: true},
-    encoding: {
-        x: { field: 'a', type: 'ordinal' },
-        y: { field: 'b', type: 'quantitative' },
-    },
-    data: { name: 'table' }, // note: vega-lite data attribute is a plain object instead of an array
-};
+import Head from "next/head";
+import styles from "../styles/Home.module.css";
+import LineChart from "./LineChart.js";
+import useFetch from "use-http";
+import Select from "react-select";
+import { useState } from "react";
+import { useStateData } from "../lib/data_loader.js";
+import { VegaLite } from "react-vega";
 
 const spec = {
-    width: 800,
-    height: 600,
-    mark: { type: 'line', tooltip: true},
-    encoding: {
-        x: { field: 'year', type: 'temporal' },
-        y: { field: '1_unit_units', type: 'quantitative' },
-        color: { field: 'state_name', type: 'nominal' },
+  width: 800,
+  height: 600,
+  encoding: {
+    x: { field: "year", type: "temporal" },
+    y: { field: "1_unit_units", type: "quantitative" },
+    color: { field: "state_name", type: "nominal" },
+  },
+  data: { name: "table" }, // note: vega-lite data attribute is a plain object instead of an array
+  usermeta: { embedOptions: { renderer: "svg" } },
+  layer: [
+    {
+      mark: "line",
+      encoding: {
+        x: {
+          field: "year",
+          scale: {
+            domain: ["1980", "2025"],
+          },
+        },
+        y: {
+          field: "1_unit_units",
+        },
+      },
+      tooltip: true,
+      point: true,
     },
-    data: { name: 'table' }, // note: vega-lite data attribute is a plain object instead of an array
+    {
+      mark: "text",
+      encoding: {
+        x: { aggregate: "max", field: "year" },
+        y: { aggregate: { argmax: "year" }, field: "1_unit_units" },
+        text: { aggregate: { argmax: "year" }, field: "state_name" },
+      },
+    },
+  ],
+  config: {
+    text: {
+      align: "left",
+      dx: 3,
+      dy: 1,
+    },
+  },
 };
 
+const options = [
+  { value: "state", label: "State" },
+  { value: "region", label: "Region" },
+  { value: "country", label: "Country" },
+  { value: "all", label: "All" },
+];
+
+function filterData(data, type) {
+  if (type == "all") {
+    return data;
+  } else {
+    return data.filter((row) => row.type == type);
+  }
+}
+
 export default function Home() {
-  const [request, response] = useFetch(
-      '/state_annual.json',
-      { data: [] }, // Default value, until the data is loaded.
-      []
-  );
+  const [request, response] = useStateData();
 
   console.log(response.data);
-  const data = { table: response.data};
+
+  const [selectedType, setSelectedOption] = useState({
+    value: "all",
+    label: "All",
+  });
+  const customStyles = {
+    container: (provided) => ({
+      ...provided,
+      width: 150,
+    }),
+  };
+
+  const data = { table: filterData(response.data, selectedType.value) };
 
   return (
     <div className={styles.container}>
       <Head>
-        <title>Create Next App</title>
+        <title>Housing Data</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -49,7 +98,7 @@ export default function Home() {
         </h1>
 
         <p className={styles.description}>
-          Get started by editing{' '}
+          Get started by editing{" "}
           <code className={styles.code}>pages/index.js</code>
         </p>
 
@@ -84,7 +133,14 @@ export default function Home() {
         </div>
       </main>
 
-      <LineChart spec={spec} data={data} />
+      <Select
+        styles={customStyles}
+        defaultValue={selectedType}
+        onChange={setSelectedOption}
+        options={options}
+      />
+
+      <VegaLite spec={spec} data={data} />
 
       <footer className={styles.footer}>
         <a
@@ -92,10 +148,10 @@ export default function Home() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Powered by{' '}
+          Powered by{" "}
           <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
         </a>
       </footer>
     </div>
-  )
+  );
 }

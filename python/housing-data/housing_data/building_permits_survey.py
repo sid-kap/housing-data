@@ -69,32 +69,62 @@ def slugify(str):
     return str.lower().replace("-", "_").strip()
 
 
-def _fix_column_names(columns: pd.Index) -> List[str]:
-    last_units_group = ""
-    suffix = ""
+def _fix_column_names(header_row_0, header_row_1) -> List[str]:
+    assert len(header_row_1) == len(header_row_0) + 1
+    header_row_0.append("")
 
+    for i, col in enumerate(header_row_0.copy()):
+        if "unit" in col:
+            header_row_0[i - 1] = col
+            header_row_0[i + 1] = col
+
+    # last_units_group = ""
+    # suffix = ""
+
+    # fixed_columns = []
+    # for val_0, val_1 in columns:
+    #     if val_0.startswith("Unnamed:"):
+    #         val_0 = ""
+    #     if val_1.startswith("Unnamed:"):
+    #         val_1 = ""
+
+    #     val_0 = val_0.strip()
+
+    #     if val_0 in COLUMN_NAMES_MAPPING:
+    #         last_units_group, suffix = COLUMN_NAMES_MAPPING[val_0]
+
+    #     # Don't add a space for 'MSA/CMSA'
+    #     join_str = "" if val_0.endswith("/") else "_"
+
+    #     if val_1.strip() in ["Value", "Bldgs", "Units"]:
+    #         col_pieces = [last_units_group, val_1, suffix]
+    #     else:
+    #         col_pieces = [val_0, val_1, suffix]
+
+    #     col_pieces = [slugify(p) for p in col_pieces if p.strip()]
+
+    #     fixed_columns.append(join_str.join(col_pieces))
     fixed_columns = []
-    for val_0, val_1 in columns:
+
+    for val_0, val_1 in zip(header_row_0, header_row_1):
         if val_0.startswith("Unnamed:"):
             val_0 = ""
         if val_1.startswith("Unnamed:"):
             val_1 = ""
 
         val_0 = val_0.strip()
+        val_1 = val_1.strip()
 
         if val_0 in COLUMN_NAMES_MAPPING:
-            last_units_group, suffix = COLUMN_NAMES_MAPPING[val_0]
+            val_0, suffix = COLUMN_NAMES_MAPPING[val_0]
+        else:
+            suffix = ""
 
         # Don't add a space for 'MSA/CMSA'
         join_str = "" if val_0.endswith("/") else "_"
 
-        if val_1.strip() in ["Value", "Bldgs", "Units"]:
-            col_pieces = [last_units_group, val_1, suffix]
-        else:
-            col_pieces = [val_0, val_1, suffix]
-
+        col_pieces = [val_0, val_1, suffix]
         col_pieces = [slugify(p) for p in col_pieces if p.strip()]
-
         fixed_columns.append(join_str.join(col_pieces))
 
     columns = pd.Series(fixed_columns)
@@ -169,31 +199,53 @@ def load_data(
 
     csv_handle = StringIO(result)
 
-    header_rows = [
-        csv_handle.readline().rstrip().split(","),
-        csv_handle.readline().rstrip().split(","),
-    ]
+    header_row_1 = csv_handle.readline().rstrip().split(",")
+    header_row_2 = csv_handle.readline().rstrip().split(",")
 
     # Skip blank line after header
-    csv_handle.readline()
+    line = csv_handle.readline()
+    assert line.strip() == ""
 
     df = pd.read_csv(csv_handle, header=None, index_col=False)
-    df.columns = _fix_column_names(itertools.zip_longest(*header_rows, fillvalue=""))
+    df.columns = _fix_column_names(header_row_1, header_row_2)
 
     if scale == "state":
-        df["state_name"] = df["state_name"].str.title()
-
-        def fix_state(s):
-            if isinstance(s, str):
-                return (
-                    s.replace("Division", "")
-                    .replace("Divisi", "")
-                    .replace("Region", "")
-                    .strip()
-                )
-            else:
-                return s
-
-        df["state_name"] = df["state_name"].apply(fix_state)
+        state_cleanup(df)
 
     return df
+
+
+def fix_state(s):
+    if isinstance(s, str):
+        return (
+            s.replace("Division", "")
+            .replace("Divisi", "")
+            .replace("Region", "")
+            .strip()
+        )
+    else:
+        return s
+
+
+TYPE_MAPPING = {
+    "United States": "country",
+    "South Atlantic": "region",
+    "West": "region",
+    "West South Central": "region",
+    "South": "region",
+    "East North Central": "region",
+    "East South Central": "region",
+    "Midwest": "region",
+    "West North Central": "region",
+    "Middle Atlantic": "region",
+    "New England": "region",
+    "Northeast": "region",
+    "Pacific": "region",
+    "Mountain": "region",
+}
+
+
+def state_cleanup(df):
+    df["state_name"] = df["state_name"].str.title()
+    df["state_name"] = df["state_name"].apply(fix_state)
+    df["type"] = df["state_name"].map(TYPE_MAPPING).fillna("state")
