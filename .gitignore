@@ -32,3 +32,9 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# python
+__pycache__
+.ipynb_checkpoints
+*.ipynb
+python/housing-data/*.json

@@ -28,6 +28,8 @@ TimeScale = Literal["monthly_current", "monthly_year_to_date", "annual"]
 
 Scale = Literal["county", "metro", "place", "state"]
 
+ERROR_STRING = "Sorry, the page you requested has either been moved or is no longer available on this server."
+
 
 def _validate_load_data_inputs(
     scale: Scale,
@@ -50,36 +52,85 @@ def _validate_load_data_inputs(
         raise ValueError("If time_scale is 'annual', month must be None.")
 
 
-def _fix_column_names(columns: pd.Index) -> List[str]:
-    last_units_group = ""
+COLUMN_NAMES_MAPPING = {
+    "1-unit": ("1_unit", ""),
+    "2-units": ("2_units", ""),
+    "3-4 units": ("3_to_4_units", ""),
+    "5+ units": ("5_plus_units", ""),
+    "1-unit rep": ("1_unit", "reported"),
+    "2-units rep": ("2_units", "reported"),
+    "3-4 units rep": ("3_to_4_units", "reported"),
+    "5+ units rep": ("5_plus_units", "reported"),
+}
 
+
+def slugify(str):
+    # Technically slugify adds hyphens... maybe this should be called "unslugify"
+    return str.lower().replace("-", "_").strip()
+
+
+def _fix_column_names(header_row_0, header_row_1) -> List[str]:
+    assert len(header_row_1) == len(header_row_0) + 1
+    header_row_0.append("")
+
+    for i, col in enumerate(header_row_0.copy()):
+        if "unit" in col:
+            header_row_0[i - 1] = col
+            header_row_0[i + 1] = col
+
+    # last_units_group = ""
+    # suffix = ""
+
+    # fixed_columns = []
+    # for val_0, val_1 in columns:
+    #     if val_0.startswith("Unnamed:"):
+    #         val_0 = ""
+    #     if val_1.startswith("Unnamed:"):
+    #         val_1 = ""
+
+    #     val_0 = val_0.strip()
+
+    #     if val_0 in COLUMN_NAMES_MAPPING:
+    #         last_units_group, suffix = COLUMN_NAMES_MAPPING[val_0]
+
+    #     # Don't add a space for 'MSA/CMSA'
+    #     join_str = "" if val_0.endswith("/") else "_"
+
+    #     if val_1.strip() in ["Value", "Bldgs", "Units"]:
+    #         col_pieces = [last_units_group, val_1, suffix]
+    #     else:
+    #         col_pieces = [val_0, val_1, suffix]
+
+    #     col_pieces = [slugify(p) for p in col_pieces if p.strip()]
+
+    #     fixed_columns.append(join_str.join(col_pieces))
     fixed_columns = []
-    for val_0, val_1 in columns:
+
+    for val_0, val_1 in zip(header_row_0, header_row_1):
         if val_0.startswith("Unnamed:"):
             val_0 = ""
         if val_1.startswith("Unnamed:"):
             val_1 = ""
-        if val_0 in [
-            "1-unit",
-            "2-units",
-            "3-4 units",
-            "5+ units",
-            "1-unit rep",
-            "2-units rep",
-            "3-4 units rep",
-            "5+ units rep",
-        ]:
-            last_units_group = val_0
+
+        val_0 = val_0.strip()
+        val_1 = val_1.strip()
+
+        if val_0 in COLUMN_NAMES_MAPPING:
+            val_0, suffix = COLUMN_NAMES_MAPPING[val_0]
+        else:
+            suffix = ""
 
         # Don't add a space for 'MSA/CMSA'
-        join_str = "" if val_0.endswith("/") else " "
+        join_str = "" if val_0.endswith("/") else "_"
 
-        if val_1 in ["Value", "Bldgs"]:
-            fixed_columns.append(last_units_group + join_str + val_1)
-        else:
-            fixed_columns.append(val_0 + join_str + val_1)
+        col_pieces = [val_0, val_1, suffix]
+        col_pieces = [slugify(p) for p in col_pieces if p.strip()]
+        fixed_columns.append(join_str.join(col_pieces))
 
-    return fixed_columns
+    columns = pd.Series(fixed_columns)
+    columns = columns.str.strip()
+
+    return columns
 
 
 def load_data(
@@ -122,31 +173,79 @@ def load_data(
         filename_part_1 = "ma"
         extra_path = None
     elif scale == "state":
+        if region is not None:
+            raise ValueError("region must be None in since scale = 'state'")
         filename_part_1 = "st"
         extra_path = None
 
-    if extra_path is not None:
-        path = f"https://www2.census.gov/econ/bps/Place/{extra_path}/{filename_part_1}{filename_part_2}.txt"
-    else:
-        path = f"https://www2.census.gov/econ/bps/Place/{filename_part_1}{filename_part_2}.txt"
+    scale_path = scale.capitalize()
 
-    csv_handle = StringIO(
+    if extra_path is not None:
+        path = f"https://www2.census.gov/econ/bps/{scale_path}/{extra_path}/{filename_part_1}{filename_part_2}.txt"
+    else:
+        path = f"https://www2.census.gov/econ/bps/{scale_path}/{filename_part_1}{filename_part_2}.txt"
+
+    print(f"Dowloading data from {path}")
+
+    result = (
         requests.get(path, stream=True)
         .text
         # OMG so dumb that they didn't wrap with quotations
         .replace("Bristol, VA", '"Bristol, VA"')
         .replace("Bristol, TN", '"Bristol, TN"')
     )
+    if ERROR_STRING in result:
+        raise ValueError(f"Path {path} is not valid")
 
-    header_rows = [
-        csv_handle.readline().rstrip().split(","),
-        csv_handle.readline().rstrip().split(","),
-    ]
+    csv_handle = StringIO(result)
+
+    header_row_1 = csv_handle.readline().rstrip().split(",")
+    header_row_2 = csv_handle.readline().rstrip().split(",")
 
     # Skip blank line after header
-    csv_handle.readline()
+    line = csv_handle.readline()
+    assert line.strip() == ""
 
     df = pd.read_csv(csv_handle, header=None, index_col=False)
-    df.columns = _fix_column_names(itertools.zip_longest(*header_rows, fillvalue=""))
+    df.columns = _fix_column_names(header_row_1, header_row_2)
+
+    if scale == "state":
+        state_cleanup(df)
 
     return df
+
+
+def fix_state(s):
+    if isinstance(s, str):
+        return (
+            s.replace("Division", "")
+            .replace("Divisi", "")
+            .replace("Region", "")
+            .strip()
+        )
+    else:
+        return s
+
+
+TYPE_MAPPING = {
+    "United States": "country",
+    "South Atlantic": "region",
+    "West": "region",
+    "West South Central": "region",
+    "South": "region",
+    "East North Central": "region",
+    "East South Central": "region",
+    "Midwest": "region",
+    "West North Central": "region",
+    "Middle Atlantic": "region",
+    "New England": "region",
+    "Northeast": "region",
+    "Pacific": "region",
+    "Mountain": "region",
+}
+
+
+def state_cleanup(df):
+    df["state_name"] = df["state_name"].str.title()
+    df["state_name"] = df["state_name"].apply(fix_state)
+    df["type"] = df["state_name"].map(TYPE_MAPPING).fillna("state")
