@@ -6,6 +6,7 @@ import LineChart from "../LineChart.js";
 import Select from "react-select";
 import { useState, useEffect } from "react";
 import { VegaLite } from "react-vega";
+import { GitHubFooter } from "../../lib/common_elements.js";
 
 function* fields_generator(
   types = ["bldgs", "units", "value"],
@@ -176,7 +177,9 @@ export default function State() {
             {filteredData.map((value, index) => (
               // toLocaleString adds thousands separator
               <tr key={index}>
-                <td className="p-1 border border-black">{value.year}</td>
+                <td className="p-1 border border-black font-bold">
+                  {value.year}
+                </td>
                 <td className="p-1 border border-black">
                   {value["1_unit_units"].toLocaleString("en")}
                 </td>
@@ -193,7 +196,16 @@ export default function State() {
             ))}
           </tbody>
         </table>
+
+        <p className="m-4 rounded-lg">
+          (See also the&nbsp;
+          <a href="/" className="text-blue-500 hover:text-blue-300">
+            combined charts
+          </a>
+          .)
+        </p>
       </div>
+      <GitHubFooter />
     </div>
   );
 }
