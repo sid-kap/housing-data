@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 from io import StringIO
 from typing import TYPE_CHECKING
 from urllib.parse import quote
