@@ -10,9 +10,16 @@ const spec = {
   width: 800,
   height: 600,
   encoding: {
-    x: { field: 'year', type: 'temporal' },
-    y: { field: '1_unit_units', type: 'quantitative' },
-    color: { field: 'state_name', type: 'nominal' }
+    x: { field: 'year', type: 'temporal', axis: { title: 'Year' } },
+    y: {
+      field: 'total_units',
+      type: 'quantitative',
+      axis: {
+        title: 'Units permitted (per year)'
+      }
+    },
+    color: { field: 'state_name', type: 'nominal', legend: null },
+    legend: false
   },
   data: { name: 'table' }, // note: vega-lite data attribute is a plain object instead of an array
   usermeta: { embedOptions: { renderer: 'svg' } },
@@ -21,13 +28,10 @@ const spec = {
       mark: 'line',
       encoding: {
         x: {
-          field: 'year',
-          scale: {
-            domain: ['1980', '2025']
-          }
+          field: 'year'
         },
         y: {
-          field: '1_unit_units'
+          field: 'total_units'
         }
       },
       tooltip: true,
@@ -37,11 +41,12 @@ const spec = {
       mark: 'text',
       encoding: {
         x: { aggregate: 'max', field: 'year' },
-        y: { aggregate: { argmax: 'year' }, field: '1_unit_units' },
+        y: { aggregate: { argmax: 'year' }, field: 'total_units' },
         text: { aggregate: { argmax: 'year' }, field: 'state_name' }
       }
     }
   ],
+  legend: null,
   config: {
     text: {
       align: 'left',
@@ -52,24 +57,64 @@ const spec = {
 }
 
 const options = [
-  { value: 'state', label: 'State' },
-  { value: 'region', label: 'Region' },
+  { value: 'all', label: 'All' },
   { value: 'country', label: 'Country' },
-  { value: 'all', label: 'All' }
+  { value: 'region', label: 'Region' },
+  { value: 'division', label: 'Division' },
+  { value: 'state', label: 'State' }
 ]
 
-function filterData (data, type) {
-  if (type === 'all') {
-    return data
-  } else {
-    return data.filter((row) => row.type === type)
+// Region codes from https://www2.census.gov/geo/pdfs/maps-data/maps/reference/us_regdiv.pdf
+const regionOptions = [
+  {
+    label: 'All',
+    options: [
+      { value: 'all', label: 'All' }
+    ]
+  },
+  {
+    label: 'Region',
+    options: [
+      { value: ['region', '1'], label: 'Northeast' },
+      { value: ['region', '2'], label: 'Midwest' },
+      { value: ['region', '3'], label: 'South' },
+      { value: ['region', '4'], label: 'West' }
+    ]
+  },
+  {
+    label: 'Division',
+    options: [
+      { value: ['division', '1'], label: 'New England' },
+      { value: ['division', '2'], label: 'Middle Atlantic' },
+      { value: ['division', '3'], label: 'East North Central' },
+      { value: ['division', '4'], label: 'West North Central' },
+      { value: ['division', '5'], label: 'South Atlantic' },
+      { value: ['division', '6'], label: 'East South Central' },
+      { value: ['division', '7'], label: 'West South Central' },
+      { value: ['division', '8'], label: 'Mountain' },
+      { value: ['division', '9'], label: 'Pacific' }
+    ]
   }
+]
+
+function filterData (data, type, region) {
+  if (type !== 'all') {
+    data = data.filter((row) => row.type === type)
+  }
+  if (region !== null && region !== 'all') {
+    if (region[0] === 'region') {
+      data = data.filter((row) => row.region_code === region[1])
+    } else if (region[0] === 'division') {
+      data = data.filter((row) => row.division_code === region[1])
+    } else {
+      throw new Error(region + ' unknown')
+    }
+  }
+  return data
 }
 
 export default function Home () {
   const { response } = useStateData()
-
-  console.log(response.data)
 
   const [selectedType, setSelectedOption] = useState({
     value: 'all',
@@ -81,12 +126,43 @@ export default function Home () {
       width: 150
     })
   }
+  const regionStyles = {
+    container: (provided) => ({
+      ...provided,
+      width: 200
+    })
+  }
 
-  const data = { table: filterData(response.data, selectedType.value) }
+  const [selectedRegion, setSelectedRegion] = useState({
+    value: 'all',
+    label: 'All'
+  })
+
+  let regionSelect
+  if (selectedType.value === 'state') {
+    regionSelect = (
+      <Select
+        styles={regionStyles}
+        options={regionOptions}
+        defaultValue={selectedRegion}
+        onChange={setSelectedRegion}
+        className='m-2'
+      />
+    )
+  } else {
+    regionSelect = ''
+  }
+
+  const data = {
+    table: filterData(
+      response.data, selectedType.value,
+      selectedType.value === 'state' ? selectedRegion.value : null
+    )
+  }
 
   return (
     <div>
-      <div className={{ ...styles.container, 'my-0': true, 'text-center': true }}>
+      <div className={styles.container}>
         <Head>
           <title>Housing Data</title>
           <link rel='icon' href='/favicon.ico' />
@@ -96,16 +172,20 @@ export default function Home () {
           Combined Plots
         </h1>
 
-        <Select
-          styles={customStyles}
-          defaultValue={selectedType}
-          onChange={setSelectedOption}
-          options={options}
-        />
+        <div className='flex'>
+          <Select
+            styles={customStyles}
+            defaultValue={selectedType}
+            onChange={setSelectedOption}
+            options={options}
+            className='m-2'
+          />
+          {regionSelect}
+        </div>
 
         <VegaLite spec={spec} data={data} />
 
-        <p className='m-4 rounded-lg'>
+        <p className='m-4 rounded-lg text-center'>
           (The more interesting stuff is in the is&nbsp;
           <a
             href='/states/Alabama'

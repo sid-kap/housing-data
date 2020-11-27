@@ -228,19 +228,19 @@ def fix_state(s):
 
 TYPE_MAPPING = {
     "United States": "country",
-    "South Atlantic": "region",
-    "West": "region",
-    "West South Central": "region",
-    "South": "region",
-    "East North Central": "region",
-    "East South Central": "region",
-    "Midwest": "region",
-    "West North Central": "region",
-    "Middle Atlantic": "region",
-    "New England": "region",
     "Northeast": "region",
-    "Pacific": "region",
-    "Mountain": "region",
+    "Midwest": "region",
+    "South": "region",
+    "West": "region",
+    "South Atlantic": "division",
+    "West South Central": "division",
+    "East North Central": "division",
+    "East South Central": "division",
+    "West North Central": "division",
+    "Middle Atlantic": "division",
+    "New England": "division",
+    "Pacific": "division",
+    "Mountain": "division",
 }
 
 
@@ -248,3 +248,12 @@ def state_cleanup(df):
     df["state_name"] = df["state_name"].str.title()
     df["state_name"] = df["state_name"].apply(fix_state)
     df["type"] = df["state_name"].map(TYPE_MAPPING).fillna("state")
+    df["total_units"] = (
+        df["1_unit_units"]
+        + df["2_units_units"]
+        + df["3_to_4_units_units"]
+        + df["5_plus_units_units"]
+    )
+    df["region_code"] = df["region_code"].astype(str)
+    df["division_code"] = df["division_code"].astype(str)
+    return df
