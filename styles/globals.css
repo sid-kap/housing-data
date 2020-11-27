@@ -1,6 +1,6 @@
-@tailwind base;
+@import "tailwindcss/base";
 
-@tailwind components;
+@import "tailwindcss/components";
 
 html,
 body {
@@ -19,4 +19,4 @@ a {
   box-sizing: border-box;
 }
 
-@tailwind utilities;
+@import "tailwindcss/utilities";
