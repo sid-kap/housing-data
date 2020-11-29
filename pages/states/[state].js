@@ -5,45 +5,13 @@ import { useStateData } from '../../lib/data_loader.js'
 import Select from 'react-select'
 import { useState, useEffect } from 'react'
 import { VegaLite } from 'react-vega'
-import { GitHubFooter } from '../../lib/common_elements.js'
-
-function * fieldsGenerator (
-  types = ['bldgs', 'units', 'value'],
-  suffixes = ['_reported', '']
-) {
-  for (const numUnits of [
-    '1_unit',
-    '2_units',
-    '3_to_4_units',
-    '5_plus_units'
-  ]) {
-    for (const type of types) {
-      for (const suffix of suffixes) {
-        yield numUnits + '_' + type + suffix
-      }
-    }
-  }
-}
+import { Nav, GitHubFooter } from '../../lib/common_elements.js'
+import { fieldsGenerator, keyMapping } from '../../lib/plots.js'
 
 const fields = Array.from(fieldsGenerator())
 
 function spec (units) {
   const filterFields = Array.from(fieldsGenerator([units], ['']))
-
-  const keyMapping = {
-    '1_unit_units': '1 unit',
-    '2_units_units': '2 units',
-    '3_to_4_units_units': '3-4 units',
-    '5_plus_units_units': '5+ units',
-    '1_unit_bldgs': '1 unit',
-    '2_units_bldgs': '2 units',
-    '3_to_4_units_bldgs': '3-4 units',
-    '5_plus_units_bldgs': '5+ units',
-    '1_unit_value': '1 unit',
-    '2_units_value': '2 units',
-    '3_to_4_units_value': '3-4 units',
-    '5_plus_units_value': '5+ units'
-  }
 
   return {
     width: 800,
@@ -166,6 +134,8 @@ export default function State () {
       <Head>
         <title>{stateName}</title>
       </Head>
+
+      <Nav />
 
       <div className='grid grid-cols-3'>
         <Select

@@ -68,9 +68,10 @@ def slugify(str):
     return str.lower().replace("-", "_").strip()
 
 
-def _fix_column_names(header_row_0, header_row_1) -> List[str]:
-    assert len(header_row_1) == len(header_row_0) + 1
-    header_row_0.append("")
+def _fix_column_names(header_row_0, header_row_1, fix_row_lengths=True) -> List[str]:
+    if fix_row_lengths:
+        assert len(header_row_1) == len(header_row_0) + 1
+        header_row_0.append("")
 
     for i, col in enumerate(header_row_0.copy()):
         if "unit" in col:
@@ -206,10 +207,16 @@ def load_data(
     assert line.strip() == ""
 
     df = pd.read_csv(csv_handle, header=None, index_col=False)
-    df.columns = _fix_column_names(header_row_1, header_row_2)
+    fix_row_lengths = not (year == 1984 and region == "west")
+    df.columns = _fix_column_names(
+        header_row_1, header_row_2, fix_row_lengths=fix_row_lengths
+    )
 
     if scale == "state":
         state_cleanup(df)
+
+    if scale == "place":
+        place_cleanup(df)
 
     return df
 
@@ -256,4 +263,31 @@ def state_cleanup(df):
     )
     df["region_code"] = df["region_code"].astype(str)
     df["division_code"] = df["division_code"].astype(str)
-    return df
+
+
+def place_cleanup(df):
+    place_names = df["place_name"]
+
+    place_names = (
+        place_names.str.replace(" .", "", regex=False)
+        .str.replace(" *", "", regex=False)
+        .str.rstrip(".")
+        .str.title()
+        .str.strip()
+    )
+
+    place_types = ["township", "town", "city", "village"]
+    for place_type in place_types:
+        place_names = place_names.str.replace(
+            place_type.title(), place_type, regex=False
+        )
+
+    df["place_name"] = place_names
+
+    # Cast float types to nullable ints - none of the data here is actually floats,
+    # they're just coerced to float because they have nulls.
+    # (TODO: maybe just specify the dtype as 'Int64' in the pd.read_csv call?
+    # IDK if it's supported.)
+    float_cols = df.dtypes.loc[lambda x: x == float].index
+    for col in float_cols:
+        df[col] = df[col].astype("Int64")

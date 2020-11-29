@@ -4,7 +4,7 @@ import Select from 'react-select'
 import { useState } from 'react'
 import { useStateData } from '../lib/data_loader.js'
 import { VegaLite } from 'react-vega'
-import { GitHubFooter } from '../lib/common_elements.js'
+import { Nav, GitHubFooter } from '../lib/common_elements.js'
 
 const spec = {
   width: 800,
@@ -162,13 +162,14 @@ export default function Home () {
 
   return (
     <div>
+      <Head>
+        <title>Housing Data</title>
+        <link rel='icon' href='/favicon.ico' />
+      </Head>
+      <Nav />
       <div className={styles.container}>
-        <Head>
-          <title>Housing Data</title>
-          <link rel='icon' href='/favicon.ico' />
-        </Head>
 
-        <h1 className='mt-1 mb-8 text-4xl col-span-1 text-center'>
+        <h1 className='mt-4 mb-8 text-4xl col-span-1 text-center'>
           Combined Plots
         </h1>
 

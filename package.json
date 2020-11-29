@@ -8,18 +8,22 @@
     "start": "next start"
   },
   "dependencies": {
+    "fuzzysort": "^1.1.4",
     "next": "10.0.0",
     "react": "^17.0.1",
     "react-dom": "17.0.1",
     "react-select": "^3.1.1",
+    "react-select-search": "^2.2.1",
     "react-vega": "^7.4.2",
-    "standard": "^16.0.3",
+    "swr": "^0.3.9",
+    "us": "^2.0.0",
     "use-http": "^1.0.15",
     "vega": "^5.17.0",
     "vega-lite": "^4.17.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.0.2",
+    "standard": "^16.0.3",
     "postcss": "^8.1.10",
     "tailwindcss": "^2.0.1"
   }
