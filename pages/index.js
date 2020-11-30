@@ -4,53 +4,62 @@ import { useState } from 'react'
 import { useStateData } from '../lib/data_loader.js'
 import { VegaLite } from 'react-vega'
 import { Nav, GitHubFooter } from '../lib/common_elements.js'
+import ContainerDimensions from 'react-container-dimensions'
 
-const spec = {
-  width: 800,
-  height: 600,
-  encoding: {
-    x: { field: 'year', type: 'temporal', axis: { title: 'Year' } },
-    y: {
-      field: 'total_units',
-      type: 'quantitative',
-      axis: {
-        title: 'Units permitted (per year)'
-      }
+function spec (width, height) {
+  const plotWidth = Math.min(width * 0.95, 800)
+
+  return {
+    width: plotWidth,
+    height: 0.75 * plotWidth,
+    autosize: {
+      type: 'fit',
+      contains: 'padding'
     },
-    color: { field: 'state_name', type: 'nominal', legend: null },
-    legend: false
-  },
-  data: { name: 'table' }, // note: vega-lite data attribute is a plain object instead of an array
-  usermeta: { embedOptions: { renderer: 'svg' } },
-  layer: [
-    {
-      mark: 'line',
-      encoding: {
-        x: {
-          field: 'year'
-        },
-        y: {
-          field: 'total_units'
+    encoding: {
+      x: { field: 'year', type: 'temporal', axis: { title: 'Year' } },
+      y: {
+        field: 'total_units',
+        type: 'quantitative',
+        axis: {
+          title: 'Units permitted (per year)'
         }
       },
-      tooltip: true,
-      point: true
+      color: { field: 'state_name', type: 'nominal', legend: null },
+      legend: false
     },
-    {
-      mark: 'text',
-      encoding: {
-        x: { aggregate: 'max', field: 'year' },
-        y: { aggregate: { argmax: 'year' }, field: 'total_units' },
-        text: { aggregate: { argmax: 'year' }, field: 'state_name' }
+    data: { name: 'table' }, // note: vega-lite data attribute is a plain object instead of an array
+    usermeta: { embedOptions: { renderer: 'svg' } },
+    layer: [
+      {
+        mark: 'line',
+        encoding: {
+          x: {
+            field: 'year'
+          },
+          y: {
+            field: 'total_units'
+          }
+        },
+        tooltip: true,
+        point: true
+      },
+      {
+        mark: 'text',
+        encoding: {
+          x: { aggregate: 'max', field: 'year' },
+          y: { aggregate: { argmax: 'year' }, field: 'total_units' },
+          text: { aggregate: { argmax: 'year' }, field: 'state_name' }
+        }
       }
-    }
-  ],
-  legend: null,
-  config: {
-    text: {
-      align: 'left',
-      dx: 3,
-      dy: 1
+    ],
+    legend: null,
+    config: {
+      text: {
+        align: 'left',
+        dx: 3,
+        dy: 1
+      }
     }
   }
 }
@@ -183,7 +192,13 @@ export default function Home () {
           {regionSelect}
         </div>
 
-        <VegaLite spec={spec} data={data} />
+        <div className='w-full flex flex-row'>
+          <ContainerDimensions>
+            {({ width, height }) => (
+              <VegaLite spec={spec(width, height)} data={data} />
+            )}
+          </ContainerDimensions>
+        </div>
 
       </div>
       <GitHubFooter />
