@@ -1,5 +1,4 @@
 import { useRouter } from 'next/router'
-import styles from '../../styles/Home.module.css'
 import Head from 'next/head'
 import { useStateData } from '../../lib/data_loader.js'
 import Select from 'react-select'
@@ -156,7 +155,7 @@ export default function State () {
         <div className='col-span-1' />
       </div>
 
-      <div className={styles.container}>
+      <div className='flex flex-col justify-center items-center mx-auto mb-10'>
         <Select
           styles={customStyles}
           defaultValue={selectedUnits}

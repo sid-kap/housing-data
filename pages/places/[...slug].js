@@ -1,6 +1,5 @@
 import { useRouter } from 'next/router'
 import Head from 'next/head'
-import styles from '../../styles/Home.module.css'
 import { VegaLite } from 'react-vega'
 import { keyMapping, fieldsGenerator } from '../../lib/plots.js'
 import { useMemo } from 'react'
@@ -22,6 +21,11 @@ function getStateAbbreviation (stateCode) {
 
 function getStateFips (stateStr) {
   return parseInt(us.lookup(stateStr).fips)
+}
+
+function getJsonUrl (place, state) {
+  place = place.replace('#', '%23')
+  return '/places_data/' + getStateFips(state) + '/' + place + '.json'
 }
 
 export default function Place () {
@@ -61,22 +65,20 @@ export default function Place () {
 
   const state = slug ? slug[0] : null
   const place = slug ? slug[1] : null
-  console.log(placeLookup)
 
   const optionVal = useMemo(() => {
     if (place !== null && state !== null) {
       const fips = getStateFips(state)
       const index = placeLookup[place + '/' + fips]
       if (typeof index !== 'undefined') {
-        console.log(placeOptions[index])
         return placeOptions[index].value
       }
     }
     return null
-  }, [place, state, placeLookup])
+  }, [place, state, placeLookup.length])
 
   const { data } = useSWR(
-    () => place !== null ? '/places_data/' + getStateFips(state) + '/' + place + '.json' : null
+    () => place !== null ? getJsonUrl(place, state) : null
   )
 
   if ((typeof slug === 'undefined') || (slug.length === 0)) {
@@ -96,7 +98,7 @@ function makePage (place, state, optionVal, filteredData, placeOptions, placeLoo
   const onChange = function (newPlace) {
     const chosenOption = placeOptions[newPlace]
     if (chosenOption.place_name !== place || chosenOption.abbr !== state) {
-      router.push('/places/' + chosenOption.abbr + '/' + chosenOption.place_name)
+      router.push('/places/' + chosenOption.abbr + '/' + chosenOption.place_name.replace('#', '%23'))
     }
   }
 
@@ -109,13 +111,12 @@ function makePage (place, state, optionVal, filteredData, placeOptions, placeLoo
   return (
     <div>
       <Head>
-
         <title>{place}, {state}</title>
       </Head>
       <Nav />
-      <div className={styles.container}>
+      <div className='mx-auto mb-10 align-center items-center flex flex-col justify-center'>
         <div className='grid grid-cols-3'>
-          <div className='m-4'>
+          <div className='m-4 col-span-1'>
             <WindowSelectSearch
               search
               onChange={onChange}

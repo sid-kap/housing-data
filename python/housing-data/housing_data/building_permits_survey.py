@@ -265,23 +265,68 @@ def state_cleanup(df):
     df["division_code"] = df["division_code"].astype(str)
 
 
+CORRECTIONS = {
+    "0Tsego Co. Pt. Uninc. Area": "Otsego Co. Pt. Uninc. Area",
+    "Otsego Co. Pt Uninc. Area": "Otsego Co. Pt. Uninc. Area",
+    "Washington Dc": "Washington",
+    "Washington D.C": "Washington",
+    ".Pike County": "Pike County",
+}
+
+
+# TODO: make sure that we're not overwriting Gulf County, FL
+SUBSTRING_CORRECTIONS = {
+    " .": "",
+    " *": "",
+    " #": "",
+    " (N)#": "",
+    " (N)": "",
+    "@1": "",
+    "@2": "",
+    "@4": "",
+    "@5": "",
+    "Unincorporated Area": "",
+    "Unincoporated Area": "",
+    "Unincorporared Area": "",
+    "Unincorported Area": "",
+    "Unincorporate Area": "",
+    "Balance Of County": "County",
+    "Bal. Of Co": "County",
+    "Bal. Of C0": "County",
+    "0Tsego Co": "Otsego Co",
+    "Co. Uninc. Area": "County",
+    "Co. Uninc Area": "County",
+    "Co. Pt Uninc. Area": "County Part",
+    "Co. Pt. Uninc. Area": "County Part",
+    "Co. Pt Uninc": "County Part",
+    "'S": "s",  # for Prince George'S County, St Mary'S County, etc.
+    "County Part": "County",
+    "Parish Uninc. Area": "Parish",
+    "Parish Pt. Uninc. Area": "Parish",
+    "Parish Pt Uninc. Area": "Parish",
+    "County Uninc Area": "County",
+}
+
+
 def place_cleanup(df):
     place_names = df["place_name"]
 
     place_names = (
-        place_names.str.replace(" .", "", regex=False)
-        .str.replace(" *", "", regex=False)
-        .str.rstrip(".")
-        .str.title()
-        .str.strip()
+        place_names.str.title().str.rstrip(".").str.strip().replace(CORRECTIONS)
     )
 
-    place_types = ["township", "town", "city", "village"]
+    for s, replacement_s in SUBSTRING_CORRECTIONS.items():
+        place_names = place_names.str.replace(s, replacement_s, regex=False)
+
+    place_types = [" township", " town", " city", " village"]
     for place_type in place_types:
         place_names = place_names.str.replace(
             place_type.title(), place_type, regex=False
         )
 
+    place_names = place_names.str.rstrip(".").str.rstrip(".#").str.strip()
+
+    df["uncleaned_place_name"] = df["place_name"]
     df["place_name"] = place_names
 
     # Cast float types to nullable ints - none of the data here is actually floats,
@@ -291,3 +336,5 @@ def place_cleanup(df):
     float_cols = df.dtypes.loc[lambda x: x == float].index
     for col in float_cols:
         df[col] = df[col].astype("Int64")
+
+    df = df[df["place_name"].notnull()]
