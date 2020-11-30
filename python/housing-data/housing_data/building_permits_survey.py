@@ -216,7 +216,7 @@ def load_data(
         state_cleanup(df)
 
     if scale == "place":
-        place_cleanup(df)
+        df = place_cleanup(df)
 
     return df
 
@@ -337,4 +337,13 @@ def place_cleanup(df):
     for col in float_cols:
         df[col] = df[col].astype("Int64")
 
-    df = df[df["place_name"].notnull()]
+    df = df[df["place_name"].notnull()].copy()
+
+    df["total_units"] = (
+        df["1_unit_units"]
+        + df["2_units_units"]
+        + df["3_to_4_units_units"]
+        + df["5_plus_units_units"]
+    )
+
+    return df

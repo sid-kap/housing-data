@@ -165,7 +165,7 @@ export default function Home () {
         <title>Housing Data</title>
         <link rel='icon' href='/favicon.ico' />
       </Head>
-      <Nav />
+      <Nav currentIndex={0} />
       <div className='flex flex-col justify-center items-center mx-auto mb-10'>
 
         <h1 className='mt-4 mb-8 text-4xl col-span-1 text-center'>

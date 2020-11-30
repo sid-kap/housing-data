@@ -49,7 +49,10 @@ function spec (units) {
     usermeta: { embedOptions: { renderer: 'svg' } },
     layer: [
       {
-        mark: 'bar',
+        mark: {
+          type: 'bar',
+          tooltip: { content: 'data' }
+        },
         encoding: {
           x: {
             field: 'year'
@@ -62,7 +65,15 @@ function spec (units) {
             scale: {
               scheme: 'tableau10'
             }
-          }
+          },
+          tooltip: [
+            { field: 'year', type: 'temporal', scale: { type: 'utc' }, timeUnit: 'utcyear', title: 'Year' },
+            { field: '1_unit_units', title: '1 unit', format: ',' },
+            { field: '2_units_units', title: '2 unit', format: ',' },
+            { field: '3_to_4_units_units', title: '3-4 units', format: ',' },
+            { field: '5_plus_units_units', title: '5+ units', format: ',' },
+            { field: 'total_units', title: 'Total units', format: ',' }
+          ]
         },
         tooltip: true
       }
@@ -134,7 +145,7 @@ export default function State () {
         <title>{stateName}</title>
       </Head>
 
-      <Nav />
+      <Nav currentIndex={1} />
 
       <div className='grid grid-cols-3'>
         <Select
