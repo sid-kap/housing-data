@@ -1,5 +1,4 @@
 import Head from 'next/head'
-import styles from '../styles/Home.module.css'
 import Select from 'react-select'
 import { useState } from 'react'
 import { useStateData } from '../lib/data_loader.js'
@@ -167,7 +166,7 @@ export default function Home () {
         <link rel='icon' href='/favicon.ico' />
       </Head>
       <Nav />
-      <div className={styles.container}>
+      <div className='flex flex-col justify-center items-center mx-auto mb-10'>
 
         <h1 className='mt-4 mb-8 text-4xl col-span-1 text-center'>
           Combined Plots
@@ -186,16 +185,6 @@ export default function Home () {
 
         <VegaLite spec={spec} data={data} />
 
-        <p className='m-4 rounded-lg text-center'>
-          (The more interesting stuff is in the is&nbsp;
-          <a
-            href='/states/Alabama'
-            className='text-blue-500 hover:text-blue-300'
-          >
-            state-level charts
-          </a>
-          .)
-        </p>
       </div>
       <GitHubFooter />
     </div>

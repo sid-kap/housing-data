@@ -165,48 +165,6 @@ export default function State () {
         />
 
         <VegaLite spec={spec(selectedUnits.value)} data={data} />
-
-        <table className='m-4 table-auto border border-black rounded-lg'>
-          <thead>
-            <tr className='bg-green-500 text-gray-800'>
-              <th className='p-1 border border-black'>Year</th>
-              <th className='p-1 border border-black'>Single-fam units</th>
-              <th className='p-1 border border-black'>2-unit units</th>
-              <th className='p-1 border border-black'>3-4 unit units</th>
-              <th className='p-1 border border-black'>5+ unit units</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredData.map((value, index) => (
-              // toLocaleString adds thousands separator
-              <tr key={index}>
-                <td className='p-1 border border-black font-bold'>
-                  {value.year}
-                </td>
-                <td className='p-1 border border-black'>
-                  {value['1_unit_units'].toLocaleString('en')}
-                </td>
-                <td className='p-1 border border-black'>
-                  {value['2_units_units'].toLocaleString('en')}
-                </td>
-                <td className='p-1 border border-black'>
-                  {value['3_to_4_units_units'].toLocaleString('en')}
-                </td>
-                <td className='p-1 border border-black'>
-                  {value['5_plus_units_units'].toLocaleString('en')}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <p className='m-4 rounded-lg'>
-          (See also the&nbsp;
-          <a href='/' className='text-blue-500 hover:text-blue-300'>
-            combined charts
-          </a>
-          .)
-        </p>
       </div>
       <GitHubFooter />
     </div>
