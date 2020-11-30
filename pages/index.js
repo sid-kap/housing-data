@@ -7,7 +7,7 @@ import { Nav, GitHubFooter } from '../lib/common_elements.js'
 import ContainerDimensions from 'react-container-dimensions'
 
 function spec (width, height) {
-  const plotWidth = Math.min(width * 0.95, 800)
+  const plotWidth = Math.min(width * 0.95, 900)
 
   return {
     width: plotWidth,
