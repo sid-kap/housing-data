@@ -114,6 +114,7 @@ function makePage (place, state, optionVal, filteredData, placeOptions, placeLoo
     <div>
       <Head>
         <title>{place}, {state}</title>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </Head>
       <Nav />
       <div className='mx-auto mb-10 align-center items-center flex flex-col justify-center'>
