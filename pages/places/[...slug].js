@@ -153,9 +153,9 @@ function spec (width, height) {
 
   const filterFields = Array.from(fieldsGenerator(['units'], ['']))
 
-  const plotWidth = Math.min(width * 0.95, 900)
+  const plotWidth = Math.min(width * 0.95, 936)
 
-  const continuousBandSize = plotWidth * 10 / 900
+  const continuousBandSize = plotWidth * 10 / 936
 
   return {
     width: plotWidth,
