@@ -68,9 +68,10 @@ def slugify(str):
     return str.lower().replace("-", "_").strip()
 
 
-def _fix_column_names(header_row_0, header_row_1) -> List[str]:
-    assert len(header_row_1) == len(header_row_0) + 1
-    header_row_0.append("")
+def _fix_column_names(header_row_0, header_row_1, fix_row_lengths=True) -> List[str]:
+    if fix_row_lengths:
+        assert len(header_row_1) == len(header_row_0) + 1
+        header_row_0.append("")
 
     for i, col in enumerate(header_row_0.copy()):
         if "unit" in col:
@@ -206,10 +207,16 @@ def load_data(
     assert line.strip() == ""
 
     df = pd.read_csv(csv_handle, header=None, index_col=False)
-    df.columns = _fix_column_names(header_row_1, header_row_2)
+    fix_row_lengths = not (year == 1984 and region == "west")
+    df.columns = _fix_column_names(
+        header_row_1, header_row_2, fix_row_lengths=fix_row_lengths
+    )
 
     if scale == "state":
         state_cleanup(df)
+
+    if scale == "place":
+        place_cleanup(df)
 
     return df
 
@@ -256,4 +263,78 @@ def state_cleanup(df):
     )
     df["region_code"] = df["region_code"].astype(str)
     df["division_code"] = df["division_code"].astype(str)
-    return df
+
+
+CORRECTIONS = {
+    "0Tsego Co. Pt. Uninc. Area": "Otsego Co. Pt. Uninc. Area",
+    "Otsego Co. Pt Uninc. Area": "Otsego Co. Pt. Uninc. Area",
+    "Washington Dc": "Washington",
+    "Washington D.C": "Washington",
+    ".Pike County": "Pike County",
+}
+
+
+# TODO: make sure that we're not overwriting Gulf County, FL
+SUBSTRING_CORRECTIONS = {
+    " .": "",
+    " *": "",
+    " #": "",
+    " (N)#": "",
+    " (N)": "",
+    "@1": "",
+    "@2": "",
+    "@4": "",
+    "@5": "",
+    "Unincorporated Area": "",
+    "Unincoporated Area": "",
+    "Unincorporared Area": "",
+    "Unincorported Area": "",
+    "Unincorporate Area": "",
+    "Balance Of County": "County",
+    "Bal. Of Co": "County",
+    "Bal. Of C0": "County",
+    "0Tsego Co": "Otsego Co",
+    "Co. Uninc. Area": "County",
+    "Co. Uninc Area": "County",
+    "Co. Pt Uninc. Area": "County Part",
+    "Co. Pt. Uninc. Area": "County Part",
+    "Co. Pt Uninc": "County Part",
+    "'S": "s",  # for Prince George'S County, St Mary'S County, etc.
+    "County Part": "County",
+    "Parish Uninc. Area": "Parish",
+    "Parish Pt. Uninc. Area": "Parish",
+    "Parish Pt Uninc. Area": "Parish",
+    "County Uninc Area": "County",
+}
+
+
+def place_cleanup(df):
+    place_names = df["place_name"]
+
+    place_names = (
+        place_names.str.title().str.rstrip(".").str.strip().replace(CORRECTIONS)
+    )
+
+    for s, replacement_s in SUBSTRING_CORRECTIONS.items():
+        place_names = place_names.str.replace(s, replacement_s, regex=False)
+
+    place_types = [" township", " town", " city", " village"]
+    for place_type in place_types:
+        place_names = place_names.str.replace(
+            place_type.title(), place_type, regex=False
+        )
+
+    place_names = place_names.str.rstrip(".").str.rstrip(".#").str.strip()
+
+    df["uncleaned_place_name"] = df["place_name"]
+    df["place_name"] = place_names
+
+    # Cast float types to nullable ints - none of the data here is actually floats,
+    # they're just coerced to float because they have nulls.
+    # (TODO: maybe just specify the dtype as 'Int64' in the pd.read_csv call?
+    # IDK if it's supported.)
+    float_cols = df.dtypes.loc[lambda x: x == float].index
+    for col in float_cols:
+        df[col] = df[col].astype("Int64")
+
+    df = df[df["place_name"].notnull()]

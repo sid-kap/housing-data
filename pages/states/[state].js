@@ -1,49 +1,16 @@
 import { useRouter } from 'next/router'
-import styles from '../../styles/Home.module.css'
 import Head from 'next/head'
 import { useStateData } from '../../lib/data_loader.js'
 import Select from 'react-select'
 import { useState, useEffect } from 'react'
 import { VegaLite } from 'react-vega'
-import { GitHubFooter } from '../../lib/common_elements.js'
-
-function * fieldsGenerator (
-  types = ['bldgs', 'units', 'value'],
-  suffixes = ['_reported', '']
-) {
-  for (const numUnits of [
-    '1_unit',
-    '2_units',
-    '3_to_4_units',
-    '5_plus_units'
-  ]) {
-    for (const type of types) {
-      for (const suffix of suffixes) {
-        yield numUnits + '_' + type + suffix
-      }
-    }
-  }
-}
+import { Nav, GitHubFooter } from '../../lib/common_elements.js'
+import { fieldsGenerator, keyMapping } from '../../lib/plots.js'
 
 const fields = Array.from(fieldsGenerator())
 
 function spec (units) {
   const filterFields = Array.from(fieldsGenerator([units], ['']))
-
-  const keyMapping = {
-    '1_unit_units': '1 unit',
-    '2_units_units': '2 units',
-    '3_to_4_units_units': '3-4 units',
-    '5_plus_units_units': '5+ units',
-    '1_unit_bldgs': '1 unit',
-    '2_units_bldgs': '2 units',
-    '3_to_4_units_bldgs': '3-4 units',
-    '5_plus_units_bldgs': '5+ units',
-    '1_unit_value': '1 unit',
-    '2_units_value': '2 units',
-    '3_to_4_units_value': '3-4 units',
-    '5_plus_units_value': '5+ units'
-  }
 
   return {
     width: 800,
@@ -167,6 +134,8 @@ export default function State () {
         <title>{stateName}</title>
       </Head>
 
+      <Nav />
+
       <div className='grid grid-cols-3'>
         <Select
           styles={statePickerStyles}
@@ -186,7 +155,7 @@ export default function State () {
         <div className='col-span-1' />
       </div>
 
-      <div className={styles.container}>
+      <div className='flex flex-col justify-center items-center mx-auto mb-10'>
         <Select
           styles={customStyles}
           defaultValue={selectedUnits}
@@ -196,48 +165,6 @@ export default function State () {
         />
 
         <VegaLite spec={spec(selectedUnits.value)} data={data} />
-
-        <table className='m-4 table-auto border border-black rounded-lg'>
-          <thead>
-            <tr className='bg-green-500 text-gray-800'>
-              <th className='p-1 border border-black'>Year</th>
-              <th className='p-1 border border-black'>Single-fam units</th>
-              <th className='p-1 border border-black'>2-unit units</th>
-              <th className='p-1 border border-black'>3-4 unit units</th>
-              <th className='p-1 border border-black'>5+ unit units</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredData.map((value, index) => (
-              // toLocaleString adds thousands separator
-              <tr key={index}>
-                <td className='p-1 border border-black font-bold'>
-                  {value.year}
-                </td>
-                <td className='p-1 border border-black'>
-                  {value['1_unit_units'].toLocaleString('en')}
-                </td>
-                <td className='p-1 border border-black'>
-                  {value['2_units_units'].toLocaleString('en')}
-                </td>
-                <td className='p-1 border border-black'>
-                  {value['3_to_4_units_units'].toLocaleString('en')}
-                </td>
-                <td className='p-1 border border-black'>
-                  {value['5_plus_units_units'].toLocaleString('en')}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <p className='m-4 rounded-lg'>
-          (See also the&nbsp;
-          <a href='/' className='text-blue-500 hover:text-blue-300'>
-            combined charts
-          </a>
-          .)
-        </p>
       </div>
       <GitHubFooter />
     </div>
