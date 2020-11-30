@@ -2,19 +2,27 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { useStateData } from '../../lib/data_loader.js'
 import SelectSearch from 'react-select-search/dist/cjs'
-import { useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { VegaLite } from 'react-vega'
 import { Nav, GitHubFooter } from '../../lib/common_elements.js'
 import { fieldsGenerator, keyMapping } from '../../lib/plots.js'
+import ContainerDimensions from 'react-container-dimensions'
 
 const fields = Array.from(fieldsGenerator())
 
-function spec (units) {
+function spec (units, width, height) {
   const filterFields = Array.from(fieldsGenerator([units], ['']))
 
+  const plotWidth = Math.min(width * 0.95, 936)
+  const continuousBandSize = plotWidth * 10 / 936
+
   return {
-    width: 800,
-    height: 600,
+    width: plotWidth,
+    height: 0.75 * plotWidth,
+    autosize: {
+      type: 'fit',
+      contains: 'padding'
+    },
     encoding: {
       x: {
         field: 'year',
@@ -80,7 +88,7 @@ function spec (units) {
     ],
     config: {
       bar: {
-        continuousBandSize: 10
+        continuousBandSize: continuousBandSize
       }
     }
   }
@@ -91,20 +99,6 @@ const unitsOptions = [
   { value: 'bldgs', name: 'Buildings' },
   { value: 'value', name: 'Property value' }
 ]
-
-const customStyles = {
-  container: (provided) => ({
-    ...provided,
-    width: 50
-  })
-}
-
-const statePickerStyles = {
-  container: (provided) => ({
-    ...provided,
-    width: 300
-  })
-}
 
 export default function State () {
   const router = useRouter()
@@ -120,37 +114,33 @@ export default function State () {
 
   const [selectedUnits, setSelectedUnits] = useState('units')
 
-  const [stateOptions, setStateOptions] = useState([])
-
-  useEffect(() => {
+  const stateOptions = useMemo(() => {
     let stateNames = response.data
       .filter((row) => row.type === 'state')
       .map((row) => row.state_name)
-      .filter((row) => row != null)
+      .filter((row) => row !== null)
     stateNames = Array.from(new Set(stateNames))
-    setStateOptions(
-      stateNames.map((state) => ({
-        value: state,
-        name: state
-      }))
-    )
+    return stateNames.map((state) => ({
+      value: state,
+      name: state
+    }))
   }, [response.status])
 
   return (
     <div>
       <Head>
         <title>{stateName}</title>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </Head>
 
       <Nav currentIndex={1} />
 
       <div className='flex flex-col justify-center items-center mx-auto mb-10'>
 
-        <div className='grid grid-cols-3'>
+        <div className='flex flex-col lg:grid lg:grid-cols-3'>
           <div className='m-4 col-span-1'>
             <SelectSearch
               search
-              styles={statePickerStyles}
               value={stateName}
               onChange={(newState) =>
                 newState !== stateName
@@ -165,7 +155,6 @@ export default function State () {
 
           <div className='col-span-1 m-4'>
             <SelectSearch
-              styles={customStyles}
               value={selectedUnits}
               onChange={setSelectedUnits}
               options={unitsOptions}
@@ -173,7 +162,13 @@ export default function State () {
           </div>
         </div>
 
-        <VegaLite spec={spec(selectedUnits)} data={data} />
+        <div className='w-full flex flex-row'>
+          <ContainerDimensions>
+            {({ width, height }) => (
+              <VegaLite spec={spec(selectedUnits, width, height)} data={data} />
+            )}
+          </ContainerDimensions>
+        </div>
       </div>
       <GitHubFooter />
     </div>

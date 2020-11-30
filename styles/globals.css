@@ -234,3 +234,8 @@ a {
     --tw-bg-opacity: 1;
     background-color: rgba(191, 219, 254, var(--tw-bg-opacity));
 }
+
+div.vega-embed {
+    margin-left: auto;
+    margin-right: auto;
+}
