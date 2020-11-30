@@ -116,7 +116,7 @@ function makePage (place, state, optionVal, filteredData, placeOptions, placeLoo
         <title>{place}, {state}</title>
         <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </Head>
-      <Nav />
+      <Nav currentIndex={2} />
       <div className='mx-auto mb-10 align-center items-center flex flex-col justify-center'>
         <div className='lg:grid lg:grid-cols-3 flex flex-col'>
           <div className='m-4 col-span-1'>
@@ -198,7 +198,10 @@ function spec (width, height) {
     usermeta: { embedOptions: { renderer: 'svg' } },
     layer: [
       {
-        mark: 'bar',
+        mark: {
+          type: 'bar',
+          tooltip: { content: 'data' }
+        },
         encoding: {
           x: {
             field: 'year'
@@ -211,9 +214,16 @@ function spec (width, height) {
             scale: {
               scheme: 'tableau10'
             }
-          }
-        },
-        tooltip: true
+          },
+          tooltip: [
+            { field: 'year', type: 'temporal', scale: { type: 'utc' }, timeUnit: 'utcyear', title: 'Year' },
+            { field: '1_unit_units', title: '1 unit', format: ',' },
+            { field: '2_units_units', title: '2 unit', format: ',' },
+            { field: '3_to_4_units_units', title: '3-4 units', format: ',' },
+            { field: '5_plus_units_units', title: '5+ units', format: ',' },
+            { field: 'total_units', title: 'Total units', format: ',' }
+          ]
+        }
       }
     ],
     config: {

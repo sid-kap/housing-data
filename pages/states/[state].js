@@ -1,8 +1,8 @@
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { useStateData } from '../../lib/data_loader.js'
-import Select from 'react-select'
-import { useState, useEffect } from 'react'
+import SelectSearch from 'react-select-search/dist/cjs'
+import { useMemo, useState } from 'react'
 import { VegaLite } from 'react-vega'
 import { Nav, GitHubFooter } from '../../lib/common_elements.js'
 import { fieldsGenerator, keyMapping } from '../../lib/plots.js'
@@ -57,7 +57,10 @@ function spec (units, width, height) {
     usermeta: { embedOptions: { renderer: 'svg' } },
     layer: [
       {
-        mark: 'bar',
+        mark: {
+          type: 'bar',
+          tooltip: { content: 'data' }
+        },
         encoding: {
           x: {
             field: 'year'
@@ -70,7 +73,15 @@ function spec (units, width, height) {
             scale: {
               scheme: 'tableau10'
             }
-          }
+          },
+          tooltip: [
+            { field: 'year', type: 'temporal', scale: { type: 'utc' }, timeUnit: 'utcyear', title: 'Year' },
+            { field: '1_unit_units', title: '1 unit', format: ',' },
+            { field: '2_units_units', title: '2 unit', format: ',' },
+            { field: '3_to_4_units_units', title: '3-4 units', format: ',' },
+            { field: '5_plus_units_units', title: '5+ units', format: ',' },
+            { field: 'total_units', title: 'Total units', format: ',' }
+          ]
         },
         tooltip: true
       }
@@ -84,24 +95,10 @@ function spec (units, width, height) {
 }
 
 const unitsOptions = [
-  { value: 'units', label: 'Units' },
-  { value: 'bldgs', label: 'Buildings' },
-  { value: 'value', label: 'Property value' }
+  { value: 'units', name: 'Units' },
+  { value: 'bldgs', name: 'Buildings' },
+  { value: 'value', name: 'Property value' }
 ]
-
-const customStyles = {
-  container: (provided) => ({
-    ...provided,
-    width: 150
-  })
-}
-
-const statePickerStyles = {
-  container: (provided) => ({
-    ...provided,
-    width: 300
-  })
-}
 
 export default function State () {
   const router = useRouter()
@@ -115,25 +112,18 @@ export default function State () {
 
   const data = { table: filteredData }
 
-  const [selectedUnits, setSelectedUnits] = useState({
-    value: 'units',
-    label: 'Units'
-  })
+  const [selectedUnits, setSelectedUnits] = useState('units')
 
-  const [stateOptions, setStateOptions] = useState([])
-
-  useEffect(() => {
+  const stateOptions = useMemo(() => {
     let stateNames = response.data
       .filter((row) => row.type === 'state')
       .map((row) => row.state_name)
-      .filter((row) => row != null)
+      .filter((row) => row !== null)
     stateNames = Array.from(new Set(stateNames))
-    setStateOptions(
-      stateNames.map((state) => ({
-        value: state,
-        label: state
-      }))
-    )
+    return stateNames.map((state) => ({
+      value: state,
+      name: state
+    }))
   }, [response.status])
 
   return (
@@ -143,40 +133,39 @@ export default function State () {
         <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </Head>
 
-      <Nav />
-
-      <div className='flex flex-col items-center md:grid md:grid-cols-3'>
-        <Select
-          styles={statePickerStyles}
-          defaultValue={stateName}
-          onChange={(newState) =>
-            newState !== stateName
-              ? router.push('/states/' + newState.value)
-              : null}
-          options={stateOptions}
-          className='m-4 col-span-1'
-          placeholder='Change state...'
-          size={0.1}
-        />
-
-        <h1 className='mt-4 text-4xl col-span-1 text-center'>{stateName}</h1>
-
-        <div className='col-span-1' />
-      </div>
+      <Nav currentIndex={1} />
 
       <div className='flex flex-col justify-center items-center mx-auto mb-10'>
-        <Select
-          styles={customStyles}
-          defaultValue={selectedUnits}
-          onChange={setSelectedUnits}
-          options={unitsOptions}
-          className='m-4'
-        />
+
+        <div className='flex flex-col lg:grid lg:grid-cols-3'>
+          <div className='m-4 col-span-1'>
+            <SelectSearch
+              search
+              value={stateName}
+              onChange={(newState) =>
+                newState !== stateName
+                  ? router.push('/states/' + newState)
+                  : null}
+              options={stateOptions}
+              placeholder='Change state...'
+            />
+          </div>
+
+          <h1 className='mt-4 text-4xl col-span-1 text-center'>{stateName}</h1>
+
+          <div className='col-span-1 m-4'>
+            <SelectSearch
+              value={selectedUnits}
+              onChange={setSelectedUnits}
+              options={unitsOptions}
+            />
+          </div>
+        </div>
 
         <div className='w-full flex flex-row'>
           <ContainerDimensions>
             {({ width, height }) => (
-              <VegaLite spec={spec(selectedUnits.value, width, height)} data={data} />
+              <VegaLite spec={spec(selectedUnits, width, height)} data={data} />
             )}
           </ContainerDimensions>
         </div>
