@@ -6,15 +6,23 @@ import { useState, useEffect } from 'react'
 import { VegaLite } from 'react-vega'
 import { Nav, GitHubFooter } from '../../lib/common_elements.js'
 import { fieldsGenerator, keyMapping } from '../../lib/plots.js'
+import ContainerDimensions from 'react-container-dimensions'
 
 const fields = Array.from(fieldsGenerator())
 
-function spec (units) {
+function spec (units, width, height) {
   const filterFields = Array.from(fieldsGenerator([units], ['']))
 
+  const plotWidth = Math.min(width * 0.95, 936)
+  const continuousBandSize = plotWidth * 10 / 936
+
   return {
-    width: 800,
-    height: 600,
+    width: plotWidth,
+    height: 0.75 * plotWidth,
+    autosize: {
+      type: 'fit',
+      contains: 'padding'
+    },
     encoding: {
       x: {
         field: 'year',
@@ -69,7 +77,7 @@ function spec (units) {
     ],
     config: {
       bar: {
-        continuousBandSize: 10
+        continuousBandSize: continuousBandSize
       }
     }
   }
@@ -132,11 +140,12 @@ export default function State () {
     <div>
       <Head>
         <title>{stateName}</title>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </Head>
 
       <Nav />
 
-      <div className='grid grid-cols-3'>
+      <div className='flex flex-col items-center md:grid md:grid-cols-3'>
         <Select
           styles={statePickerStyles}
           defaultValue={stateName}
@@ -164,7 +173,13 @@ export default function State () {
           className='m-4'
         />
 
-        <VegaLite spec={spec(selectedUnits.value)} data={data} />
+        <div className='w-full flex flex-row'>
+          <ContainerDimensions>
+            {({ width, height }) => (
+              <VegaLite spec={spec(selectedUnits.value, width, height)} data={data} />
+            )}
+          </ContainerDimensions>
+        </div>
       </div>
       <GitHubFooter />
     </div>

@@ -8,6 +8,7 @@ import useSWR from 'swr'
 import WindowSelectSearch from '../../lib/WindowSelectSearch.js'
 import us from 'us'
 import { Nav, GitHubFooter } from '../../lib/common_elements.js'
+import ContainerDimensions from 'react-container-dimensions'
 
 function getStateAbbreviation (stateCode) {
   const twoDigitStringCode = String(stateCode).padStart(2, 0)
@@ -24,6 +25,9 @@ function getStateFips (stateStr) {
 }
 
 function getJsonUrl (place, state) {
+  if (place === null) {
+    return null
+  }
   place = place.replace('#', '%23')
   return '/places_data/' + getStateFips(state) + '/' + place + '.json'
 }
@@ -77,9 +81,7 @@ export default function Place () {
     return null
   }, [place, state, placeLookup.length])
 
-  const { data } = useSWR(
-    () => place !== null ? getJsonUrl(place, state) : null
-  )
+  const { data } = useSWR(getJsonUrl(place, state))
 
   if ((typeof slug === 'undefined') || (slug.length === 0)) {
     return (
@@ -112,10 +114,11 @@ function makePage (place, state, optionVal, filteredData, placeOptions, placeLoo
     <div>
       <Head>
         <title>{place}, {state}</title>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </Head>
       <Nav />
       <div className='mx-auto mb-10 align-center items-center flex flex-col justify-center'>
-        <div className='grid grid-cols-3'>
+        <div className='lg:grid lg:grid-cols-3 flex flex-col'>
           <div className='m-4 col-span-1'>
             <WindowSelectSearch
               search
@@ -128,22 +131,39 @@ function makePage (place, state, optionVal, filteredData, placeOptions, placeLoo
           <h1 className='mt-4 text-4xl col-span-1 text-center'>{place}, {state}</h1>
         </div>
 
-        <VegaLite spec={spec()} data={{ table: filteredData }} />
+        <div className='w-full flex flex-row'>
+          <ContainerDimensions>
+            {
+          ({ width, height }) => (
+            <VegaLite spec={spec(width, height)} data={{ table: filteredData }} />
+          )
+        }
+          </ContainerDimensions>
+        </div>
       </div>
       <GitHubFooter />
 
     </div>
   )
+  // <div className='w-full flex flex-row box-border border border-black-1 items-center align-center' >
 }
 
-function spec () {
+function spec (width, height) {
   const fields = Array.from(fieldsGenerator())
 
   const filterFields = Array.from(fieldsGenerator(['units'], ['']))
 
+  const plotWidth = Math.min(width * 0.95, 936)
+
+  const continuousBandSize = plotWidth * 10 / 936
+
   return {
-    width: 800,
-    height: 600,
+    width: plotWidth,
+    height: 0.75 * plotWidth,
+    autosize: {
+      type: 'fit',
+      contains: 'padding'
+    },
     encoding: {
       x: {
         field: 'year',
@@ -198,7 +218,7 @@ function spec () {
     ],
     config: {
       bar: {
-        continuousBandSize: 10
+        continuousBandSize: continuousBandSize
       }
     }
   }
