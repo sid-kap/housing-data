@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import Select from 'react-select'
+import SelectSearch from 'react-select-search/dist/cjs'
 import { useState } from 'react'
 import { useStateData } from '../lib/data_loader.js'
 import { VegaLite } from 'react-vega'
@@ -56,42 +56,39 @@ const spec = {
 }
 
 const options = [
-  { value: 'all', label: 'All' },
-  { value: 'country', label: 'Country' },
-  { value: 'region', label: 'Region' },
-  { value: 'division', label: 'Division' },
-  { value: 'state', label: 'State' }
+  { value: 'all', name: 'All' },
+  { value: 'country', name: 'Country' },
+  { value: 'region', name: 'Region' },
+  { value: 'division', name: 'Division' },
+  { value: 'state', name: 'State' }
 ]
 
 // Region codes from https://www2.census.gov/geo/pdfs/maps-data/maps/reference/us_regdiv.pdf
 const regionOptions = [
+  { value: 'all', name: 'All' },
   {
-    label: 'All',
-    options: [
-      { value: 'all', label: 'All' }
+    name: 'Region',
+    type: 'group',
+    items: [
+      { value: 'region_1', name: 'Northeast' },
+      { value: 'region_2', name: 'Midwest' },
+      { value: 'region_3', name: 'South' },
+      { value: 'region_4', name: 'West' }
     ]
   },
   {
-    label: 'Region',
-    options: [
-      { value: ['region', '1'], label: 'Northeast' },
-      { value: ['region', '2'], label: 'Midwest' },
-      { value: ['region', '3'], label: 'South' },
-      { value: ['region', '4'], label: 'West' }
-    ]
-  },
-  {
-    label: 'Division',
-    options: [
-      { value: ['division', '1'], label: 'New England' },
-      { value: ['division', '2'], label: 'Middle Atlantic' },
-      { value: ['division', '3'], label: 'East North Central' },
-      { value: ['division', '4'], label: 'West North Central' },
-      { value: ['division', '5'], label: 'South Atlantic' },
-      { value: ['division', '6'], label: 'East South Central' },
-      { value: ['division', '7'], label: 'West South Central' },
-      { value: ['division', '8'], label: 'Mountain' },
-      { value: ['division', '9'], label: 'Pacific' }
+    name: 'Division',
+    type: 'group',
+    items: [
+      { value: 'division_1', name: 'New England' },
+      { value: 'division_2', name: 'Middle Atlantic' },
+      { value: 'division_3', name: 'East North Central' },
+      { value: 'division_4', name: 'West North Central' },
+      { value: 'division_5', name: 'South Atlantic' },
+      { value: 'division_6', name: 'East South Central' },
+      { value: 'division_7', name: 'West South Central' },
+      { value: 'division_8', name: 'Mountain' },
+      { value: 'division_9', name: 'Pacific' }
     ]
   }
 ]
@@ -101,10 +98,12 @@ function filterData (data, type, region) {
     data = data.filter((row) => row.type === type)
   }
   if (region !== null && region !== 'all') {
-    if (region[0] === 'region') {
-      data = data.filter((row) => row.region_code === region[1])
-    } else if (region[0] === 'division') {
-      data = data.filter((row) => row.division_code === region[1])
+    if (region.startsWith('region')) {
+      const regionCode = region.substring(region.length - 1)
+      data = data.filter((row) => row.region_code === regionCode)
+    } else if (region.startsWith('division')) {
+      const divisionCode = region.substring(region.length - 1)
+      data = data.filter((row) => row.division_code === divisionCode)
     } else {
       throw new Error(region + ' unknown')
     }
@@ -115,38 +114,20 @@ function filterData (data, type, region) {
 export default function Home () {
   const { response } = useStateData()
 
-  const [selectedType, setSelectedOption] = useState({
-    value: 'all',
-    label: 'All'
-  })
-  const customStyles = {
-    container: (provided) => ({
-      ...provided,
-      width: 150
-    })
-  }
-  const regionStyles = {
-    container: (provided) => ({
-      ...provided,
-      width: 200
-    })
-  }
+  const [selectedType, setSelectedOption] = useState('all')
 
-  const [selectedRegion, setSelectedRegion] = useState({
-    value: 'all',
-    label: 'All'
-  })
+  const [selectedRegion, setSelectedRegion] = useState('all')
 
   let regionSelect
-  if (selectedType.value === 'state') {
+  if (selectedType === 'state') {
     regionSelect = (
-      <Select
-        styles={regionStyles}
-        options={regionOptions}
-        defaultValue={selectedRegion}
-        onChange={setSelectedRegion}
-        className='m-2'
-      />
+      <div className='mx-2'>
+        <SelectSearch
+          options={regionOptions}
+          defaultValue={selectedRegion}
+          onChange={setSelectedRegion}
+        />
+      </div>
     )
   } else {
     regionSelect = ''
@@ -154,8 +135,8 @@ export default function Home () {
 
   const data = {
     table: filterData(
-      response.data, selectedType.value,
-      selectedType.value === 'state' ? selectedRegion.value : null
+      response.data, selectedType,
+      selectedType === 'state' ? selectedRegion : null
     )
   }
 
@@ -168,17 +149,15 @@ export default function Home () {
       <Nav currentIndex={0} />
       <div className='flex flex-col justify-center items-center mx-auto mb-10'>
 
-        <h1 className='mt-4 mb-8 text-4xl col-span-1 text-center'>
+        <h1 className='mt-4 mb-2 text-4xl col-span-1 text-center'>
           Combined Plots
         </h1>
 
-        <div className='flex'>
-          <Select
-            styles={customStyles}
-            defaultValue={selectedType}
+        <div className='flex m-2'>
+          <SelectSearch
+            value={selectedType}
             onChange={setSelectedOption}
             options={options}
-            className='m-2'
           />
           {regionSelect}
         </div>

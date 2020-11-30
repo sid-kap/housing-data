@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { useStateData } from '../../lib/data_loader.js'
-import Select from 'react-select'
+import SelectSearch from 'react-select-search/dist/cjs'
 import { useState, useEffect } from 'react'
 import { VegaLite } from 'react-vega'
 import { Nav, GitHubFooter } from '../../lib/common_elements.js'
@@ -87,15 +87,15 @@ function spec (units) {
 }
 
 const unitsOptions = [
-  { value: 'units', label: 'Units' },
-  { value: 'bldgs', label: 'Buildings' },
-  { value: 'value', label: 'Property value' }
+  { value: 'units', name: 'Units' },
+  { value: 'bldgs', name: 'Buildings' },
+  { value: 'value', name: 'Property value' }
 ]
 
 const customStyles = {
   container: (provided) => ({
     ...provided,
-    width: 150
+    width: 50
   })
 }
 
@@ -118,10 +118,7 @@ export default function State () {
 
   const data = { table: filteredData }
 
-  const [selectedUnits, setSelectedUnits] = useState({
-    value: 'units',
-    label: 'Units'
-  })
+  const [selectedUnits, setSelectedUnits] = useState('units')
 
   const [stateOptions, setStateOptions] = useState([])
 
@@ -134,7 +131,7 @@ export default function State () {
     setStateOptions(
       stateNames.map((state) => ({
         value: state,
-        label: state
+        name: state
       }))
     )
   }, [response.status])
@@ -147,35 +144,36 @@ export default function State () {
 
       <Nav currentIndex={1} />
 
-      <div className='grid grid-cols-3'>
-        <Select
-          styles={statePickerStyles}
-          defaultValue={stateName}
-          onChange={(newState) =>
-            newState !== stateName
-              ? router.push('/states/' + newState.value)
-              : null}
-          options={stateOptions}
-          className='m-4 col-span-1'
-          placeholder='Change state...'
-          size={0.1}
-        />
-
-        <h1 className='mt-4 text-4xl col-span-1 text-center'>{stateName}</h1>
-
-        <div className='col-span-1' />
-      </div>
-
       <div className='flex flex-col justify-center items-center mx-auto mb-10'>
-        <Select
-          styles={customStyles}
-          defaultValue={selectedUnits}
-          onChange={setSelectedUnits}
-          options={unitsOptions}
-          className='m-4'
-        />
 
-        <VegaLite spec={spec(selectedUnits.value)} data={data} />
+        <div className='grid grid-cols-3'>
+          <div className='m-4 col-span-1'>
+            <SelectSearch
+              search
+              styles={statePickerStyles}
+              value={stateName}
+              onChange={(newState) =>
+                newState !== stateName
+                  ? router.push('/states/' + newState)
+                  : null}
+              options={stateOptions}
+              placeholder='Change state...'
+            />
+          </div>
+
+          <h1 className='mt-4 text-4xl col-span-1 text-center'>{stateName}</h1>
+
+          <div className='col-span-1 m-4'>
+            <SelectSearch
+              styles={customStyles}
+              value={selectedUnits}
+              onChange={setSelectedUnits}
+              options={unitsOptions}
+            />
+          </div>
+        </div>
+
+        <VegaLite spec={spec(selectedUnits)} data={data} />
       </div>
       <GitHubFooter />
     </div>
