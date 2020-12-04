@@ -11,10 +11,12 @@ requests = "^2.25.0"
 typing-extensions = "^3.7.4"
 pyarrow = "^2.0.0"
 tqdm = "^4.54.0"
+us = "^2.0.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 jupyterlab = "^2.2.9"
+networkx = "^2.5"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

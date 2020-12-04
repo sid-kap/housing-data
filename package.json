@@ -16,6 +16,7 @@
     "react-select-search": "^2.2.1",
     "react-vega": "^7.4.2",
     "react-window": "^1.8.6",
+    "sass": "^1.29.0",
     "swr": "^0.3.9",
     "us": "^2.0.0",
     "use-http": "^1.0.15",

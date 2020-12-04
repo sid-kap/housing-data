@@ -30,60 +30,60 @@ function getStateFips (stateStr) {
   return parseInt(us.lookup(stateStr).fips)
 }
 
-function getJsonUrl (place, state) {
-  if (place === null) {
+function getJsonUrl (county, state) {
+  if (county === null) {
     return null
   }
-  place = place.replace('#', '%23')
-  return '/places_data/' + getStateFips(state) + '/' + place + '.json'
+  county = county.replace('#', '%23')
+  return '/counties_data/' + getStateFips(state) + '/' + county + '.json'
 }
 
-export default function Place () {
+export default function County () {
   const router = useRouter()
 
-  const { data: placesListResponse } = useSWR('/places_list.json')
+  const { data: countysListResponse } = useSWR('/counties_list.json')
 
-  const [placeOptions, placeLookup] = useMemo(() => {
-    const placeNames = placesListResponse || []
+  const [countyOptions, countyLookup] = useMemo(() => {
+    const countyNames = countysListResponse || []
 
     const lookupTable = {}
     const options = []
-    for (let i = 0; i < placeNames.length; i++) {
-      const place = placeNames[i]
-      if (place.state_code !== null && place.place_name !== null) {
-        const abbr = getStateAbbreviation(place.state_code)
+    for (let i = 0; i < countyNames.length; i++) {
+      const county = countyNames[i]
+      if (county.state_code !== null && county.county_name !== null) {
+        const abbr = getStateAbbreviation(county.state_code)
         options.push({
           value: i,
           abbr: abbr,
-          place_name: place.place_name,
-          name: place.place_name + ', ' + abbr
+          county_name: county.county_name,
+          name: county.county_name + ', ' + abbr
         })
 
         // This feels stupid but I don't know if there's a better way
-        lookupTable[place.place_name + '/' + place.state_code] = i
+        lookupTable[county.county_name + '/' + county.state_code] = i
       }
     }
 
     return [options, lookupTable]
-  }, [placesListResponse])
+  }, [countysListResponse])
 
-  const slug = router.query.slug
+  const slug = router.query.county
 
   const state = slug ? slug[0] : null
-  const place = slug ? slug[1] : null
+  const county = slug ? slug[1] : null
 
   const optionVal = useMemo(() => {
-    if (place !== null && state !== null) {
+    if (county !== null && state !== null) {
       const fips = getStateFips(state)
-      const index = placeLookup[place + '/' + fips]
+      const index = countyLookup[county + '/' + fips]
       if (typeof index !== 'undefined') {
-        return placeOptions[index].value
+        return countyOptions[index].value
       }
     }
     return null
-  }, [place, state, placeLookup.length || 0])
+  }, [county, state, countyLookup.length || 0])
 
-  const { data } = useSWR(getJsonUrl(place, state))
+  const { data } = useSWR(getJsonUrl(county, state))
 
   if ((typeof slug === 'undefined') || (slug.length === 0)) {
     return (
@@ -94,15 +94,15 @@ export default function Place () {
       <h1>Bad path (sad face)</h1>
     )
   } else {
-    return makePage(place, state, optionVal, data, placeOptions, placeLookup, router)
+    return makePage(county, state, optionVal, data, countyOptions, countyLookup, router)
   }
 }
 
-function makePage (place, state, optionVal, filteredData, placeOptions, placeLookup, router) {
-  const onChange = function (newPlace) {
-    const chosenOption = placeOptions[newPlace]
-    if (chosenOption.place_name !== place || chosenOption.abbr !== state) {
-      router.push('/places/' + chosenOption.abbr + '/' + chosenOption.place_name.replace('#', '%23'))
+function makePage (county, state, optionVal, filteredData, countyOptions, countyLookup, router) {
+  const onChange = function (newCounty) {
+    const chosenOption = countyOptions[newCounty]
+    if (chosenOption.county_name !== county || chosenOption.abbr !== state) {
+      router.push('/counties/' + chosenOption.abbr + '/' + chosenOption.county_name.replace('#', '%23'))
     }
   }
 
@@ -112,29 +112,26 @@ function makePage (place, state, optionVal, filteredData, placeOptions, placeLoo
     distance: 5
   }
 
-  const isCounty = place.endsWith('County') || place.endsWith('Parish')
-
   return (
     <div>
       <Head>
-        <title>{place}, {state}</title>
+        <title>{county}, {state}</title>
         <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </Head>
-      <Nav currentIndex={4} />
+      <Nav currentIndex={3} />
       <div className='mx-auto mb-10 align-center items-center flex flex-col justify-center'>
         <div className='lg:grid lg:grid-cols-5 flex flex-col'>
           <div className='m-4 col-span-1'>
             <WindowSelectSearch
               search
               onChange={onChange}
-              options={placeOptions}
+              options={countyOptions}
               fuseOptions={fuseOptions}
               value={optionVal}
             />
           </div>
           <div className='mt-4 mb-1 col-span-3 text-center'>
-            {isCounty && <h2 className='text-2xl -mb-2'>Unincorporated</h2>}
-            <h1 className='text-4xl'>{place}, {state}</h1>
+            <h1 className='text-4xl'>{county}, {state}</h1>
           </div>
         </div>
 

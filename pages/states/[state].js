@@ -5,7 +5,7 @@ import SelectSearch from 'react-select-search/dist/cjs'
 import { useMemo, useState } from 'react'
 import { VegaLite } from 'react-vega'
 import { Nav, GitHubFooter } from '../../lib/common_elements.js'
-import { fieldsGenerator, keyMapping } from '../../lib/plots.js'
+import { fieldsGenerator, makeBarChartSpec } from '../../lib/plots.js'
 import ContainerDimensions from 'react-container-dimensions'
 
 const fields = Array.from(fieldsGenerator())
@@ -13,85 +13,7 @@ const fields = Array.from(fieldsGenerator())
 function spec (units, width, height) {
   const filterFields = Array.from(fieldsGenerator([units], ['']))
 
-  const plotWidth = Math.min(width * 0.95, 936)
-  const continuousBandSize = plotWidth * 10 / 936
-
-  return {
-    width: plotWidth,
-    height: 0.75 * plotWidth,
-    autosize: {
-      type: 'fit',
-      contains: 'padding'
-    },
-    encoding: {
-      x: {
-        field: 'year',
-        type: 'temporal',
-        axis: { title: 'Year' }
-      },
-      y: { field: 'value', type: 'quantitative', axis: { title: 'Units permitted' } },
-      color: { field: 'key', type: 'nominal', axis: { title: 'Unit count' } }
-    },
-    scales: [
-      {
-        name: 'legend_labels',
-        type: 'nominal',
-        domain: ['1_unit_units', '2_units_units', '3_to_4_units_units', '5_plus_units_units'],
-        range: ['1 unit', '2 units', '3-4 units', '5+ units']
-      }
-    ],
-    transform: [
-      { fold: fields },
-      {
-        filter: {
-          field: 'key',
-          oneOf: filterFields
-        }
-      },
-      {
-        calculate: JSON.stringify(keyMapping) + '[datum.key] || "Error"',
-        as: 'key_pretty_printed'
-      }
-    ],
-    data: { name: 'table' }, // note: vega-lite data attribute is a plain object instead of an array
-    usermeta: { embedOptions: { renderer: 'svg' } },
-    layer: [
-      {
-        mark: {
-          type: 'bar',
-          tooltip: { content: 'data' }
-        },
-        encoding: {
-          x: {
-            field: 'year'
-          },
-          y: {
-            field: 'value'
-          },
-          color: {
-            field: 'key_pretty_printed',
-            scale: {
-              scheme: 'tableau10'
-            }
-          },
-          tooltip: [
-            { field: 'year', type: 'temporal', scale: { type: 'utc' }, timeUnit: 'utcyear', title: 'Year' },
-            { field: '1_unit_units', title: '1 unit', format: ',' },
-            { field: '2_units_units', title: '2 unit', format: ',' },
-            { field: '3_to_4_units_units', title: '3-4 units', format: ',' },
-            { field: '5_plus_units_units', title: '5+ units', format: ',' },
-            { field: 'total_units', title: 'Total units', format: ',' }
-          ]
-        },
-        tooltip: true
-      }
-    ],
-    config: {
-      bar: {
-        continuousBandSize: continuousBandSize
-      }
-    }
-  }
+  return makeBarChartSpec(fields, filterFields, width, height)
 }
 
 const unitsOptions = [
