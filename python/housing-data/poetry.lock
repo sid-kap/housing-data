@@ -15,13 +15,13 @@ optional = false
 python-versions = "*"
 
 [package.dependencies]
-cffi = ">=1.0.0"
 six = "*"
+cffi = ">=1.0.0"
 
 [package.extras]
-dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pytest", "sphinx", "wheel", "pre-commit"]
 docs = ["sphinx"]
 tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pytest"]
+dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pytest", "sphinx", "wheel", "pre-commit"]
 
 [[package]]
 name = "async-generator"
@@ -48,10 +48,10 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [package.extras]
-dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.interface", "furo", "sphinx", "pre-commit"]
 docs = ["furo", "sphinx", "zope.interface"]
 tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.interface"]
 tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six"]
+dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.interface", "furo", "sphinx", "pre-commit"]
 
 [[package]]
 name = "backcall"
@@ -71,8 +71,8 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [package.dependencies]
 packaging = "*"
-six = ">=1.9.0"
 webencodings = "*"
+six = ">=1.9.0"
 
 [[package]]
 name = "certifi"
@@ -150,11 +150,11 @@ optional = false
 python-versions = ">=3.5"
 
 [package.dependencies]
-appnope = {version = "*", markers = "platform_system == \"Darwin\""}
 ipython = ">=5.0.0"
-jupyter-client = "*"
 tornado = ">=4.2"
+appnope = {version = "*", markers = "platform_system == \"Darwin\""}
 traitlets = ">=4.1.0"
+jupyter-client = "*"
 
 [package.extras]
 test = ["pytest (!=5.3.4)", "pytest-cov", "flaky", "nose"]
@@ -168,27 +168,27 @@ optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
-appnope = {version = "*", markers = "sys_platform == \"darwin\""}
 backcall = "*"
-colorama = {version = "*", markers = "sys_platform == \"win32\""}
-decorator = "*"
-jedi = ">=0.10"
+appnope = {version = "*", markers = "sys_platform == \"darwin\""}
 pexpect = {version = ">4.3", markers = "sys_platform != \"win32\""}
-pickleshare = "*"
-prompt-toolkit = ">=2.0.0,<3.0.0 || >3.0.0,<3.0.1 || >3.0.1,<3.1.0"
-pygments = "*"
 traitlets = ">=4.2"
+jedi = ">=0.10"
+pygments = "*"
+colorama = {version = "*", markers = "sys_platform == \"win32\""}
+prompt-toolkit = ">=2.0.0,<3.0.0 || >3.0.0,<3.0.1 || >3.0.1,<3.1.0"
+pickleshare = "*"
+decorator = "*"
 
 [package.extras]
-all = ["Sphinx (>=1.3)", "ipykernel", "ipyparallel", "ipywidgets", "nbconvert", "nbformat", "nose (>=0.10.1)", "notebook", "numpy (>=1.14)", "pygments", "qtconsole", "requests", "testpath"]
-doc = ["Sphinx (>=1.3)"]
-kernel = ["ipykernel"]
-nbconvert = ["nbconvert"]
 nbformat = ["nbformat"]
+all = ["Sphinx (>=1.3)", "ipykernel", "ipyparallel", "ipywidgets", "nbconvert", "nbformat", "nose (>=0.10.1)", "notebook", "numpy (>=1.14)", "pygments", "qtconsole", "requests", "testpath"]
+kernel = ["ipykernel"]
+doc = ["Sphinx (>=1.3)"]
 notebook = ["notebook", "ipywidgets"]
-parallel = ["ipyparallel"]
+nbconvert = ["nbconvert"]
 qtconsole = ["qtconsole"]
 test = ["nose (>=0.10.1)", "requests", "testpath", "pygments", "nbformat", "ipykernel", "numpy (>=1.14)"]
+parallel = ["ipyparallel"]
 
 [[package]]
 name = "ipython-genutils"
@@ -247,13 +247,13 @@ optional = false
 python-versions = "*"
 
 [package.dependencies]
-attrs = ">=17.4.0"
 pyrsistent = ">=0.14.0"
 six = ">=1.11.0"
+attrs = ">=17.4.0"
 
 [package.extras]
-format = ["idna", "jsonpointer (>1.13)", "rfc3987", "strict-rfc3339", "webcolors"]
 format_nongpl = ["idna", "jsonpointer (>1.13)", "webcolors", "rfc3986-validator (>0.1.0)", "rfc3339-validator"]
+format = ["idna", "jsonpointer (>1.13)", "rfc3987", "strict-rfc3339", "webcolors"]
 
 [[package]]
 name = "jupyter-client"
@@ -264,11 +264,11 @@ optional = false
 python-versions = ">=3.5"
 
 [package.dependencies]
-jupyter-core = ">=4.6.0"
 python-dateutil = ">=2.1"
-pyzmq = ">=13"
 tornado = ">=4.1"
 traitlets = "*"
+jupyter-core = ">=4.6.0"
+pyzmq = ">=13"
 
 [package.extras]
 test = ["ipykernel", "ipython", "mock", "pytest", "pytest-asyncio", "async-generator", "pytest-timeout"]
@@ -282,8 +282,8 @@ optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
-pywin32 = {version = ">=1.0", markers = "sys_platform == \"win32\""}
 traitlets = "*"
+pywin32 = {version = ">=1.0", markers = "sys_platform == \"win32\""}
 
 [[package]]
 name = "jupyterlab"
@@ -294,14 +294,14 @@ optional = false
 python-versions = ">=3.5"
 
 [package.dependencies]
+tornado = "<6.0.0 || >6.0.0,<6.0.1 || >6.0.1,<6.0.2 || >6.0.2"
+notebook = ">=4.3.1"
 jinja2 = ">=2.10"
 jupyterlab-server = ">=1.1.5,<2.0"
-notebook = ">=4.3.1"
-tornado = "<6.0.0 || >6.0.0,<6.0.1 || >6.0.1,<6.0.2 || >6.0.2"
 
 [package.extras]
-docs = ["jsx-lexer", "recommonmark", "sphinx", "sphinx-rtd-theme", "sphinx-copybutton"]
 test = ["pytest", "pytest-check-links", "requests", "wheel", "virtualenv"]
+docs = ["jsx-lexer", "recommonmark", "sphinx", "sphinx-rtd-theme", "sphinx-copybutton"]
 
 [[package]]
 name = "jupyterlab-pygments"
@@ -323,11 +323,11 @@ optional = false
 python-versions = ">=3.5"
 
 [package.dependencies]
-jinja2 = ">=2.10"
-json5 = "*"
-jsonschema = ">=3.0.1"
-notebook = ">=4.2.0"
 requests = "*"
+json5 = "*"
+notebook = ">=4.2.0"
+jinja2 = ">=2.10"
+jsonschema = ">=3.0.1"
 
 [package.extras]
 test = ["pytest", "requests"]
@@ -365,16 +365,16 @@ optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
-async-generator = "*"
-jupyter-client = ">=6.1.5"
 nbformat = ">=5.0"
 nest-asyncio = "*"
+jupyter-client = ">=6.1.5"
 traitlets = ">=4.2"
+async-generator = "*"
 
 [package.extras]
-dev = ["codecov", "coverage", "ipython", "ipykernel", "ipywidgets", "pytest (>=4.1)", "pytest-cov (>=2.6.1)", "check-manifest", "flake8", "mypy", "tox", "bumpversion", "xmltodict", "pip (>=18.1)", "wheel (>=0.31.0)", "setuptools (>=38.6.0)", "twine (>=1.11.0)", "black"]
-sphinx = ["Sphinx (>=1.7)", "sphinx-book-theme", "mock", "moto", "myst-parser"]
 test = ["codecov", "coverage", "ipython", "ipykernel", "ipywidgets", "pytest (>=4.1)", "pytest-cov (>=2.6.1)", "check-manifest", "flake8", "mypy", "tox", "bumpversion", "xmltodict", "pip (>=18.1)", "wheel (>=0.31.0)", "setuptools (>=38.6.0)", "twine (>=1.11.0)", "black"]
+sphinx = ["Sphinx (>=1.7)", "sphinx-book-theme", "mock", "moto", "myst-parser"]
+dev = ["codecov", "coverage", "ipython", "ipykernel", "ipywidgets", "pytest (>=4.1)", "pytest-cov (>=2.6.1)", "check-manifest", "flake8", "mypy", "tox", "bumpversion", "xmltodict", "pip (>=18.1)", "wheel (>=0.31.0)", "setuptools (>=38.6.0)", "twine (>=1.11.0)", "black"]
 
 [[package]]
 name = "nbconvert"
@@ -385,25 +385,25 @@ optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
-bleach = "*"
-defusedxml = "*"
+mistune = ">=0.8.1,<2"
+nbformat = ">=4.4"
 entrypoints = ">=0.2.2"
+pandocfilters = ">=1.4.1"
+nbclient = ">=0.5.0,<0.6.0"
+traitlets = ">=4.2"
+jupyterlab-pygments = "*"
+pygments = ">=2.4.1"
 jinja2 = ">=2.4"
 jupyter-core = "*"
-jupyterlab-pygments = "*"
-mistune = ">=0.8.1,<2"
-nbclient = ">=0.5.0,<0.6.0"
-nbformat = ">=4.4"
-pandocfilters = ">=1.4.1"
-pygments = ">=2.4.1"
+bleach = "*"
 testpath = "*"
-traitlets = ">=4.2"
+defusedxml = "*"
 
 [package.extras]
-all = ["pytest", "pytest-cov", "pytest-dependency", "ipykernel", "ipywidgets (>=7)", "pyppeteer (==0.2.2)", "tornado (>=4.0)", "sphinx (>=1.5.1)", "sphinx-rtd-theme", "nbsphinx (>=0.2.12)", "ipython"]
-docs = ["sphinx (>=1.5.1)", "sphinx-rtd-theme", "nbsphinx (>=0.2.12)", "ipython"]
-serve = ["tornado (>=4.0)"]
 test = ["pytest", "pytest-cov", "pytest-dependency", "ipykernel", "ipywidgets (>=7)", "pyppeteer (==0.2.2)"]
+docs = ["sphinx (>=1.5.1)", "sphinx-rtd-theme", "nbsphinx (>=0.2.12)", "ipython"]
+all = ["pytest", "pytest-cov", "pytest-dependency", "ipykernel", "ipywidgets (>=7)", "pyppeteer (==0.2.2)", "tornado (>=4.0)", "sphinx (>=1.5.1)", "sphinx-rtd-theme", "nbsphinx (>=0.2.12)", "ipython"]
+serve = ["tornado (>=4.0)"]
 webpdf = ["pyppeteer (==0.2.2)"]
 
 [[package]]
@@ -415,14 +415,14 @@ optional = false
 python-versions = ">=3.5"
 
 [package.dependencies]
-ipython-genutils = "*"
-jsonschema = ">=2.4,<2.5.0 || >2.5.0"
-jupyter-core = "*"
 traitlets = ">=4.1"
+ipython-genutils = "*"
+jupyter-core = "*"
+jsonschema = ">=2.4,<2.5.0 || >2.5.0"
 
 [package.extras]
-fast = ["fastjsonschema"]
 test = ["fastjsonschema", "testpath", "pytest", "pytest-cov"]
+fast = ["fastjsonschema"]
 
 [[package]]
 name = "nest-asyncio"
@@ -433,6 +433,30 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
+name = "networkx"
+version = "2.5"
+description = "Python package for creating and manipulating graphs and networks"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+decorator = ">=4.3.0"
+
+[package.extras]
+all = ["numpy", "scipy", "pandas", "matplotlib", "pygraphviz", "pydot", "pyyaml", "lxml", "pytest"]
+lxml = ["lxml"]
+pydot = ["pydot"]
+numpy = ["numpy"]
+pyyaml = ["pyyaml"]
+matplotlib = ["matplotlib"]
+scipy = ["scipy"]
+pytest = ["pytest"]
+pygraphviz = ["pygraphviz"]
+pandas = ["pandas"]
+gdal = ["gdal"]
+
+[[package]]
 name = "notebook"
 version = "6.1.5"
 description = "A web-based notebook environment for interactive computing"
@@ -441,24 +465,24 @@ optional = false
 python-versions = ">=3.5"
 
 [package.dependencies]
-argon2-cffi = "*"
-ipykernel = "*"
-ipython-genutils = "*"
-jinja2 = "*"
-jupyter-client = ">=5.3.4"
-jupyter-core = ">=4.6.1"
-nbconvert = "*"
 nbformat = "*"
-prometheus-client = "*"
-pyzmq = ">=17"
-Send2Trash = "*"
 terminado = ">=0.8.3"
+ipykernel = "*"
+jupyter-client = ">=5.3.4"
 tornado = ">=5.0"
+argon2-cffi = "*"
+ipython-genutils = "*"
+Send2Trash = "*"
 traitlets = ">=4.2.1"
+jinja2 = "*"
+jupyter-core = ">=4.6.1"
+prometheus-client = "*"
+nbconvert = "*"
+pyzmq = ">=17"
 
 [package.extras]
-docs = ["sphinx", "nbsphinx", "sphinxcontrib-github-alt"]
 test = ["nose", "coverage", "requests", "nose-warnings-filters", "nbval", "nose-exclude", "selenium", "pytest", "pytest-cov", "requests-unixsocket"]
+docs = ["sphinx", "nbsphinx", "sphinxcontrib-github-alt"]
 
 [[package]]
 name = "numpy"
@@ -489,9 +513,9 @@ optional = false
 python-versions = ">=3.6.1"
 
 [package.dependencies]
-numpy = ">=1.15.4"
 python-dateutil = ">=2.7.3"
 pytz = ">=2017.2"
+numpy = ">=1.15.4"
 
 [package.extras]
 test = ["pytest (>=4.0.2)", "pytest-xdist", "hypothesis (>=3.58)"]
@@ -635,14 +659,14 @@ optional = false
 python-versions = ">=3.5"
 
 [package.dependencies]
-atomicwrites = {version = ">=1.0", markers = "sys_platform == \"win32\""}
-attrs = ">=17.4.0"
-colorama = {version = "*", markers = "sys_platform == \"win32\""}
 more-itertools = ">=4.0.0"
-packaging = "*"
-pluggy = ">=0.12,<1.0"
 py = ">=1.5.0"
 wcwidth = "*"
+packaging = "*"
+colorama = {version = "*", markers = "sys_platform == \"win32\""}
+attrs = ">=17.4.0"
+pluggy = ">=0.12,<1.0"
+atomicwrites = {version = ">=1.0", markers = "sys_platform == \"win32\""}
 
 [package.extras]
 checkqa-mypy = ["mypy (==v0.761)"]
@@ -692,8 +716,8 @@ optional = false
 python-versions = ">=3.5"
 
 [package.dependencies]
-cffi = {version = "*", markers = "implementation_name === \"pypy\""}
 py = {version = "*", markers = "implementation_name === \"pypy\""}
+cffi = {version = "*", markers = "implementation_name === \"pypy\""}
 
 [[package]]
 name = "requests"
@@ -704,9 +728,9 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [package.dependencies]
+idna = ">=2.5,<3"
 certifi = ">=2017.4.17"
 chardet = ">=3.0.2,<4"
-idna = ">=2.5,<3"
 urllib3 = ">=1.21.1,<1.27"
 
 [package.extras]
@@ -738,9 +762,9 @@ optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
-ptyprocess = {version = "*", markers = "os_name != \"nt\""}
-pywinpty = {version = ">=0.5", markers = "os_name == \"nt\""}
 tornado = ">=4"
+pywinpty = {version = ">=0.5", markers = "os_name == \"nt\""}
+ptyprocess = {version = "*", markers = "os_name != \"nt\""}
 
 [[package]]
 name = "testpath"
@@ -826,7 +850,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "2bb0f9bddcda3b35a44f50e2533c36c87325a5a27fe1863e1e137924a0f1cd20"
+content-hash = "3643011f2266c886216e3fdcd7d326e6d4ab2f273a910526cd798476789f0782"
 
 [metadata.files]
 appnope = [
@@ -1043,6 +1067,10 @@ nbformat = [
 nest-asyncio = [
     {file = "nest_asyncio-1.4.3-py3-none-any.whl", hash = "sha256:dbe032f3e9ff7f120e76be22bf6e7958e867aed1743e6894b8a9585fe8495cc9"},
     {file = "nest_asyncio-1.4.3.tar.gz", hash = "sha256:eaa09ef1353ebefae19162ad423eef7a12166bcc63866f8bff8f3635353cd9fa"},
+]
+networkx = [
+    {file = "networkx-2.5-py3-none-any.whl", hash = "sha256:8c5812e9f798d37c50570d15c4a69d5710a18d77bafc903ee9c5fba7454c616c"},
+    {file = "networkx-2.5.tar.gz", hash = "sha256:7978955423fbc9639c10498878be59caf99b44dc304c2286162fd24b458c1602"},
 ]
 notebook = [
     {file = "notebook-6.1.5-py3-none-any.whl", hash = "sha256:508cf9dad7cdb3188f1aa27017dc78179029dfe83814fc505329f689bc2ab50f"},

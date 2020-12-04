@@ -37,7 +37,7 @@ def _validate_load_data_inputs(
     month: Optional[int],
     region: Optional[Region],
 ) -> None:
-    if scale not in ["country", "metro", "place", "state"]:
+    if scale not in ["county", "metro", "place", "state"]:
         raise ValueError("Unknown scale: {}".format(scale))
     if time_scale not in ["monthly_current", "monthly_year_to_date", "annual"]:
         raise ValueError("Unknown time_scale: {}".format(time_scale))
@@ -78,32 +78,6 @@ def _fix_column_names(header_row_0, header_row_1, fix_row_lengths=True) -> List[
             header_row_0[i - 1] = col
             header_row_0[i + 1] = col
 
-    # last_units_group = ""
-    # suffix = ""
-
-    # fixed_columns = []
-    # for val_0, val_1 in columns:
-    #     if val_0.startswith("Unnamed:"):
-    #         val_0 = ""
-    #     if val_1.startswith("Unnamed:"):
-    #         val_1 = ""
-
-    #     val_0 = val_0.strip()
-
-    #     if val_0 in COLUMN_NAMES_MAPPING:
-    #         last_units_group, suffix = COLUMN_NAMES_MAPPING[val_0]
-
-    #     # Don't add a space for 'MSA/CMSA'
-    #     join_str = "" if val_0.endswith("/") else "_"
-
-    #     if val_1.strip() in ["Value", "Bldgs", "Units"]:
-    #         col_pieces = [last_units_group, val_1, suffix]
-    #     else:
-    #         col_pieces = [val_0, val_1, suffix]
-
-    #     col_pieces = [slugify(p) for p in col_pieces if p.strip()]
-
-    #     fixed_columns.append(join_str.join(col_pieces))
     fixed_columns = []
 
     for val_0, val_1 in zip(header_row_0, header_row_1):
@@ -129,6 +103,53 @@ def _fix_column_names(header_row_0, header_row_1, fix_row_lengths=True) -> List[
 
     columns = pd.Series(fixed_columns)
     columns = columns.str.strip()
+
+    return columns
+
+
+def _fix_column_names_old_county_level(header_row_0, header_row_1) -> List[str]:
+    assert len(header_row_1) == len(header_row_0) - 1
+    header_row_0.pop()
+
+    for i, col in enumerate(header_row_0.copy()):
+        if "unit" in col:
+            header_row_0[i - 1] = col
+            header_row_0[i + 1] = col
+
+    fixed_columns = []
+
+    for val_0, val_1 in zip(header_row_0, header_row_1):
+        if val_0.startswith("Unnamed:"):
+            val_0 = ""
+        if val_1.startswith("Unnamed:"):
+            val_1 = ""
+
+        val_0 = val_0.strip()
+        val_1 = val_1.strip()
+
+        if val_0 in COLUMN_NAMES_MAPPING:
+            val_0, suffix = COLUMN_NAMES_MAPPING[val_0]
+        else:
+            suffix = ""
+
+        # Don't add a space for 'MSA/CMSA'
+        join_str = "" if val_0.endswith("/") else "_"
+
+        col_pieces = [val_0, val_1, suffix]
+        col_pieces = [slugify(p) for p in col_pieces if p.strip()]
+        fixed_columns.append(join_str.join(col_pieces))
+
+    columns = pd.Series(fixed_columns)
+    columns = columns.str.strip()
+
+    # TODO this doesn't handle the reported columns, will fix that later (because I don't care about them anyways)
+    replace_strs = {
+        "2_unit_": "2_units_",
+        "34unit_": "3_to_4_units_",
+        "5_unit_": "5_plus_units_",
+    }
+    for s1, s2 in replace_strs.items():
+        columns = columns.str.replace(s1, s2, regex=False)
 
     return columns
 
@@ -167,9 +188,14 @@ def load_data(
         }[region]
         extra_path = quote(region.capitalize() + " Region")
     elif scale == "county":
+        if region is not None:
+            raise ValueError("region must be None in since scale = 'county'")
         filename_part_1 = "co"
         extra_path = None
     elif scale == "metro":
+        if region is not None:
+            raise ValueError("region must be None in since scale = 'metro'")
+        # "ma" stands for "metro area"
         filename_part_1 = "ma"
         extra_path = None
     elif scale == "state":
@@ -185,7 +211,7 @@ def load_data(
     else:
         path = f"https://www2.census.gov/econ/bps/{scale_path}/{filename_part_1}{filename_part_2}.txt"
 
-    print(f"Dowloading data from {path}")
+    print(f"Downloading data from {path}")
 
     result = (
         requests.get(path, stream=True)
@@ -208,15 +234,22 @@ def load_data(
 
     df = pd.read_csv(csv_handle, header=None, index_col=False)
     fix_row_lengths = not (year == 1984 and region == "west")
-    df.columns = _fix_column_names(
-        header_row_1, header_row_2, fix_row_lengths=fix_row_lengths
-    )
+
+    if scale == "county" and year >= 1990 and year <= 1998:
+        df.columns = _fix_column_names_old_county_level(header_row_1, header_row_2)
+    else:
+        df.columns = _fix_column_names(
+            header_row_1, header_row_2, fix_row_lengths=fix_row_lengths
+        )
 
     if scale == "state":
         state_cleanup(df)
 
     if scale == "place":
         df = place_cleanup(df)
+
+    if scale == "county":
+        county_cleanup(df)
 
     return df
 
@@ -347,3 +380,14 @@ def place_cleanup(df):
     )
 
     return df
+
+
+def county_cleanup(df):
+    df["county_name"] = df["county_name"].str.strip()
+
+    df["total_units"] = (
+        df["1_unit_units"]
+        + df["2_units_units"]
+        + df["3_to_4_units_units"]
+        + df["5_plus_units_units"]
+    )
