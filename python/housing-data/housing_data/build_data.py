@@ -202,50 +202,5 @@ def impute_pre_1990_counties(counties_df, places_df):
     return imputed_counties_df
 
 
-def use_latest_metro_name(df):
-    def _get_latest(group):
-        return group.sort_values("year", ascending=False)["ma_name"].iloc[0]
-
-    if "msa/cmsa" not in df.columns:
-        df["ma_name_by_msa"] = None
-    else:
-        msa_names = (
-            df.groupby("msa/cmsa").apply(_get_latest).reset_index(name="ma_name_by_msa")
-        )
-        df = df.merge(msa_names, on="msa/cmsa", how="left")
-
-    if "cbsa_code" not in df.columns:
-        df["ma_name_by_cbsa"] = None
-    else:
-        cbsa_names = (
-            df.groupby("cbsa_code")
-            .apply(_get_latest)
-            .reset_index(name="ma_name_by_cbsa")
-        )
-        df = df.merge(cbsa_names, on="cbsa_code", how="left")
-
-    # Only one of the two should exist for each row
-    print(
-        df[~(df["ma_name_by_cbsa"].isnull() ^ df["ma_name_by_msa"].isnull())][
-            [
-                "msa/cmsa",
-                "pmsa",
-                "cbsa_code",
-                "ma_name_by_cbsa",
-                "ma_name_by_msa",
-                "year",
-            ]
-        ]
-    )
-    assert (df["ma_name_by_cbsa"].isnull() ^ df["ma_name_by_msa"].isnull()).all()
-    df["ma_name"] = df["ma_name_by_cbsa"].combine_first(df["ma_name_by_msa"])
-
-    assert df["ma_name"].isnull().sum() == 0
-
-    df = df.drop(columns=["ma_name_by_cbsa", "ma_name_by_msa"])
-
-    return df
-
-
 if __name__ == "__main__":
     main()

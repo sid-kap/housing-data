@@ -118,7 +118,7 @@ function makePage (county, state, optionVal, filteredData, countyOptions, county
         <title>{county}, {state}</title>
         <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </Head>
-      <Nav currentIndex={3} />
+      <Nav currentIndex={2} />
       <div className='mx-auto mb-10 align-center items-center flex flex-col justify-center'>
         <div className='lg:grid lg:grid-cols-5 flex flex-col'>
           <div className='m-4 col-span-1'>

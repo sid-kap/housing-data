@@ -12,7 +12,7 @@ export default function DataSources () {
         <title>Data Sources/FAQs</title>
         <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </Head>
-      <Nav currentIndex={5} />
+      <Nav currentIndex={4} />
       <div className='max-w-2xl mx-auto mb-10 align-center flex flex-col justify-center'>
         <h1 className='mt-4 text-4xl text-center'>Data Sources/FAQs</h1>
         <h2 className={faq}>Where is this data from?</h2>

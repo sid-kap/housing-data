@@ -252,9 +252,6 @@ def load_data(
     if scale == "county":
         county_cleanup(df)
 
-    if scale == "metro":
-        df = metro_cleanup(df)
-
     return df
 
 
@@ -395,46 +392,3 @@ def county_cleanup(df):
         + df["3_to_4_units_units"]
         + df["5_plus_units_units"]
     )
-
-
-PIECES_TO_DROP = ["msa", "pmsa", "smsa", "cmsa", "(p)"]
-STATE_ABBRS = [s.abbr for s in us.STATES_AND_TERRITORIES]
-
-
-def titleify(s):
-    pieces = s.split()
-    pieces = [s for s in pieces if s.lower() not in PIECES_TO_DROP]
-    pieces = [s.title() if s not in STATE_ABBRS else s for s in pieces]
-    return " ".join(pieces)
-
-
-def metro_cleanup(df):
-    assert ("ma_name" in df.columns) ^ ("cbsa_name" in df.columns)
-
-    if "cbsa_name" in df.columns:
-        df = df.rename(columns={"cbsa_name": "ma_name"})
-
-    df = df[df["ma_name"].notnull()].copy()
-
-    df["uncleaned_ma_name"] = df["ma_name"]
-
-    metro_names = df["ma_name"]
-
-    metro_names = (
-        metro_names.str.replace(". ", "", regex=False)
-        .str.rstrip(".")
-        .apply(titleify)
-        .str.strip()
-    )
-
-    df["ma_name"] = metro_names
-
-    # Cast float types to nullable ints - none of the data here is actually floats,
-    # they're just coerced to float because they have nulls.
-    float_cols = df.dtypes.loc[lambda x: x == float].index
-    for col in float_cols:
-        df[col] = df[col].astype("Int64")
-
-    df["survey_date"] = df["survey_date"].astype(str)
-
-    return df
