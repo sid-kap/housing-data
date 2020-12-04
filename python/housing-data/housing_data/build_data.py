@@ -124,8 +124,10 @@ def load_counties(places_df=None):
         imputed_counties_df = impute_pre_1990_counties(counties_df, places_df)
         counties_df = pd.concat([counties_df, imputed_counties_df])
 
-    # In some cases the county name is fucked up in some subset of years. Let's just make it consistent by choosing the most recent one
-    # Get the county_name of the most recent record (this is ok because the imputed ones are all at the beginning of the time range)
+    # In some cases the county name is fucked up in some subset of years.
+    # Let's just make it consistent by choosing the most recent one
+    # Get the county_name of the most recent record (this is ok because the
+    # imputed ones are all at the beginning of the time range)
     metadata_df = counties_df[["fips_state", "fips_county", "county_name", "year"]]
     metadata_df = (
         metadata_df.sort_values("year")

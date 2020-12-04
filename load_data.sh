@@ -1,1 +1,3 @@
-pushd python/housing-data/ && poetry run build_data; popd
+pushd python/housing-data/ || exit
+poetry run build_data
+popd || exit
