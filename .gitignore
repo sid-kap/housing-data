@@ -40,3 +40,4 @@ __pycache__
 python/housing-data/*.json
 
 deleted
+public

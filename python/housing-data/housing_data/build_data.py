@@ -15,11 +15,9 @@ UNITS_COLUMNS = [
 
 
 def main():
-    # load_states()
-    # places_df = load_places()
-    # places_df = pd.read_parquet("../../public/places_annual.parquet")
-    # load_counties(places_df)
-    load_metros()
+    load_states()
+    load_places()
+    load_counties(places_df)
 
 
 def load_states():
@@ -101,8 +99,6 @@ def load_places():
     write_to_json_directory(
         places_df, Path("../../public/places_data"), ["place_name", "state_code"]
     )
-
-    return places_df
 
 
 def load_counties(places_df=None):
@@ -249,95 +245,6 @@ def use_latest_metro_name(df):
     df = df.drop(columns=["ma_name_by_cbsa", "ma_name_by_msa"])
 
     return df
-
-
-def fix_msas(metros_df):
-    # From 1980 to 1984, the data is weird. Let's fix that
-    pmsa_msa_mapping = (
-        metros_df[
-            (metros_df["year"] >= "1985")
-            & (metros_df["year"] <= "2002")
-            & (metros_df["pmsa"] != 9999)  # the null value
-        ][["pmsa", "msa/cmsa"]]
-        .drop_duplicates()
-        .set_index("pmsa")["msa/cmsa"]
-        .to_dict()
-    )
-
-    pre_1984_rows = metros_df[metros_df["year"] <= "1984"].copy()
-
-    pre_1984_rows["pmsa"] = pre_1984_rows["msa/cmsa"]
-
-    # If the metro isn't part of a bigger MSA, then just leave it alone.
-    # That's why we use replace rather than map here.
-    pre_1984_rows["msa/cmsa"] = pre_1984_rows["pmsa"].replace(pmsa_msa_mapping)
-    print(pre_1984_rows["msa/cmsa"])
-
-    # Just get some arbitrary row
-    id_cols_df = pre_1984_rows[["msa/cmsa", "year", "pmsa", "ma_name"]].drop_duplicates(
-        subset=["msa/cmsa", "year"]
-    )
-
-    # print(
-    #     pre_1984_rows[
-    #         pre_1984_rows['']
-    #     ]
-    # )
-
-    # Sum all the sub-PMSA's into one big MSA number
-    pre_1984_rows = (
-        pre_1984_rows.groupby(["msa/cmsa", "year"])[UNITS_COLUMNS].sum().reset_index()
-    )
-
-    pre_1984_rows = pre_1984_rows.merge(id_cols_df, on=["msa/cmsa", "year"])
-
-    # Who cares, it'll get overwritten later in use_latest_metro_name
-    pre_1984_rows["cleaned_ma_name"] = ""
-
-    # The 1985 - 2002 rows include both sub-data for each SMSA/PMSA (the sub parts), and the bigger group (the whole MSA).
-    # Let's just keep the rows for the whole MSA (which have 9999 encoded for PMSA, to indicate that it's not a smaller PSMA).
-    #
-    # For the 2003 - present rows, let's keep all for now (those have 'pmsa' = null).
-    post_1984_rows = metros_df[
-        (metros_df["year"] >= "1985") & (metros_df["pmsa"] == 9999)
-        | (metros_df["pmsa"].isnull())
-    ]
-
-    return pd.concat([pre_1984_rows, post_1984_rows])
-
-
-def load_metros():
-    dfs = []
-    for year in range(1980, 2020):
-        df = bps.load_data(
-            scale="metro", time_scale="annual", year=year, month=None, region=None
-        ).assign(year=str(year))
-        dfs.append(df)
-
-    metros_df = pd.concat(dfs)
-
-    # For debugging
-    metros_df.to_parquet("../../public/metros_annual_pre_merge.parquet")
-
-    metros_df = fix_msas(metros_df)
-
-    metros_df["cleaned_ma_name"] = metros_df["ma_name"]
-
-    metros_df = use_latest_metro_name(metros_df)
-
-    metros_df["path"] = metros_df["ma_name"].str.replace("/", "-", regex=False)
-
-    # For debugging
-    metros_df.to_parquet("../../public/metros_annual.parquet")
-
-    (
-        metros_df[["ma_name", "path"]]
-        .drop_duplicates()
-        .sort_values("ma_name")
-        .to_json("../../public/metros_list.json", orient="records")
-    )
-
-    write_to_json_directory(metros_df, Path("../../public/metros_data"), ["path"])
 
 
 if __name__ == "__main__":
