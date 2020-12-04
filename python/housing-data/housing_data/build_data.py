@@ -15,10 +15,9 @@ UNITS_COLUMNS = [
 
 
 def main():
-    # load_states()
-    # places_df = load_places()
-    # places_df = pd.read_parquet("../../public/places_annual.parquet")
-    # load_counties(places_df)
+    load_states()
+    places_df = load_places()
+    load_counties(places_df)
     load_metros()
 
 
@@ -126,8 +125,10 @@ def load_counties(places_df=None):
         imputed_counties_df = impute_pre_1990_counties(counties_df, places_df)
         counties_df = pd.concat([counties_df, imputed_counties_df])
 
-    # In some cases the county name is fucked up in some subset of years. Let's just make it consistent by choosing the most recent one
-    # Get the county_name of the most recent record (this is ok because the imputed ones are all at the beginning of the time range)
+    # In some cases the county name is fucked up in some subset of years.
+    # Let's just make it consistent by choosing the most recent one
+    # Get the county_name of the most recent record (this is ok because the
+    # imputed ones are all at the beginning of the time range)
     metadata_df = counties_df[["fips_state", "fips_county", "county_name", "year"]]
     metadata_df = (
         metadata_df.sort_values("year")
@@ -153,51 +154,13 @@ def load_counties(places_df=None):
 
 
 def impute_pre_1990_counties(counties_df, places_df):
-
     summed_places_df = (
         places_df.groupby(["county_code", "state_code", "year"])[UNITS_COLUMNS]
         .sum()
         .reset_index()
     )
-    summed_counties_df = (
-        counties_df.groupby(["fips_county", "fips_state", "year"])[UNITS_COLUMNS]
-        .sum()
-        .reset_index()
-    )
 
-    merged_df = summed_places_df.merge(
-        summed_counties_df,
-        left_on=["county_code", "state_code", "year"],
-        right_on=["fips_county", "fips_state", "year"],
-        how="outer",
-    )
-
-    # Fill the imputations (the x values) with 0 if places in that county were not found
-    cols_to_fill = [c + "_x" for c in UNITS_COLUMNS]
-    merged_df[cols_to_fill] = merged_df[cols_to_fill].fillna(0)
-
-    def county_matching_score(df):
-        scores = {}
-        for col in UNITS_COLUMNS:
-            scores[col] = (df[col + "_x"] == df[col + "_y"]).mean()
-        return pd.Series(scores)
-
-    # Let's figure out for which counties the summing trick worked on all years after 1990.
-    # Drop the rows where fips_county is null because we don't care about those rows (there is no county data to impute!)
-    merged_df_filtered = merged_df[merged_df["year"] >= "1990"].dropna(
-        subset=["fips_county"]
-    )
-
-    # county_matching_scores_df = merged_df_filtered.groupby("county_code").apply(
-    #     county_matching_score
-    # )
-    # good_counties = county_matching_scores_df.mean(axis=1).loc[lambda x: x == 1].index
-
-    imputed_counties_df = summed_places_df[(summed_places_df["year"] < "1990")]
-    # imputed_counties_df = summed_places_df[
-    #     (summed_places_df["year"] < "1990")
-    #     & merged_df["county_code"].isin(good_counties)
-    # ]
+    imputed_counties_df = summed_places_df[summed_places_df["year"] < "1990"].copy()
     imputed_counties_df["imputed"] = True
     imputed_counties_df = imputed_counties_df.rename(
         columns={"county_code": "fips_county", "state_code": "fips_state"}
