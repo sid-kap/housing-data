@@ -12,6 +12,7 @@ typing-extensions = "^3.7.4"
 pyarrow = "^2.0.0"
 tqdm = "^4.54.0"
 us = "^2.0.2"
+xlrd = "^1.2.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
