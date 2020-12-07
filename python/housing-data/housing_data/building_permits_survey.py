@@ -6,7 +6,6 @@ from urllib.parse import quote
 
 import pandas as pd
 import requests
-import us
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
