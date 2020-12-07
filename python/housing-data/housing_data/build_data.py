@@ -17,7 +17,8 @@ UNITS_COLUMNS = [
 def main():
     load_states()
     places_df = load_places()
-    load_counties(places_df)
+    counties_df = load_counties(places_df)
+    load_metros(counties_df)
 
 
 def load_states():
@@ -118,8 +119,6 @@ def load_counties(places_df=None):
 
     counties_df = pd.concat(dfs)
 
-    counties_df.to_parquet("../../public/counties_annual.parquet")
-
     if places_df is not None:
         imputed_counties_df = impute_pre_1990_counties(counties_df, places_df)
         counties_df = pd.concat([counties_df, imputed_counties_df])
@@ -139,6 +138,8 @@ def load_counties(places_df=None):
         metadata_df, on=["fips_state", "fips_county"], how="left"
     )
 
+    counties_df.to_parquet("../../public/counties_annual.parquet")
+
     (
         counties_df[["county_name", "fips_state"]]
         .rename(columns={"fips_state": "state_code"})
@@ -150,6 +151,8 @@ def load_counties(places_df=None):
     write_to_json_directory(
         counties_df, Path("../../public/counties_data"), ["county_name", "fips_state"]
     )
+
+    return counties_df
 
 
 def impute_pre_1990_counties(counties_df, places_df):
@@ -166,6 +169,120 @@ def impute_pre_1990_counties(counties_df, places_df):
     )
 
     return imputed_counties_df
+
+
+def load_metros(counties_df):
+    crosswalk_df = pd.read_csv(
+        "http://data.nber.org/cbsa-csa-fips-county-crosswalk/cbsa2fipsxw.csv"
+    )
+
+    # Could also get county name from 'countycountyequivalent' in crosswalk_df... I'm indifferent, just using the
+    # one from counties_df for now.
+    crosswalk_df = (
+        crosswalk_df[["fipsstatecode", "fipscountycode", "csatitle", "cbsatitle"]]
+        .rename(
+            columns={
+                "fipsstatecode": "fips_state",
+                "fipscountycode": "fips_county",
+                "csatitle": "csa_name",
+                "cbsatitle": "cbsa_name",
+            }
+        )
+        .dropna(subset=["cbsa_name"])[
+            ["fips_state", "fips_county", "csa_name", "cbsa_name"]
+        ]
+    )
+
+    merged_df = crosswalk_df.merge(
+        counties_df, on=["fips_state", "fips_county"], how="left"
+    )
+
+    columns_to_drop = [
+        "fips_state",
+        "fips_county",
+        "region_code",
+        "division_code",
+        "survey_date",
+    ]
+
+    sum_cols = [
+        "1_unit_bldgs",
+        "1_unit_units",
+        "1_unit_value",
+        "2_units_bldgs",
+        "2_units_units",
+        "2_units_value",
+        "3_to_4_units_bldgs",
+        "3_to_4_units_units",
+        "3_to_4_units_value",
+        "5_plus_units_bldgs",
+        "5_plus_units_units",
+        "5_plus_units_value",
+        "1_unit_bldgs_reported",
+        "1_unit_units_reported",
+        "1_unit_value_reported",
+        "2_unit rep_bldgs",
+        "2_unit rep_units",
+        "2_unit rep_value",
+        "34_unit rep_bldgs",
+        "34_unit rep_units",
+        "34_unit rep_value",
+        "5_unit rep_bldgs",
+        "5_unit rep_units",
+        "5_unit rep_value",
+        "total_units",
+        "2_units_bldgs_reported",
+        "2_units_units_reported",
+        "2_units_value_reported",
+        "3_to_4_units_bldgs_reported",
+        "3_to_4_units_units_reported",
+        "3_to_4_units_value_reported",
+        "5+units rep_bldgs",
+        "5+units rep_units",
+        "5+units rep_value",
+    ]
+    aggregate_functions = {
+        col: pd.NamedAgg(column=col, aggfunc="sum") for col in sum_cols
+    }
+    aggregate_functions["county_names"] = pd.NamedAgg(
+        column="county_name", aggfunc=lambda counties: counties.tolist()
+    )
+
+    cbsas_df = (
+        merged_df.drop(columns=["csa_name"] + columns_to_drop)
+        .groupby(["cbsa_name", "year"])
+        .agg(**aggregate_functions)
+        .reset_index()
+        .rename(columns={"cbsa_name": "metro_name"})
+        .assign(metro_type="cbsa")
+    )
+
+    csas_df = (
+        merged_df.drop(columns=["cbsa_name"] + columns_to_drop)
+        .groupby(["csa_name", "year"])
+        .agg(**aggregate_functions)
+        .reset_index()
+        .rename(columns={"csa_name": "metro_name"})
+        .assign(metro_type="csa")
+    )
+
+    metros_df = pd.concat([cbsas_df, csas_df])
+    metros_df["path"] = metros_df["metro_name"].str.replace("/", "-")
+
+    metros_df.to_parquet("../../public/metros_annual.parquet")
+
+    (
+        metros_df[["metro_name", "metro_type", "path", "county_names"]]
+        .drop_duplicates(subset=["metro_name", "metro_type", "path"])
+        .sort_values("metro_name")
+        .to_json("../../public/metros_list.json", orient="records")
+    )
+
+    write_to_json_directory(
+        metros_df.drop(columns=["county_names"]),
+        Path("../../public/metros_data"),
+        ["path"],
+    )
 
 
 if __name__ == "__main__":
