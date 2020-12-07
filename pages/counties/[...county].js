@@ -30,72 +30,50 @@ function getStateFips (stateStr) {
   return parseInt(us.lookup(stateStr).fips)
 }
 
-function getJsonUrl (county, state) {
-  if (county === null) {
-    return null
-  }
+function getJsonUrl (county, stateCode) {
   county = county.replace('#', '%23')
-  return '/counties_data/' + getStateFips(state) + '/' + county + '.json'
+  return '/counties_data/' + stateCode + '/' + county + '.json'
 }
 
-export default function County () {
+function makeCountyOptions (countiesList) {
+  const countyNames = countiesList || []
+
+  const lookupTable = {}
+  const options = []
+  for (let i = 0; i < countyNames.length; i++) {
+    const county = countyNames[i]
+    const abbr = getStateAbbreviation(county.state_code)
+    options.push({
+      value: i,
+      abbr: abbr,
+      county_name: county.county_name,
+      name: county.county_name + ', ' + abbr
+    })
+
+    // This feels stupid but I don't know if there's a better way
+    lookupTable[county.county_name + '/' + county.state_code] = i
+  }
+
+  return [options, lookupTable]
+}
+
+export default function County ({ countyName, stateAbbr, stateCode }) {
   const router = useRouter()
 
-  const { data: countysListResponse } = useSWR('/counties_list.json')
+  const { data: countiesList } = useSWR('/counties_list.json')
 
-  const [countyOptions, countyLookup] = useMemo(() => {
-    const countyNames = countysListResponse || []
-
-    const lookupTable = {}
-    const options = []
-    for (let i = 0; i < countyNames.length; i++) {
-      const county = countyNames[i]
-      if (county.state_code !== null && county.county_name !== null) {
-        const abbr = getStateAbbreviation(county.state_code)
-        options.push({
-          value: i,
-          abbr: abbr,
-          county_name: county.county_name,
-          name: county.county_name + ', ' + abbr
-        })
-
-        // This feels stupid but I don't know if there's a better way
-        lookupTable[county.county_name + '/' + county.state_code] = i
-      }
-    }
-
-    return [options, lookupTable]
-  }, [countysListResponse])
-
-  const slug = router.query.county
-
-  const state = slug ? slug[0] : null
-  const county = slug ? slug[1] : null
+  const [countyOptions, countyLookup] = useMemo(() => makeCountyOptions(countiesList), [countiesList])
 
   const optionVal = useMemo(() => {
-    if (county !== null && state !== null) {
-      const fips = getStateFips(state)
-      const index = countyLookup[county + '/' + fips]
-      if (typeof index !== 'undefined') {
-        return countyOptions[index].value
-      }
+    const index = countyLookup[countyName + '/' + stateCode]
+    if (typeof index !== 'undefined') {
+      return countyOptions[index].value
     }
-    return null
-  }, [county, state, countyLookup.length || 0])
+  }, [countyName, stateCode, countyLookup.length || 0])
 
-  const { data } = useSWR(getJsonUrl(county, state))
+  const { data } = useSWR(getJsonUrl(countyName, stateCode))
 
-  if ((typeof slug === 'undefined') || (slug.length === 0)) {
-    return (
-      <h1> Loading... </h1>
-    )
-  } else if (slug.length !== 2) {
-    return (
-      <h1>Bad path (sad face)</h1>
-    )
-  } else {
-    return makePage(county, state, optionVal, data, countyOptions, countyLookup, router)
-  }
+  return makePage(countyName, stateAbbr, optionVal, data, countyOptions, countyLookup, router)
 }
 
 function makePage (county, state, optionVal, filteredData, countyOptions, countyLookup, router) {
@@ -149,5 +127,17 @@ function makePage (county, state, optionVal, filteredData, countyOptions, county
 
     </div>
   )
-  // <div className='w-full flex flex-row box-border border border-black-1 items-center align-center' >
+}
+
+export async function getServerSideProps (context) {
+  const [stateAbbr, countyName] = context.params.county
+  const stateCode = getStateFips(stateAbbr)
+
+  return {
+    props: {
+      countyName,
+      stateAbbr,
+      stateCode
+    }
+  }
 }

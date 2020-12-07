@@ -23,57 +23,91 @@ function getJsonUrl (metro) {
   return '/metros_data/' + metro + '.json'
 }
 
-export default function Metro () {
+function makeOptions (metrosListResponse) {
+  const metroNames = metrosListResponse || []
+
+  const lookupTable = {}
+  const cbsaOptions = []
+  const csaOptions = []
+
+  for (let i = 0; i < metroNames.length; i++) {
+    const metro = metroNames[i]
+    const option = {
+      value: metro.path,
+      name: metro.metro_name,
+      path: metro.path,
+      metro_type: metro.metro_type,
+      county_names: metro.county_names
+    }
+
+    lookupTable[metro.path] = i
+
+    if (metro.metro_type === 'cbsa') {
+      cbsaOptions.push(option)
+    } else if (metro.metro_type === 'csa') {
+      csaOptions.push(option)
+    } else {
+      throw new Error('Unknown metro_type: ' + metro.metro_type)
+    }
+  }
+
+  const options = [
+    {
+      name: 'CBSAs',
+      type: 'group',
+      items: cbsaOptions
+    },
+    {
+      name: 'CSAs',
+      type: 'group',
+      items: csaOptions
+    }
+  ]
+
+  return [options, lookupTable]
+}
+
+export default function Metro ({ metroPath }) {
   const router = useRouter()
 
   const { data: metrosListResponse } = useSWR('/metros_list.json')
 
-  const [metroOptions, metroLookup] = useMemo(() => {
-    const metroNames = metrosListResponse || []
+  const [metroOptions, metroLookup] = useMemo(
+    () => makeOptions(metrosListResponse),
+    [metrosListResponse]
+  )
 
-    const lookupTable = {}
-    const options = []
-    for (let i = 0; i < metroNames.length; i++) {
-      const metro = metroNames[i]
-      if (metro.state_code !== null && metro.metro_name !== null) {
-        options.push({
-          value: i,
-          name: metro.ma_name
-        })
+  const optionVal = useMemo(
+    () => lookup(metroLookup, metrosListResponse, metroPath),
+    [metroPath, metrosListResponse]
+  )
 
-        // This feels stupid but I don't know if there's a better way
-        lookupTable[metro.metro_name] = i
-      }
-    }
-    console.log(options)
+  const { data } = useSWR(getJsonUrl(metroPath))
 
-    return [options, lookupTable]
-  }, [metrosListResponse])
-
-  const metro = router.query.metro
-  console.log(metro)
-
-  const optionVal = useMemo(() => {
-    if (metro !== null) {
-      const index = metroLookup[metro]
-      if (typeof index !== 'undefined') {
-        return metroOptions[index].value
-      }
-    }
-    return null
-  }, [metro, metroLookup.length || 0])
-
-  const { data } = useSWR(getJsonUrl(metro))
-  console.log(data)
-
-  return makePage(metro, optionVal, data, metroOptions, metroLookup, router)
+  return makePage(metroPath, optionVal, metrosListResponse, metroLookup, data, metroOptions, router)
 }
 
-function makePage (metro, optionVal, filteredData, metroOptions, metroLookup, router) {
+function renderOption (domProps, option, snapshot, className) {
+  return (
+    <button className={className} {...domProps}>
+      {option.name}
+    </button>
+  )
+  // <span className='text-xs rounded bg-purple-200 p-1'>{option.metro_type.toUpperCase()}</span>
+}
+
+function lookup (metroLookup, metrosList, metroPath) {
+  if (typeof metrosList === 'undefined') {
+    return null
+  }
+  const i = metroLookup[metroPath]
+  return metrosList[i]
+}
+
+function makePage (currentPath, optionVal, metrosList, metroLookup, filteredData, metroOptions, router) {
   const onChange = function (newMetro) {
-    const chosenOption = metroOptions[newMetro]
-    if (chosenOption.name !== metro) {
-      router.push('/metros/' + chosenOption.name.replace('#', '%23'))
+    if (newMetro !== currentPath) {
+      router.push('/metros/' + newMetro.replace('#', '%23'))
     }
   }
 
@@ -83,10 +117,14 @@ function makePage (metro, optionVal, filteredData, metroOptions, metroLookup, ro
     distance: 5
   }
 
+  if (typeof optionVal === 'undefined' || optionVal === null) {
+    return <div>Loading...</div>
+  }
+
   return (
     <div>
       <Head>
-        <title>{metro}</title>
+        <title>{optionVal.metro_name}</title>
         <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </Head>
       <Nav currentIndex={2} />
@@ -98,11 +136,12 @@ function makePage (metro, optionVal, filteredData, metroOptions, metroLookup, ro
               onChange={onChange}
               options={metroOptions}
               fuseOptions={fuseOptions}
-              value={optionVal}
+              value={optionVal.path}
+              renderOption={renderOption}
             />
           </div>
           <div className='mt-4 mb-1 col-span-3 text-center'>
-            <h1 className='text-4xl'>{metro}</h1>
+            <h1 className='text-4xl'>{optionVal.metro_name}</h1>
           </div>
         </div>
 
@@ -115,10 +154,32 @@ function makePage (metro, optionVal, filteredData, metroOptions, metroLookup, ro
         }
           </ContainerDimensions>
         </div>
+        <div className='max-w-3xl text-sm mt-4'>
+          (The <b>{optionVal.metro_name}</b> {optionVal.metro_type.toUpperCase()} includes {formatCountiesList(optionVal.county_names)}.)
+        </div>
       </div>
       <GitHubFooter />
 
     </div>
   )
-  // <div className='w-full flex flex-row box-border border border-black-1 items-center align-center' >
+}
+
+function formatCountiesList (counties) {
+  if (counties.length === 1) {
+    return counties[0]
+  } else if (counties.length === 2) {
+    return counties[0] + ' and ' + counties[1]
+  } else {
+    return counties.slice(0, counties.length - 1).join(', ') + ', and ' + counties[counties.length - 1]
+  }
+}
+
+export async function getServerSideProps (context) {
+  const metroPath = context.params.metro
+
+  return {
+    props: {
+      metroPath
+    }
+  }
 }
