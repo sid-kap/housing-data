@@ -15,10 +15,9 @@ UNITS_COLUMNS = [
 
 
 def main():
-    # load_states()
-    # places_df = load_places()
-    # counties_df = load_counties(places_df)
-    counties_df = pd.read_parquet("../../public/counties_annual.parquet")
+    load_states()
+    places_df = load_places()
+    counties_df = load_counties(places_df)
     load_metros(counties_df)
 
 
