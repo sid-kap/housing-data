@@ -10,10 +10,10 @@ import { Nav, GitHubFooter } from '../../lib/common_elements.js'
 import ContainerDimensions from 'react-container-dimensions'
 
 const fields = Array.from(fieldsGenerator())
-const filterFields = Array.from(fieldsGenerator(['units'], ['']))
+const filterFields = Array.from(fieldsGenerator(['units'], [''], ['']))
 
 function spec (width, height) {
-  return makeBarChartSpec(fields, filterFields, width, height)
+  return makeBarChartSpec(fields, filterFields, width, height, false)
 }
 
 function getStateAbbreviation (stateCode) {

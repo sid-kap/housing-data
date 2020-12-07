@@ -41,6 +41,9 @@ def get_state_populations_1980s():
 
     df["state"] = df["state"].map(us.states.mapping("abbr", "name"))
 
+    # We already have 1990 from the 1990-2000 series, don't need it twice
+    df = df.drop(columns=["1990"])
+
     return df.melt(id_vars="state", var_name="year", value_name="population")
 
 
@@ -65,9 +68,11 @@ def _get_counties_population_table_1990s(year):
     df["state_code"] = df["state_county_code"] // 1000
 
     df["year"] = "19" + df["year"].astype(str)
-    df["state"] = (
-        df["state_code"].map(us.states.mapping("fips", "name")).fillna("United States")
-    )
+
+    FIPS_NAME_MAPPING = {
+        int(k): v for k, v in us.states.mapping("fips", "name").items() if k is not None
+    }
+    df["state"] = df["state_code"].map(FIPS_NAME_MAPPING)
 
     return df
 
@@ -102,7 +107,7 @@ def get_state_populations_2000s():
     df = df.rename(
         columns={
             "Unnamed: 0": "state",
-            "Unnamed: 1": "2020-04-01",
+            "Unnamed: 1": "2010-04-01",
             "Unnamed: 12": "2020-04-01",
             "Unnamed: 13": "2020-07-01",
         }
@@ -113,6 +118,9 @@ def get_state_populations_2000s():
     df["state"] = df["state"].str.lstrip(".")
 
     df = df.astype({col: int for col in df.columns if col != "state"})
+
+    # We don't need these
+    df = df.drop(columns=["2010-04-01", "2020-04-01", "2020-07-01"])
 
     return df.melt(id_vars="state", var_name="year", value_name="population")
 

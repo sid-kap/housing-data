@@ -6,8 +6,11 @@ import { VegaLite } from 'react-vega'
 import { Nav, GitHubFooter } from '../lib/common_elements.js'
 import ContainerDimensions from 'react-container-dimensions'
 
-function spec (width, height) {
+function spec (width, height, perCapita) {
   const plotWidth = Math.min(width * 0.95, 936)
+
+  const yField = perCapita ? 'total_units_per_capita' : 'total_units'
+  const yTitle = perCapita ? 'Units permitted per capita (per year)' : 'Units permitted (per year)'
 
   return {
     width: plotWidth,
@@ -19,10 +22,10 @@ function spec (width, height) {
     encoding: {
       x: { field: 'year', type: 'temporal', axis: { title: 'Year' } },
       y: {
-        field: 'total_units',
+        field: yField,
         type: 'quantitative',
         axis: {
-          title: 'Units permitted (per year)'
+          title: yTitle
         }
       },
       color: { field: 'state_name', type: 'nominal', legend: null },
@@ -38,7 +41,7 @@ function spec (width, height) {
             field: 'year'
           },
           y: {
-            field: 'total_units'
+            field: yField
           }
         },
         tooltip: true,
@@ -48,7 +51,7 @@ function spec (width, height) {
         mark: 'text',
         encoding: {
           x: { aggregate: 'max', field: 'year' },
-          y: { aggregate: { argmax: 'year' }, field: 'total_units' },
+          y: { aggregate: { argmax: 'year' }, field: yField },
           text: { aggregate: { argmax: 'year' }, field: 'state_name' }
         }
       }
@@ -149,6 +152,16 @@ export default function Home () {
     )
   }
 
+  const [denom, setDenom] = useState('total')
+  const populationInput = (
+    <div>
+      <input type='radio' checked={denom === 'total'} value='total' onChange={() => setDenom('total')} />
+      <label for='total' className='ml-1 mr-3'>Total units</label>
+      <input type='radio' checked={denom === 'per_capita'} value='per_capita' onChange={() => setDenom('per_capita')} />
+      <label for='per_capita' className='ml-1 mr-3'>Units per capita</label>
+    </div>
+  )
+
   return (
     <div>
       <Head>
@@ -175,10 +188,11 @@ export default function Home () {
         <div className='w-full flex flex-row'>
           <ContainerDimensions>
             {({ width, height }) => (
-              <VegaLite spec={spec(width, height)} data={data} />
+              <VegaLite spec={spec(width, height, denom === 'per_capita')} data={data} />
             )}
           </ContainerDimensions>
         </div>
+        {populationInput}
 
       </div>
       <GitHubFooter />
