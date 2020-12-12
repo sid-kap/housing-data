@@ -1,9 +1,10 @@
 import shutil
 from pathlib import Path
 
-import housing_data.building_permits_survey as bps
 import numpy as np
 import pandas as pd
+from housing_data import building_permits_survey as bps
+from housing_data import population
 from tqdm import tqdm
 
 UNITS_COLUMNS = [
@@ -11,6 +12,43 @@ UNITS_COLUMNS = [
     "2_units_units",
     "3_to_4_units_units",
     "5_plus_units_units",
+]
+
+NUMERICAL_COLUMNS = [
+    "1_unit_bldgs",
+    "1_unit_units",
+    "1_unit_value",
+    "2_units_bldgs",
+    "2_units_units",
+    "2_units_value",
+    "3_to_4_units_bldgs",
+    "3_to_4_units_units",
+    "3_to_4_units_value",
+    "5_plus_units_bldgs",
+    "5_plus_units_units",
+    "5_plus_units_value",
+    "1_unit_bldgs_reported",
+    "1_unit_units_reported",
+    "1_unit_value_reported",
+    # "2_unit rep_bldgs",
+    # "2_unit rep_units",
+    # "2_unit rep_value",
+    # "34_unit rep_bldgs",
+    # "34_unit rep_units",
+    # "34_unit rep_value",
+    # "5_unit rep_bldgs",
+    # "5_unit rep_units",
+    # "5_unit rep_value",
+    "total_units",
+    "2_units_bldgs_reported",
+    "2_units_units_reported",
+    "2_units_value_reported",
+    "3_to_4_units_bldgs_reported",
+    "3_to_4_units_units_reported",
+    "3_to_4_units_value_reported",
+    # "5+units rep_bldgs",
+    # "5+units rep_units",
+    # "5+units rep_value",
 ]
 
 
@@ -29,7 +67,23 @@ def load_states():
         ).assign(year=str(year))
         dfs.append(data)
 
-    pd.concat(dfs).to_json("../../public/state_annual.json", orient="records")
+    states_df = pd.concat(dfs)
+    states_df = states_df.astype({"survey_date": str})
+
+    population_df = population.get_state_population_estimates()
+    population_df.to_parquet("../../public/population_df.parquet")
+
+    states_df = states_df.merge(
+        population_df,
+        how="left",
+        left_on=["state_name", "year"],
+        right_on=["state", "year"],
+    )
+
+    for col in NUMERICAL_COLUMNS:
+        states_df[col + "_per_capita"] = states_df[col] / states_df["population"]
+
+    states_df.to_json("../../public/state_annual.json", orient="records")
 
 
 def write_to_json_directory(df, path, group_cols=None):
@@ -205,44 +259,8 @@ def load_metros(counties_df):
         "survey_date",
     ]
 
-    sum_cols = [
-        "1_unit_bldgs",
-        "1_unit_units",
-        "1_unit_value",
-        "2_units_bldgs",
-        "2_units_units",
-        "2_units_value",
-        "3_to_4_units_bldgs",
-        "3_to_4_units_units",
-        "3_to_4_units_value",
-        "5_plus_units_bldgs",
-        "5_plus_units_units",
-        "5_plus_units_value",
-        "1_unit_bldgs_reported",
-        "1_unit_units_reported",
-        "1_unit_value_reported",
-        "2_unit rep_bldgs",
-        "2_unit rep_units",
-        "2_unit rep_value",
-        "34_unit rep_bldgs",
-        "34_unit rep_units",
-        "34_unit rep_value",
-        "5_unit rep_bldgs",
-        "5_unit rep_units",
-        "5_unit rep_value",
-        "total_units",
-        "2_units_bldgs_reported",
-        "2_units_units_reported",
-        "2_units_value_reported",
-        "3_to_4_units_bldgs_reported",
-        "3_to_4_units_units_reported",
-        "3_to_4_units_value_reported",
-        "5+units rep_bldgs",
-        "5+units rep_units",
-        "5+units rep_value",
-    ]
     aggregate_functions = {
-        col: pd.NamedAgg(column=col, aggfunc="sum") for col in sum_cols
+        col: pd.NamedAgg(column=col, aggfunc="sum") for col in NUMERICAL_COLUMNS
     }
     aggregate_functions["county_names"] = pd.NamedAgg(
         column="county_name", aggfunc=lambda counties: counties.tolist()
