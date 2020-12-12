@@ -13,7 +13,7 @@ const fields = Array.from(fieldsGenerator())
 function spec (units, width, height, perCapita) {
   const perCapitaSuffix = perCapita ? '_per_capita' : ''
   const filterFields = Array.from(fieldsGenerator([units], [''], [perCapitaSuffix]))
-  const spec = makeBarChartSpec(fields, filterFields, width, height, perCapita)
+  const spec = makeBarChartSpec(fields, units, filterFields, width, height, perCapita)
 
   return spec
 }

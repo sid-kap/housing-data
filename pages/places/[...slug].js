@@ -13,7 +13,8 @@ const fields = Array.from(fieldsGenerator())
 const filterFields = Array.from(fieldsGenerator(['units'], [''], ['']))
 
 function spec (width, height) {
-  return makeBarChartSpec(fields, filterFields, width, height, false)
+  // TODO Add dropdown for buildings/value
+  return makeBarChartSpec(fields, 'units', filterFields, width, height, false)
 }
 
 function getStateAbbreviation (stateCode) {
