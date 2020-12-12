@@ -69,7 +69,6 @@ function spec (width, height, perCapita) {
 
 const options = [
   { value: 'all', name: 'All' },
-  { value: 'country', name: 'Country' },
   { value: 'region', name: 'Region' },
   { value: 'division', name: 'Division' },
   { value: 'state', name: 'State' }

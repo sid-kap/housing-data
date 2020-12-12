@@ -4,6 +4,69 @@ import pandas as pd
 import requests
 import us
 
+DIVISIONS = {
+    "New England": [
+        "Connecticut",
+        "Maine",
+        "Massachusetts",
+        "New Hampshire",
+        "Rhode Island",
+        "Vermont",
+    ],
+    "Middle Atlantic": ["New Jersey", "New York", "Pennsylvania"],
+    "East North Central": ["Illinois", "Indiana", "Michigan", "Ohio", "Wisconsin"],
+    "West North Central": [
+        "Iowa",
+        "Kansas",
+        "Minnesota",
+        "Missouri",
+        "Nebraska",
+        "North Dakota",
+        "South Dakota",
+    ],
+    "South Atlantic": [
+        "Delaware",
+        "Florida",
+        "Georgia",
+        "Maryland",
+        "North Carolina",
+        "South Carolina",
+        "Virginia",
+        "District of Columbia",
+        "West Virginia",
+    ],
+    "East South Central": ["Alabama", "Kentucky", "Mississippi", "Tennessee"],
+    "West South Central": ["Arkansas", "Louisiana", "Oklahoma", "Texas"],
+    "Mountain": [
+        "Arizona",
+        "Colorado",
+        "Idaho",
+        "Montana",
+        "Nevada",
+        "New Mexico",
+        "Utah",
+        "Wyoming",
+    ],
+    "Pacific": ["Alaska", "California", "Hawaii", "Oregon", "Washington"],
+}
+
+REGIONS = {
+    "Northeast": ["New England", "Middle Atlantic"],
+    "Midwest": ["East North Central", "West North Central"],
+    "South": ["South Atlantic", "East South Central", "West South Central"],
+    "West": ["Mountain", "Pacific"],
+}
+
+STATE_TO_DIVISION = {
+    state: division for division, states in DIVISIONS.items() for state in states
+}
+DIVISION_TO_REGION = {
+    division: region for region, divisions in REGIONS.items() for division in divisions
+}
+STATE_TO_REGION = {
+    state: DIVISION_TO_REGION[division] for state, division in STATE_TO_DIVISION.items()
+}
+
 
 def _line_to_cols(row):
     return [s.strip() for s in row.split()]
@@ -159,4 +222,27 @@ def get_state_population_estimates():
     print("Loading 2010s data...")
     df_2010s = get_state_populations_2010s()
 
-    return pd.concat([df_1980s, df_1990s, df_2000s, df_2010s])
+    states_df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s])
+
+    states = us.states.mapping("name", "fips").keys()
+    states_df = states_df[states_df["state"].isin(states)]
+
+    missing_states = set(states) - (
+        set(STATE_TO_DIVISION.keys()) | set(STATE_TO_REGION.keys())
+    )
+    print(f"Missing division/region mapping for states: {missing_states}")
+
+    divisions_df = (
+        states_df.assign(state=states_df["state"].map(STATE_TO_DIVISION))
+        .groupby(["state", "year"])
+        .sum()
+        .reset_index()
+    )
+    regions_df = (
+        states_df.assign(state=states_df["state"].map(STATE_TO_REGION))
+        .groupby(["state", "year"])
+        .sum()
+        .reset_index()
+    )
+
+    return pd.concat([states_df, divisions_df, regions_df])
