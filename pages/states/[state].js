@@ -54,9 +54,9 @@ export default function State () {
   const populationInput = (
     <div>
       <input type='radio' checked={denom === 'total'} value='total' onChange={() => setDenom('total')} />
-      <label for='total' className='ml-1 mr-3'>Total units</label>
+      <label htmlFor='total' className='ml-1 mr-3'>Total units</label>
       <input type='radio' checked={denom === 'per_capita'} value='per_capita' onChange={() => setDenom('per_capita')} />
-      <label for='per_capita' className='ml-1 mr-3'>Units per capita</label>
+      <label htmlFor='per_capita' className='ml-1 mr-3'>Units per capita</label>
     </div>
   )
 
