@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import SelectSearch from 'react-select-search/dist/cjs'
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useFetch } from '../lib/queries.js'
 import { VegaLite } from 'react-vega'
 import { Nav, GitHubFooter } from '../lib/common_elements.js'
@@ -123,41 +123,49 @@ function filterData (data, type, region) {
 }
 
 export default function Home () {
-  const { data: response } = useFetch('/state_annual.json')
+  const { status, data: response } = useFetch('/state_annual.json')
 
   const [selectedType, setSelectedOption] = useState('all')
 
   const [selectedRegion, setSelectedRegion] = useState('all')
 
-  let regionSelect
-  if (selectedType === 'state') {
-    regionSelect = (
-      <div className='mx-2'>
-        <SelectSearch
-          options={regionOptions}
-          defaultValue={selectedRegion}
-          onChange={setSelectedRegion}
-        />
-      </div>
-    )
-  } else {
-    regionSelect = ''
-  }
+  const regionSelect = (
+    selectedType === 'state'
+      ? (
+        <div className='mx-2'>
+          <SelectSearch
+            options={regionOptions}
+            defaultValue={selectedRegion}
+            onChange={setSelectedRegion}
+          />
+        </div>
+        )
+      : <></>
+  )
 
-  const data = {
-    table: filterData(
-      response.data, selectedType,
-      selectedType === 'state' ? selectedRegion : null
-    )
-  }
+  const data = useMemo(
+    () => {
+      return {
+        table: filterData(
+          response || [],
+          selectedType,
+          selectedType === 'state' ? selectedRegion : null
+        )
+      }
+    },
+    [status, selectedType, selectedRegion]
+  )
 
   const [denom, setDenom] = useState('total')
+  const setTotal = useCallback(() => setDenom('total'))
+  const setPerCapita = useCallback(() => setDenom('per_capita'))
+
   const populationInput = (
     <div>
-      <input type='radio' checked={denom === 'total'} value='total' onChange={() => setDenom('total')} />
-      <label for='total' className='ml-1 mr-3'>Total units</label>
-      <input type='radio' checked={denom === 'per_capita'} value='per_capita' onChange={() => setDenom('per_capita')} />
-      <label for='per_capita' className='ml-1 mr-3'>Units per capita</label>
+      <input type='radio' checked={denom === 'total'} value='total' onChange={setTotal} />
+      <label htmlFor='total' className='ml-1 mr-3'>Total units</label>
+      <input type='radio' checked={denom === 'per_capita'} value='per_capita' onChange={setPerCapita} />
+      <label htmlFor='per_capita' className='ml-1 mr-3'>Units per capita</label>
     </div>
   )
 
