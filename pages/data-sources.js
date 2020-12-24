@@ -32,3 +32,10 @@ export default function DataSources () {
     </div>
   )
 }
+
+// Need to add this to indicate that it's a static page
+export async function getStaticProps (context) {
+  return {
+    props: {}
+  }
+}

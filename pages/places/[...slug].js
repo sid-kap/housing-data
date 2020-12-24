@@ -2,8 +2,8 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { VegaLite } from 'react-vega'
 import { fieldsGenerator, makeBarChartSpec } from '../../lib/plots.js'
-import { useMemo } from 'react'
-import useSWR from 'swr'
+import { useMemo, useCallback } from 'react'
+import { useFetch } from '../../lib/queries.js'
 import WindowSelectSearch from '../../lib/WindowSelectSearch.js'
 import us from 'us'
 import { Nav, GitHubFooter } from '../../lib/common_elements.js'
@@ -42,7 +42,7 @@ function getJsonUrl (place, state) {
 export default function Place () {
   const router = useRouter()
 
-  const { data: placesListResponse } = useSWR('/places_list.json')
+  const { data: placesListResponse } = useFetch('/places_list.json')
 
   const [placeOptions, placeLookup] = useMemo(() => {
     const placeNames = placesListResponse || []
@@ -68,10 +68,7 @@ export default function Place () {
     return [options, lookupTable]
   }, [placesListResponse])
 
-  const slug = router.query.slug
-
-  const state = slug ? slug[0] : null
-  const place = slug ? slug[1] : null
+  const [state, place] = router.query.slug ?? [null, null]
 
   const optionVal = useMemo(() => {
     if (place !== null && state !== null) {
@@ -84,28 +81,16 @@ export default function Place () {
     return null
   }, [place, state, placeLookup.length || 0])
 
-  const { data } = useSWR(getJsonUrl(place, state))
+  const { data } = useFetch(getJsonUrl(place, state))
 
-  if ((typeof slug === 'undefined') || (slug.length === 0)) {
-    return (
-      <h1> Loading... </h1>
-    )
-  } else if (slug.length !== 2) {
-    return (
-      <h1>Bad path (sad face)</h1>
-    )
-  } else {
-    return makePage(place, state, optionVal, data, placeOptions, placeLookup, router)
-  }
-}
-
-function makePage (place, state, optionVal, filteredData, placeOptions, placeLookup, router) {
-  const onChange = function (newPlace) {
-    const chosenOption = placeOptions[newPlace]
-    if (chosenOption.place_name !== place || chosenOption.abbr !== state) {
-      router.push('/places/' + chosenOption.abbr + '/' + chosenOption.place_name.replace('#', '%23'))
-    }
-  }
+  const onChange = useCallback(
+    (newPlace) => {
+      const chosenOption = placeOptions[newPlace]
+      if (chosenOption.place_name !== place || chosenOption.abbr !== state) {
+        router.push('/places/' + chosenOption.abbr + '/' + chosenOption.place_name.replace('#', '%23'))
+      }
+    }, [place, state]
+  )
 
   const fuseOptions = {
     keys: ['name'],
@@ -113,12 +98,12 @@ function makePage (place, state, optionVal, filteredData, placeOptions, placeLoo
     distance: 5
   }
 
-  const isCounty = place.endsWith('County') || place.endsWith('Parish')
+  const isCounty = place ? place.endsWith('County') || place.endsWith('Parish') : false
 
   return (
     <div>
       <Head>
-        <title>{place}, {state}</title>
+        <title>{place ? place + ', ' + state : 'Housing Data'}</title>
         <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </Head>
       <Nav currentIndex={4} />
@@ -143,7 +128,7 @@ function makePage (place, state, optionVal, filteredData, placeOptions, placeLoo
           <ContainerDimensions>
             {
           ({ width, height }) => (
-            <VegaLite spec={spec(width, height)} data={{ table: filteredData }} />
+            <VegaLite spec={spec(width, height)} data={{ table: data }} />
           )
         }
           </ContainerDimensions>

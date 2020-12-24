@@ -1,34 +1,16 @@
-import Head from 'next/head'
-import dynamic from 'next/dynamic'
 import { useState } from 'react'
-import { Nav, GitHubFooter } from '../../lib/common_elements.js'
+import { Page } from '../../lib/common_elements.js'
+import { useRouter } from 'next/router'
 
-const MetroPlots = dynamic(
-  () => import('../../lib/MetroPlots.js'),
-  { ssr: false }
-)
+import MetroPlots from '../../lib/MetroPlots.js'
 
-export default function Metro ({ metroPath }) {
+export default function Metro () {
+  const router = useRouter()
+  const metroPath = router.query.metro ?? null
   const [title, setTitle] = useState(metroPath)
   return (
-    <div>
-      <Head>
-        <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-        <title>{title}</title>
-      </Head>
-      <Nav currentIndex={2} />
+    <Page title={title} navIndex={2}>
       <MetroPlots metroPath={metroPath} setTitle={setTitle} />
-      <GitHubFooter />
-    </div>
+    </Page>
   )
-}
-
-export async function getServerSideProps (context) {
-  const metroPath = context.params.metro
-
-  return {
-    props: {
-      metroPath
-    }
-  }
 }

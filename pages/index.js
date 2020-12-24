@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import SelectSearch from 'react-select-search/dist/cjs'
 import { useState } from 'react'
-import { useStateData } from '../lib/data_loader.js'
+import { useFetch } from '../../lib/queries.js'
 import { VegaLite } from 'react-vega'
 import { Nav, GitHubFooter } from '../lib/common_elements.js'
 import ContainerDimensions from 'react-container-dimensions'
@@ -123,7 +123,7 @@ function filterData (data, type, region) {
 }
 
 export default function Home () {
-  const { response } = useStateData()
+  const { data: response } = useFetch('/state_annual.json')
 
   const [selectedType, setSelectedOption] = useState('all')
 
