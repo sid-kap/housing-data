@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import SelectSearch from 'react-select-search/dist/cjs'
 import { useState } from 'react'
-import { useFetch } from '../../lib/queries.js'
+import { useFetch } from '../lib/queries.js'
 import { VegaLite } from 'react-vega'
 import { Nav, GitHubFooter } from '../lib/common_elements.js'
 import ContainerDimensions from 'react-container-dimensions'
