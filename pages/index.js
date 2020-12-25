@@ -1,9 +1,8 @@
-import Head from 'next/head'
 import SelectSearch from 'react-select-search/dist/cjs'
 import { useState, useMemo, useCallback } from 'react'
 import { useFetch } from '../lib/queries.js'
 import { VegaLite } from 'react-vega'
-import { Nav, GitHubFooter } from '../lib/common_elements.js'
+import { Page } from '../lib/common_elements.js'
 import ContainerDimensions from 'react-container-dimensions'
 
 function spec (width, height, perCapita) {
@@ -170,13 +169,7 @@ export default function Home () {
   )
 
   return (
-    <div>
-      <Head>
-        <title>Housing Data</title>
-        <link rel='icon' href='/favicon.ico' />
-        <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-      </Head>
-      <Nav currentIndex={0} />
+    <Page title='Housing Data' navIndex={0}>
       <div className='flex flex-col justify-center items-center mx-auto mb-10'>
 
         <h1 className='mt-4 mb-2 text-4xl col-span-1 text-center'>
@@ -202,7 +195,6 @@ export default function Home () {
         {populationInput}
 
       </div>
-      <GitHubFooter />
-    </div>
+    </Page>
   )
 }
