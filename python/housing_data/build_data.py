@@ -32,6 +32,16 @@ NUMERICAL_COLUMNS = [
     "1_unit_bldgs_reported",
     "1_unit_units_reported",
     "1_unit_value_reported",
+    "2_units_bldgs_reported",
+    "2_units_units_reported",
+    "2_units_value_reported",
+    "3_to_4_units_bldgs_reported",
+    "3_to_4_units_units_reported",
+    "3_to_4_units_value_reported",
+    "5_plus_units_bldgs_reported",
+    "5_plus_units_units_reported",
+    "5_plus_units_value_reported",
+    "total_units",
     # "2_unit rep_bldgs",
     # "2_unit rep_units",
     # "2_unit rep_value",
@@ -41,13 +51,6 @@ NUMERICAL_COLUMNS = [
     # "5_unit rep_bldgs",
     # "5_unit rep_units",
     # "5_unit rep_value",
-    "total_units",
-    "2_units_bldgs_reported",
-    "2_units_units_reported",
-    "2_units_value_reported",
-    "3_to_4_units_bldgs_reported",
-    "3_to_4_units_units_reported",
-    "3_to_4_units_value_reported",
     # "5+units rep_bldgs",
     # "5+units rep_units",
     # "5+units rep_value",
@@ -213,7 +216,7 @@ def load_counties(places_df=None):
 
 def impute_pre_1990_counties(counties_df, places_df):
     summed_places_df = (
-        places_df.groupby(["county_code", "state_code", "year"])[UNITS_COLUMNS]
+        places_df.groupby(["county_code", "state_code", "year"])[NUMERICAL_COLUMNS]
         .sum()
         .reset_index()
     )
