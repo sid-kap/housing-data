@@ -58,6 +58,9 @@ NUMERICAL_COLUMNS = [
 
 
 def main():
+    # Make sure the public/ directory exists
+    PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
+
     load_states()
     places_df = load_places()
     counties_df = load_counties(places_df)
