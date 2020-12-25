@@ -7,6 +7,8 @@ from housing_data import building_permits_survey as bps
 from housing_data import population
 from tqdm import tqdm
 
+PUBLIC_DIR = Path("../public")
+
 UNITS_COLUMNS = [
     "1_unit_units",
     "2_units_units",
@@ -71,7 +73,7 @@ def load_states():
     states_df = states_df.astype({"survey_date": str})
 
     population_df = population.get_state_population_estimates()
-    population_df.to_parquet("../../public/population_df.parquet")
+    population_df.to_parquet(PUBLIC_DIR / "population_df.parquet")
 
     states_df = states_df.merge(
         population_df,
@@ -83,7 +85,7 @@ def load_states():
     for col in NUMERICAL_COLUMNS:
         states_df[col + "_per_capita"] = states_df[col] / states_df["population"]
 
-    states_df.to_json("../../public/state_annual.json", orient="records")
+    states_df.to_json(PUBLIC_DIR / "state_annual.json", orient="records")
 
 
 def write_to_json_directory(df, path, group_cols=None):
@@ -142,17 +144,17 @@ def load_places():
     for col in STR_COLUMNS:
         places_df[col] = places_df[col].astype("str")
 
-    places_df.to_parquet("../../public/places_annual.parquet")
+    places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
     (
         places_df[["place_name", "state_code"]]
         .drop_duplicates()
         .sort_values("place_name")
-        .to_json("../../public/places_list.json", orient="records")
+        .to_json(PUBLIC_DIR / "places_list.json", orient="records")
     )
 
     write_to_json_directory(
-        places_df, Path("../../public/places_data"), ["place_name", "state_code"]
+        places_df, Path(PUBLIC_DIR, "places_data"), ["place_name", "state_code"]
     )
 
     return places_df
@@ -192,18 +194,18 @@ def load_counties(places_df=None):
         metadata_df, on=["fips_state", "fips_county"], how="left"
     )
 
-    counties_df.to_parquet("../../public/counties_annual.parquet")
+    counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")
 
     (
         counties_df[["county_name", "fips_state"]]
         .rename(columns={"fips_state": "state_code"})
         .drop_duplicates()
         .sort_values("county_name")
-        .to_json("../../public/counties_list.json", orient="records")
+        .to_json(PUBLIC_DIR / "counties_list.json", orient="records")
     )
 
     write_to_json_directory(
-        counties_df, Path("../../public/counties_data"), ["county_name", "fips_state"]
+        counties_df, Path(PUBLIC_DIR / "counties_data"), ["county_name", "fips_state"]
     )
 
     return counties_df
@@ -287,18 +289,18 @@ def load_metros(counties_df):
     metros_df = pd.concat([cbsas_df, csas_df])
     metros_df["path"] = metros_df["metro_name"].str.replace("/", "-")
 
-    metros_df.to_parquet("../../public/metros_annual.parquet")
+    metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
 
     (
         metros_df[["metro_name", "metro_type", "path", "county_names"]]
         .drop_duplicates(subset=["metro_name", "metro_type", "path"])
         .sort_values("metro_name")
-        .to_json("../../public/metros_list.json", orient="records")
+        .to_json(PUBLIC_DIR / "metros_list.json", orient="records")
     )
 
     write_to_json_directory(
         metros_df.drop(columns=["county_names"]),
-        Path("../../public/metros_data"),
+        Path(PUBLIC_DIR, "metros_data"),
         ["path"],
     )
 

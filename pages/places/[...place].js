@@ -68,7 +68,7 @@ export default function Place () {
     return [options, lookupTable]
   }, [placesListResponse])
 
-  const [state, place] = router.query.slug ?? [null, null]
+  const [state, place] = router.query.place ?? [null, null]
 
   const optionVal = useMemo(() => {
     if (place !== null && state !== null) {
