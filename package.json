@@ -14,7 +14,6 @@
     "react-container-dimensions": "^1.4.1",
     "react-dom": "17.0.1",
     "react-query": "^3.5.5",
-    "react-responsive": "^8.2.0",
     "react-select-search": "^2.2.1",
     "react-vega": "^7.4.2",
     "react-window": "^1.8.6",
