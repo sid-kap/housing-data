@@ -6,7 +6,7 @@ import { Page } from '../lib/common_elements.js'
 import ContainerDimensions from 'react-container-dimensions'
 
 function spec (width, height, perCapita) {
-  const plotWidth = Math.min(width * 0.9, 936)
+  const plotWidth = Math.min(width * 0.92, 936)
 
   const yField = perCapita ? 'total_units_per_capita' : 'total_units'
   const yTitle = perCapita ? 'Units permitted per capita (per year)' : 'Units permitted (per year)'
