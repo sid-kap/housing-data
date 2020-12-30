@@ -263,6 +263,17 @@ def load_places():
     places_df = add_population_data(raw_places_df, place_populations_df)
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
+    (
+        places_df[["place_name", "state_code"]]
+        .drop_duplicates()
+        .sort_values("place_name")
+        .to_json(PUBLIC_DIR / "places_list.json", orient="records")
+    )
+
+    write_to_json_directory(
+        places_df, Path(PUBLIC_DIR, "places_data"), ["place_name", "state_code"]
+    )
+
     return raw_places_df
 
 
