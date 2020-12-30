@@ -5,7 +5,6 @@ Maybe if I like IPUMS enough, I can switch the other datasets to this also, but 
 I'm just using it for this data because it was the only one not available on the Census website.
 """
 
-import json
 import time
 from pathlib import Path
 

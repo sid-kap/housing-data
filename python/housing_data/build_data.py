@@ -1,5 +1,4 @@
 import shutil
-import warnings
 from pathlib import Path
 
 import numpy as np
@@ -118,8 +117,8 @@ def make_bps_fips_mapping(
     places_df: pd.DataFrame, place_population_df: pd.DataFrame
 ) -> pd.DataFrame:
     # The most recent years have fips code in BPS, so we'll use those to join.
-    # Some years will have the same BPS 6-digit ID, so we can join roughly 1993 to present using that.
-    # From 1980-1992 BPS has different FIPS codes, so it becomes a little trickier.
+    # Some years will have the same BPS 6-digit ID, so we can join roughly 1992 to present using that.
+    # From 1980-1991 BPS has different FIPS codes, so it becomes a little trickier.
     mapping = places_df[(places_df["year"] == "2019")][
         ["place_name", "fips place_code", "county_code", "state_code", "6_digit_id"]
     ].copy()
@@ -135,6 +134,7 @@ def make_bps_fips_mapping(
     )
 
     mapping = mapping[["6_digit_id", "state_code", "place_or_county_code"]]
+    mapping["6_digit_id"] = mapping["6_digit_id"].astype(str)
 
     return mapping
 
@@ -145,6 +145,14 @@ def add_population_data(
     bps_fips_mapping = make_bps_fips_mapping(places_df, place_population_df)
 
     places_df = places_df.drop(columns=["fips place_code", "county_code"])
+    places_df["6_digit_id"] = (
+        places_df["6_digit_id"]
+        .astype(str)
+        .where(
+            places_df["year"] >= "1992",
+            places_df["6_digit_id"].astype(str) + "_pre_1992",
+        )
+    )
 
     merged_df = places_df.merge(
         bps_fips_mapping, how="left", on=["6_digit_id", "state_code"], indicator=True

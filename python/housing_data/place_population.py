@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 from io import StringIO
 from typing import TYPE_CHECKING
 
@@ -10,6 +9,18 @@ import requests
 
 if TYPE_CHECKING:
     from typing import List
+
+
+def _get_places_crosswalk_df() -> pd.DataFrame:
+    df = pd.read_fwf("https://www2.census.gov/geo/tiger/PREVGENZ/pl/us_places.txt")
+
+    df["State Code"] = df["CENSUS"] // 10000
+    df["Place Code"] = df["CENSUS"] % 10000
+    df = df.rename(columns={"FIPS": "place_fips"})
+
+    df["place_fips"] = df["place_fips"].astype("Int64")
+
+    return df
 
 
 def get_place_populations_1980() -> pd.DataFrame:
@@ -34,13 +45,22 @@ def get_place_populations_1980() -> pd.DataFrame:
         df["State Name"] == "Louisiana", " Parish", " County"
     )
 
+    # In 1980, FIPS wasn't a thing so the census had a separate coding system for places.
+    # Luckily, there is a crosswalk available that we can use to convert 1980 Census Place Codes to FIPS.
+    crosswalk_df = _get_places_crosswalk_df()
+    old_len = len(df)
+    df = df.merge(
+        crosswalk_df.drop(columns=["NAME"]), how="left", on=["Place Code", "State Code"]
+    )
+    assert len(df) == old_len
+
     # 9999 indicates balance of county. That makes this super easy, IPUMS is great!
     df["Place Name"] = np.where(
         df["Place Code"] == 9999, county_names, df["Place Name"]
     )
 
     df["place_or_county_code"] = (
-        df["Place Code"]
+        df["place_fips"]
         .astype(str)
         .where(df["Place Code"] != 9999, df["County Code"].astype(str) + "_county")
     )
@@ -85,7 +105,8 @@ def get_place_populations_1980() -> pd.DataFrame:
 
 def _load_raw_place_populations_1990s() -> pd.DataFrame:
     tables = requests.get(
-        "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/2000-subcounties-evaluation-estimates/sc2000f_us.txt"
+        "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/"
+        "2000-subcounties-evaluation-estimates/sc2000f_us.txt"
     ).text.split("\f")
 
     common_cols = [
@@ -164,6 +185,9 @@ def _load_raw_place_populations_1990s() -> pd.DataFrame:
         + [f"{year}-07-01" for year in range(1990, 2001)]
     ].copy()
 
+    # Cast from float to nullable int
+    combined_df["place_fips"] = combined_df["place_fips"].astype("Int64")
+
     return combined_df
 
 
@@ -182,7 +206,7 @@ def _fix_place_names(place_names):
         place_names = place_names.str.replace(s1, s2)
 
     place_names = place_names.str.replace("^Balance of ", "")
-    place_names = place_names.str.replace(" \(balance\)$", "")
+    place_names = place_names.str.replace(r" \(balance\)$", "")
 
     return place_names
 
@@ -357,32 +381,35 @@ def get_place_population_estimates():
     # TODO: do something smarter to smooth out the discontinuities/slope changes at 2000 and 2010.
     # Maybe some kind of scaling thing, where we set
     #   pop_year = old_series_estimates_year * new_series_2000 / old_series_2000
-    # (i.e. scale the 1990s populations as a fraction of the 2000 estimate, to line up with the new series's 2000 value.)
+    # (i.e. scale the 1990s populations as a fraction of the 2000 estimate, to line up with the
+    # new series's 2000 value.)
     # This would help with the jumps we see from 1999 to 2000, and from 2009 to 2010 (you can see this in Google too)
     df_1990s = df_1990s[df_1990s["year"] != "2000"]
     df_2000s = df_2000s[df_2000s["year"] != "2010"]
 
     print("Interpolating 1990s populations...")
     # Linear interp the 1980s data
-    start_df = df_1980[["place_name", "state_code", "population"]].rename(
-        columns={"population": "1980"}
-    )
+    start_df = df_1980[
+        ["place_name", "state_code", "place_or_county_code", "population"]
+    ].rename(columns={"population": "1980"})
     end_df = df_1990s.query('year == "1990"')[
-        ["place_name", "state_code", "population"]
+        ["place_name", "state_code", "place_or_county_code", "population"]
     ].rename(columns={"population": "1990"})
     assert start_df["1980"].notnull().all()
     assert end_df["1990"].notnull().all()
 
     interp_df = start_df.merge(
         end_df,
-        on=["place_name", "state_code"],
+        on=["place_name", "state_code", "place_or_county_code"],
         how="inner",  # only interp rows that have both start and end data
     )
     interp_df[[f"{year}" for year in range(1981, 1990)]] = None
     interp_df = interp_df.sort_index(axis="columns")
     interp_df = interp_df.melt(
-        id_vars=["place_name", "state_code"], var_name="year", value_name="population"
-    ).sort_values(["place_name", "state_code", "year"])
+        id_vars=["place_name", "state_code", "place_or_county_code"],
+        var_name="year",
+        value_name="population",
+    ).sort_values(["state_code", "place_name", "place_or_county_code", "year"])
 
     # linear interpolate for now! but pandas has more options I could look into...
     interp_df["population"] = interp_df["population"].astype(float).interpolate()
