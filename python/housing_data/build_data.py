@@ -72,11 +72,10 @@ def main():
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
     load_states()
-    places_df = load_places()
+    raw_places_df = load_places()
 
-    # My changes with places fucked up the counties, so commenting this out for now.
-    # counties_df = load_counties(places_df)
-    # load_metros(counties_df)
+    counties_df = load_counties(raw_places_df)
+    load_metros(counties_df)
 
 
 def load_states():
@@ -255,16 +254,16 @@ def load_places():
             ).assign(year=str(year))
             dfs.append(data)
 
-    places_df = pd.concat(dfs)
-    places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
+    raw_places_df = pd.concat(dfs)
+    raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
     place_populations_df = place_population.get_place_population_estimates()
     place_populations_df.to_parquet(PUBLIC_DIR / "places_population.parquet")
 
-    places_df = add_population_data(places_df, place_populations_df)
+    places_df = add_population_data(raw_places_df, place_populations_df)
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
-    return places_df
+    return raw_places_df
 
 
 def load_counties(places_df=None):
