@@ -246,7 +246,7 @@ def load_data(
         state_cleanup(df)
 
     if scale == "place":
-        df = place_cleanup(df)
+        df = place_cleanup(df, year)
 
     if scale == "county":
         county_cleanup(df)
@@ -309,7 +309,7 @@ CORRECTIONS = {
 
 # TODO: make sure that we're not overwriting Gulf County, FL
 SUBSTRING_CORRECTIONS = {
-    " .": "",
+    # " .": "",
     " *": "",
     " #": "",
     " (N)#": "",
@@ -338,37 +338,109 @@ SUBSTRING_CORRECTIONS = {
     "Parish Pt. Uninc. Area": "Parish",
     "Parish Pt Uninc. Area": "Parish",
     "County Uninc Area": "County",
+    "Westlake Village City": "Westlake Village City",
 }
 
 
-def place_cleanup(df):
+def parse_number_column(col: pd.Series) -> pd.Series:
+    """
+    Converts a column that includes numeric data (integers or blank spaces, as either an int or a string type)
+    to Int64.
+    """
+    col = col.copy()
+
+    if col.dtype == object:
+        # in 'survey_date' in some files
+        col = col.str.rstrip("\x1a")
+
+        space_or_empty = col.str.isspace() | (col.str.len() == 0)
+        col.loc[space_or_empty] = None
+
+        # For some malformed zipcodes, like '49098____  '
+        col = col.str.rstrip("_ ")
+
+    # pd.Series(['1', None]).astype('Int64') fails with the error:
+    #   TypeError: object cannot be converted to an IntegerDtype.
+    # So I need to convert via float
+    return col.astype(float).astype("Int64")
+
+
+def place_cleanup(df, year):
+    """
+    Any cleanup that can be done on an individual file basis goes here.
+    Stuff that can only be done after combining all the dfs together is done in build_data.load_places
+    """
+    if "" in df.columns:
+        df = df.drop(columns=[""])
+
+    NUMBER_COLS_TO_PARSE = [
+        "6_digit_id",
+        "census place_code",
+        "county_code",
+        "division_code",
+        "fips mcd_code",
+        "fips place_code",
+        "footnote_code",
+        "msa/cmsa",
+        "number of_months rep",
+        "place_code",
+        "pmsa_code",
+        "pop",
+        "region_code",
+        "state_code",
+        "survey_date",
+        "zip_code",
+    ]
+    for col in NUMBER_COLS_TO_PARSE:
+        if col in df.columns:
+            df[col] = parse_number_column(df[col])
+
+    # Can take the values '0', '1', and 'C', though some sub-files might only see 0 and 1, which leads to parsing
+    # it as an int.
+    # TODO: move this dtype-specifying logic to the pd.read_csv call, to make it more consistent.
+    if "central_city" in df.columns:
+        df["central_city"] = df["central_city"].astype(str)
+
     place_names = df["place_name"]
 
-    place_names = (
-        place_names.str.title().str.rstrip(".").str.strip().replace(CORRECTIONS)
-    )
+    if year < 1988:
+        place_names = place_names.str.title().str.rstrip(".# ")
+
+    place_names = place_names.replace(CORRECTIONS)
 
     for s, replacement_s in SUBSTRING_CORRECTIONS.items():
         place_names = place_names.str.replace(s, replacement_s, regex=False)
 
-    place_types = [" township", " town", " city", " village"]
-    for place_type in place_types:
-        place_names = place_names.str.replace(
-            place_type.title(), place_type, regex=False
-        )
+    place_names = place_names.str.rstrip()
 
-    place_names = place_names.str.rstrip(".").str.rstrip(".#").str.strip()
+    place_types = ["township", "town", "city", "village", "borough"]
+    # for place_type in place_types:
+    #     place_names = place_names.str.replace(
+    #         place_type.title(), place_type, regex=False
+    #     )
 
     df["uncleaned_place_name"] = df["place_name"]
+
+    place_names_with_suffix = place_names
+    if year < 1988:
+        for place_type in place_types:
+            if place_type != "city":
+                place_names_with_suffix = place_names_with_suffix.str.replace(
+                    f" {place_type.title()}$", f" {place_type}"
+                )
+        df["place_name_with_suffix"] = place_names_with_suffix
+    else:
+        df["place_name_with_suffix"] = place_names_with_suffix
+
+    place_names = place_names_with_suffix
+    for place_type in place_types:
+        place_names = place_names.str.replace(f" {place_type}$", "")
+
     df["place_name"] = place_names
 
-    # Cast float types to nullable ints - none of the data here is actually floats,
-    # they're just coerced to float because they have nulls.
-    # (TODO: maybe just specify the dtype as 'Int64' in the pd.read_csv call?
-    # IDK if it's supported.)
-    float_cols = df.dtypes.loc[lambda x: x == float].index
-    for col in float_cols:
-        df[col] = df[col].astype("Int64")
+    # Try to standardize the col names between years... still more to do here
+    # if "fips place_code" in df.columns:
+    #     df = df.rename(columns={"fips place_code": "place_code"})
 
     df = df[df["place_name"].notnull()].copy()
 

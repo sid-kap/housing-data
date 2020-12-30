@@ -1,10 +1,11 @@
 import shutil
+import warnings
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from housing_data import building_permits_survey as bps
-from housing_data import population
+from housing_data import place_population, population
 from tqdm import tqdm
 
 PUBLIC_DIR = Path("../public")
@@ -42,18 +43,27 @@ NUMERICAL_COLUMNS = [
     "5_plus_units_units_reported",
     "5_plus_units_value_reported",
     "total_units",
-    # "2_unit rep_bldgs",
-    # "2_unit rep_units",
-    # "2_unit rep_value",
-    # "34_unit rep_bldgs",
-    # "34_unit rep_units",
-    # "34_unit rep_value",
-    # "5_unit rep_bldgs",
-    # "5_unit rep_units",
-    # "5_unit rep_value",
-    # "5+units rep_bldgs",
-    # "5+units rep_units",
-    # "5+units rep_value",
+]
+
+PLACE_COLS_TO_DELETE = [
+    "",
+    "6_digit_id",
+    "cbsa_code",
+    "central_city",
+    "county_code",
+    "csa_code",
+    "csa_csa",
+    "division_code",
+    "fips mcd_code",
+    "footnote_code",
+    "msa/cmsa",
+    "number of_months rep",
+    "place_code",
+    "pmsa_code",
+    "pop",
+    "region_code",
+    "survey_date",
+    "zip_code",
 ]
 
 
@@ -61,7 +71,7 @@ def main():
     # Make sure the public/ directory exists
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
-    load_states()
+    # load_states()
     places_df = load_places()
     counties_df = load_counties(places_df)
     load_metros(counties_df)
@@ -121,6 +131,139 @@ def write_to_json_directory(df, path, group_cols=None):
         )
 
 
+def fuzzify_populations_df(place_populations_df) -> pd.DataFrame:
+    """
+    Returns the same DataFrame, but duplicating rows that end in 'city' to have a version without the city suffix.
+    This is useful for string-matching cities (I know, gross).
+
+    Not used right now... TODO delete if not needed?
+    """
+    # Just for places that end in "city": add a record where it doesn't say, because I suspect that BPS
+    # omits the suffix _only_ for cities.
+    # TODO: maybe move this code elsewhere
+    place_populations_df_cities = place_populations_df[
+        place_populations_df["place_name"].str.contains(" city$")
+    ].copy()
+    place_populations_df_cities["place_name"] = place_populations_df_cities[
+        "place_name"
+    ].str.replace(" city$", "")
+
+    return pd.concat([place_populations_df, place_populations_df_cities])
+
+
+def make_bps_fips_mapping(
+    places_df: pd.DataFrame, place_population_df: pd.DataFrame
+) -> pd.DataFrame:
+    # The most recent years have fips code in BPS, so we'll use those to join.
+    # Some years will have the same BPS 6-digit ID, so we can join roughly 1993 to present using that.
+    # From 1980-1992 BPS has different FIPS codes, so it becomes a little trickier.
+    mapping = places_df[(places_df["year"] == "2019")][
+        ["place_name", "fips place_code", "county_code", "state_code", "6_digit_id"]
+    ].copy()
+
+    # For it to be a mapping, each BPS ID should appear only once per state...
+    assert (mapping.groupby(["6_digit_id", "state_code"]).size() == 1).all()
+
+    fips_place_code_str = mapping["fips place_code"].astype(str).replace("<NA>", "")
+    county_code_str = mapping["county_code"].astype(str).replace("<NA>", "")
+
+    mapping["place_or_county_code"] = fips_place_code_str.where(
+        ~mapping["fips place_code"].isin([0, 99990]), county_code_str + "_county"
+    )
+
+    mapping = mapping[["6_digit_id", "state_code", "place_or_county_code"]]
+
+    return mapping
+
+
+def add_population_data(
+    places_df: pd.DataFrame, place_population_df: pd.DataFrame
+) -> pd.DataFrame:
+    bps_fips_mapping = make_bps_fips_mapping(places_df, place_population_df)
+
+    places_df = places_df.drop(columns=["fips place_code", "county_code"])
+
+    merged_df = places_df.merge(
+        bps_fips_mapping, how="left", on=["6_digit_id", "state_code"], indicator=True
+    )
+    assert len(merged_df) == len(places_df)
+    print(
+        "First mapping handled {:.1%} of rows!".format(
+            (merged_df["_merge"] == "both").mean()
+        )
+    )
+
+    merged_rows = merged_df[merged_df["_merge"] == "both"].drop(columns=["_merge"])
+    unmerged_rows = merged_df[merged_df["_merge"] == "left_only"].drop(
+        columns=["_merge", "place_or_county_code"]
+    )
+    assert len(merged_rows) + len(unmerged_rows) == len(places_df)
+
+    # For earlier rows, we'll have to figure out the IDs by matching place name and state code.
+    # Let's use 2019 names assuming that those are similar.
+    place_name_fips_mapping = merged_rows[
+        ["place_name", "state_code", "place_or_county_code"]
+    ].drop_duplicates()
+
+    # Remove dupes ( (place_name, state_code) tuples for which there are multiple fips codes)
+    dupes = (
+        place_name_fips_mapping.groupby(["place_name", "state_code"])
+        .size()
+        .loc[lambda x: x > 1]
+    )
+    place_name_fips_mapping = (
+        place_name_fips_mapping.merge(
+            dupes.rename("dupe_count").reset_index().drop(columns=["dupe_count"]),
+            on=["place_name", "state_code"],
+            how="left",
+            indicator=True,
+        )
+        .loc[lambda df: df["_merge"] == "left_only"]
+        .drop(columns=["_merge"])
+    )
+
+    # For this to be used as a mapping, it must also satisfy this property
+    assert (
+        place_name_fips_mapping.groupby(["place_name", "state_code"]).size() == 1
+    ).all()
+
+    unmerged_rows_2 = unmerged_rows.merge(
+        place_name_fips_mapping,
+        how="left",
+        on=["place_name", "state_code"],
+        indicator=True,
+    )
+
+    print(
+        "Second mapping handled {:.1%} of the remaining rows!".format(
+            (unmerged_rows_2["_merge"] == "both").mean()
+        )
+    )
+
+    places_with_fips_df = pd.concat([merged_rows, unmerged_rows_2])
+
+    # Finally, let's merge in population!
+    final_places_df = places_with_fips_df.merge(
+        place_population_df,
+        left_on=["place_or_county_code", "state_code", "year"],
+        right_on=["place_or_county_code", "state_code", "year"],
+        how="left",
+    )
+
+    print(
+        "Final fraction of rows with population: {:.1%}".format(
+            final_places_df["population"].notnull().mean()
+        )
+    )
+
+    for col in NUMERICAL_COLUMNS:
+        final_places_df[col + "_per_capita"] = (
+            final_places_df[col] / final_places_df["population"]
+        )
+
+    return final_places_df
+
+
 def load_places():
     dfs = []
     for year in range(1980, 2020):
@@ -131,37 +274,13 @@ def load_places():
             dfs.append(data)
 
     places_df = pd.concat(dfs)
+    places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
-    # TODO maybe some of these could be Int64 rather than str.
-    # But I'm not using them right now, so it doesn't matter.
-    STR_COLUMNS = [
-        "survey_date",
-        "zip_code",
-        "fips place_code",
-        "msa/cmsa",
-        "pmsa_code",
-        "place_code",
-        "fips place_code",
-        "fips mcd_code",
-        "footnote_code",
-        "pop",
-    ]
+    place_populations_df = place_population.get_place_population_estimates()
+    place_populations_df.to_parquet(PUBLIC_DIR / "places_population.parquet")
 
-    for col in STR_COLUMNS:
-        places_df[col] = places_df[col].astype("str")
-
+    places_df = add_population_data(places_df, place_populations_df)
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
-
-    (
-        places_df[["place_name", "state_code"]]
-        .drop_duplicates()
-        .sort_values("place_name")
-        .to_json(PUBLIC_DIR / "places_list.json", orient="records")
-    )
-
-    write_to_json_directory(
-        places_df, Path(PUBLIC_DIR, "places_data"), ["place_name", "state_code"]
-    )
 
     return places_df
 
