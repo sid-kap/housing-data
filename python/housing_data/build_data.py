@@ -45,6 +45,10 @@ NUMERICAL_COLUMNS = [
     "total_units",
 ]
 
+NUMERICAL_NON_REPORTED_COLUMNS = [
+    col for col in NUMERICAL_COLUMNS if "reported" not in col
+]
+
 
 def main():
     # Make sure the public/ directory exists
@@ -215,7 +219,7 @@ def add_population_data(
         )
     )
 
-    for col in NUMERICAL_COLUMNS:
+    for col in NUMERICAL_NON_REPORTED_COLUMNS:
         final_places_df[col + "_per_capita"] = (
             final_places_df[col] / final_places_df["population"]
         )
