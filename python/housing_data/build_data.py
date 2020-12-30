@@ -71,7 +71,7 @@ def main():
     # Make sure the public/ directory exists
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
-    # load_states()
+    load_states()
     places_df = load_places()
     counties_df = load_counties(places_df)
     load_metros(counties_df)
@@ -129,26 +129,6 @@ def write_to_json_directory(df, path, group_cols=None):
         group.reset_index(drop=True).to_json(
             Path(sub_path, f"{small_name}.json"), orient="records"
         )
-
-
-def fuzzify_populations_df(place_populations_df) -> pd.DataFrame:
-    """
-    Returns the same DataFrame, but duplicating rows that end in 'city' to have a version without the city suffix.
-    This is useful for string-matching cities (I know, gross).
-
-    Not used right now... TODO delete if not needed?
-    """
-    # Just for places that end in "city": add a record where it doesn't say, because I suspect that BPS
-    # omits the suffix _only_ for cities.
-    # TODO: maybe move this code elsewhere
-    place_populations_df_cities = place_populations_df[
-        place_populations_df["place_name"].str.contains(" city$")
-    ].copy()
-    place_populations_df_cities["place_name"] = place_populations_df_cities[
-        "place_name"
-    ].str.replace(" city$", "")
-
-    return pd.concat([place_populations_df, place_populations_df_cities])
 
 
 def make_bps_fips_mapping(

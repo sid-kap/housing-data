@@ -309,7 +309,6 @@ CORRECTIONS = {
 
 # TODO: make sure that we're not overwriting Gulf County, FL
 SUBSTRING_CORRECTIONS = {
-    # " .": "",
     " *": "",
     " #": "",
     " (N)#": "",
@@ -338,7 +337,6 @@ SUBSTRING_CORRECTIONS = {
     "Parish Pt. Uninc. Area": "Parish",
     "Parish Pt Uninc. Area": "Parish",
     "County Uninc Area": "County",
-    "Westlake Village City": "Westlake Village City",
 }
 
 
