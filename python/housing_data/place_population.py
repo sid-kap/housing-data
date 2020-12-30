@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import shutil
 from io import StringIO
-from tempfile import NamedTemporaryFile
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 import requests
+
+if TYPE_CHECKING:
+    from typing import List
 
 
 def get_place_populations_1980() -> pd.DataFrame:
@@ -185,7 +188,9 @@ def _fix_place_names(place_names):
     suffixes = ["city", "village", "town", "township", "borough"]
 
     replace_strings = [(f" {suffix}$", " " + suffix) for suffix in suffixes]
-    replace_pt_strings = [(f" {suffix} \(pt.\)$", " " + suffix) for suffix in suffixes]
+    replace_pt_strings = [
+        (f" {suffix} \\(pt.\\)$", " " + suffix) for suffix in suffixes
+    ]
 
     for s1, s2 in replace_strings + replace_pt_strings:
         place_names = place_names.str.replace(s1, s2)
@@ -360,8 +365,9 @@ def get_place_population_estimates():
     print("Loading 2010s populations...")
     df_2010s = get_place_populations_2010s()
 
-    # Remove the dupes by only taking [1990, 2000) from the 90s dataset, [2000, 2010) from the 2000s dataset, etc.
-    # since these decade ones have both the start and end year.
+    # Remove the dupes by only taking [1990, 2000) from the 90s dataset,
+    # [2000, 2010) from the 2000s dataset, etc. since these decade ones have both the start and end year.
+    #
     # TODO: do something smarter to smooth out the discontinuities/slope changes at 2000 and 2010.
     # Maybe some kind of scaling thing, where we set
     #   pop_year = old_series_estimates_year * new_series_2000 / old_series_2000

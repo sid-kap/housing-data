@@ -73,8 +73,10 @@ def main():
 
     load_states()
     places_df = load_places()
-    counties_df = load_counties(places_df)
-    load_metros(counties_df)
+
+    # My changes with places fucked up the counties, so commenting this out for now.
+    # counties_df = load_counties(places_df)
+    # load_metros(counties_df)
 
 
 def load_states():
