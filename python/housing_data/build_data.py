@@ -45,27 +45,6 @@ NUMERICAL_COLUMNS = [
     "total_units",
 ]
 
-PLACE_COLS_TO_DELETE = [
-    "",
-    "6_digit_id",
-    "cbsa_code",
-    "central_city",
-    "county_code",
-    "csa_code",
-    "csa_csa",
-    "division_code",
-    "fips mcd_code",
-    "footnote_code",
-    "msa/cmsa",
-    "number of_months rep",
-    "place_code",
-    "pmsa_code",
-    "pop",
-    "region_code",
-    "survey_date",
-    "zip_code",
-]
-
 
 def main():
     # Make sure the public/ directory exists
@@ -73,7 +52,6 @@ def main():
 
     load_states()
     raw_places_df = load_places()
-
     counties_df = load_counties(raw_places_df)
     load_metros(counties_df)
 
@@ -225,7 +203,7 @@ def add_population_data(
 
     # Finally, let's merge in population!
     final_places_df = places_with_fips_df.merge(
-        place_population_df,
+        place_population_df.drop(columns=["place_name"]),
         left_on=["place_or_county_code", "state_code", "year"],
         right_on=["place_or_county_code", "state_code", "year"],
         how="left",

@@ -70,20 +70,6 @@ def get_place_populations_1980() -> pd.DataFrame:
 
     df["year"] = "1980"
 
-    # TODO: compute balance of county by subtracting all the incorporated places. this will be a little tricky,
-    # we'll need to make sure the CDPs are not being subtracted since they _are_ part of the unincorporated area.
-
-    # Just for places that end in "city": add a record where it doesn't say, because I suspect that BPS
-    # omits the suffix _only_ for cities.
-    # TODO: maybe move this code elsewhere
-    # cities_df = df[
-    #     df['place_name'].str.contains(' city$')
-    # ].copy()
-    # cities_df['place_name'] = cities_df['place_name'].str.replace(
-    #     ' city$', ''
-    # )
-    # df = pd.concat([df, cities_df])
-
     place_name = df["Area Name"].str.title().str.replace("%Cdp<$", "CDP")
     suffixes = ["township", "town", "city", "village", "borough"]
     for suffix in suffixes:
