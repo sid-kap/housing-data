@@ -53,10 +53,10 @@ def main():
     # Make sure the public/ directory exists
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
-    # load_states()
+    load_states()
     raw_places_df = load_places()
-    # counties_df = load_counties(raw_places_df)
-    # load_metros(counties_df)
+    counties_df = load_counties(raw_places_df)
+    load_metros(counties_df)
 
 
 def load_states():
