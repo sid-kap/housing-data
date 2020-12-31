@@ -37,3 +37,5 @@ yarn-error.log*
 __pycache__
 .ipynb_checkpoints
 *.ipynb
+
+python/IPUMS_KEY
