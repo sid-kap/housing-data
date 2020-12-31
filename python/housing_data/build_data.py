@@ -306,11 +306,9 @@ def load_places():
     add_alt_names(raw_places_df)
 
     raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
-    # raw_places_df = pd.read_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
     place_populations_df = place_population.get_place_population_estimates()
     place_populations_df.to_parquet(PUBLIC_DIR / "places_population.parquet")
-    # place_populations_df = pd.read_parquet(PUBLIC_DIR / "places_population.parquet")
 
     places_df = add_population_data(raw_places_df, place_populations_df)
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")

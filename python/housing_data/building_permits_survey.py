@@ -400,6 +400,7 @@ def place_cleanup(df, year):
     if "central_city" in df.columns:
         df["central_city"] = df["central_city"].astype(str)
 
+    df["uncleaned_place_name"] = df["place_name"]
     place_names = df["place_name"]
 
     if year < 1988:
@@ -413,33 +414,11 @@ def place_cleanup(df, year):
     place_names = place_names.str.rstrip()
 
     place_types = ["township", "town", "city", "village", "borough"]
-    # for place_type in place_types:
-    #     place_names = place_names.str.replace(
-    #         place_type.title(), place_type, regex=False
-    #     )
-
-    df["uncleaned_place_name"] = df["place_name"]
-
-    place_names_with_suffix = place_names
-    if year < 1988:
-        for place_type in place_types:
-            if place_type != "city":
-                place_names_with_suffix = place_names_with_suffix.str.replace(
-                    f" {place_type.title()}$", f" {place_type}"
-                )
-        df["place_name_with_suffix"] = place_names_with_suffix
-    else:
-        df["place_name_with_suffix"] = place_names_with_suffix
-
-    place_names = place_names_with_suffix
     for place_type in place_types:
+        place_names = place_names.str.replace(f" {place_type.title()}$", "")
         place_names = place_names.str.replace(f" {place_type}$", "")
 
     df["place_name"] = place_names
-
-    # Try to standardize the col names between years... still more to do here
-    # if "fips place_code" in df.columns:
-    #     df = df.rename(columns={"fips place_code": "place_code"})
 
     df = df[df["place_name"].notnull()].copy()
 
