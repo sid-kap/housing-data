@@ -53,10 +53,10 @@ def main():
     # Make sure the public/ directory exists
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
-    load_states()
+    # load_states()
     raw_places_df = load_places()
-    counties_df = load_counties(raw_places_df)
-    load_metros(counties_df)
+    # counties_df = load_counties(raw_places_df)
+    # load_metros(counties_df)
 
 
 def load_states():
@@ -116,6 +116,9 @@ def write_to_json_directory(df, path, group_cols=None):
 def make_bps_fips_mapping(
     places_df: pd.DataFrame, place_population_df: pd.DataFrame
 ) -> pd.DataFrame:
+    """
+    Returns a DataFrame with columns: 6_digit_id, state_code, place_or_county_code
+    """
     # The most recent years have fips code in BPS, so we'll use those to join.
     # Some years will have the same BPS 6-digit ID, so we can join roughly 1992 to present using that.
     # From 1980-1991 BPS has different FIPS codes, so it becomes a little trickier.
@@ -133,8 +136,47 @@ def make_bps_fips_mapping(
         ~mapping["fips place_code"].isin([0, 99990]), county_code_str + "_county"
     )
 
+    # Fix NYC boroughs - we don't want the population denominator to be the population of the whole city
+    mapping["place_or_county_code"] = mapping["place_or_county_code"].where(
+        (mapping["place_or_county_code"] != "51000")
+        | (mapping["place_name"] == "New York City"),  # New York City boroughs
+        mapping["place_name"].map(
+            {
+                "Manhattan": "61_county",
+                "Brooklyn": "47_county",
+                "Bronx": "5_county",
+                "Queens": "81_county",
+                "Staten Island": "85_county",
+            }
+        ),
+    )
+
     mapping = mapping[["6_digit_id", "state_code", "place_or_county_code"]]
     mapping["6_digit_id"] = mapping["6_digit_id"].astype(str)
+
+    return mapping
+
+
+def make_place_name_fips_mapping(merged_rows):
+    mapping = merged_rows[
+        ["place_name", "state_code", "place_or_county_code"]
+    ].drop_duplicates()
+
+    # Remove dupes ( (place_name, state_code) tuples for which there are multiple fips codes)
+    dupes = mapping.groupby(["place_name", "state_code"]).size().loc[lambda x: x > 1]
+    mapping = (
+        mapping.merge(
+            dupes.rename("dupe_count").reset_index().drop(columns=["dupe_count"]),
+            on=["place_name", "state_code"],
+            how="left",
+            indicator=True,
+        )
+        .loc[lambda df: df["_merge"] == "left_only"]
+        .drop(columns=["_merge"])
+    )
+
+    # For this to be used as a mapping, it must also satisfy this property
+    assert (mapping.groupby(["place_name", "state_code"]).size() == 1).all()
 
     return mapping
 
@@ -163,7 +205,6 @@ def add_population_data(
             (merged_df["_merge"] == "both").mean()
         )
     )
-
     merged_rows = merged_df[merged_df["_merge"] == "both"].drop(columns=["_merge"])
     unmerged_rows = merged_df[merged_df["_merge"] == "left_only"].drop(
         columns=["_merge", "place_or_county_code"]
@@ -172,31 +213,7 @@ def add_population_data(
 
     # For earlier rows, we'll have to figure out the IDs by matching place name and state code.
     # Let's use 2019 names assuming that those are similar.
-    place_name_fips_mapping = merged_rows[
-        ["place_name", "state_code", "place_or_county_code"]
-    ].drop_duplicates()
-
-    # Remove dupes ( (place_name, state_code) tuples for which there are multiple fips codes)
-    dupes = (
-        place_name_fips_mapping.groupby(["place_name", "state_code"])
-        .size()
-        .loc[lambda x: x > 1]
-    )
-    place_name_fips_mapping = (
-        place_name_fips_mapping.merge(
-            dupes.rename("dupe_count").reset_index().drop(columns=["dupe_count"]),
-            on=["place_name", "state_code"],
-            how="left",
-            indicator=True,
-        )
-        .loc[lambda df: df["_merge"] == "left_only"]
-        .drop(columns=["_merge"])
-    )
-
-    # For this to be used as a mapping, it must also satisfy this property
-    assert (
-        place_name_fips_mapping.groupby(["place_name", "state_code"]).size() == 1
-    ).all()
+    place_name_fips_mapping = make_place_name_fips_mapping(merged_rows)
 
     unmerged_rows_2 = unmerged_rows.merge(
         place_name_fips_mapping,
@@ -210,7 +227,7 @@ def add_population_data(
             (unmerged_rows_2["_merge"] == "both").mean()
         )
     )
-
+    unmerged_rows_2 = unmerged_rows_2.drop(columns=["_merge"])
     places_with_fips_df = pd.concat([merged_rows, unmerged_rows_2])
 
     # Finally, let's merge in population!
@@ -235,6 +252,44 @@ def add_population_data(
     return final_places_df
 
 
+def _make_nyc_rows(raw_places_df):
+    nyc_df = raw_places_df[
+        raw_places_df["place_name"].isin(
+            ["Manhattan", "Bronx", "Brooklyn", "Queens", "Staten Island"]
+        )
+        & (raw_places_df["state_code"] == 36)
+    ]
+    nyc_rows = nyc_df.groupby("year")[NUMERICAL_COLUMNS].sum().reset_index()
+
+    nyc_rows["fips place_code"] = 51000
+    nyc_rows["state_code"] = 36
+    nyc_rows["place_name"] = "New York City"
+
+    # Fabricate a new 6-digit-id
+    nyc_rows["6_digit_id"] = -1000
+
+    return nyc_rows
+
+
+def add_alt_names(raw_places_df):
+    """
+    Add extra names to help with searching
+    """
+    raw_places_df["alt_name"] = None
+
+    nyc_borough_rows = raw_places_df["place_name"].isin(
+        ["Manhattan", "Bronx", "Brooklyn", "Queens", "Staten Island"]
+    ) & (raw_places_df["state_code"] == 36)
+    raw_places_df.loc[nyc_borough_rows, "alt_name"] = "New York City"
+
+    nyc_rows = (raw_places_df["place_name"] == "New York City") & (
+        raw_places_df["state_code"] == 36
+    )
+    raw_places_df.loc[
+        nyc_rows, "alt_name"
+    ] = "Manhattan Bronx Brooklyn Queens Staten Island"
+
+
 def load_places():
     dfs = []
     for year in range(1980, 2020):
@@ -245,16 +300,23 @@ def load_places():
             dfs.append(data)
 
     raw_places_df = pd.concat(dfs)
+    nyc_rows = _make_nyc_rows(raw_places_df)
+    raw_places_df = pd.concat([raw_places_df, nyc_rows])
+
+    add_alt_names(raw_places_df)
+
+    # raw_places_df = pd.read_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
     raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
-    place_populations_df = place_population.get_place_population_estimates()
-    place_populations_df.to_parquet(PUBLIC_DIR / "places_population.parquet")
+    # place_populations_df = place_population.get_place_population_estimates()
+    # place_populations_df.to_parquet(PUBLIC_DIR / "places_population.parquet")
+    place_populations_df = pd.read_parquet(PUBLIC_DIR / "places_population.parquet")
 
     places_df = add_population_data(raw_places_df, place_populations_df)
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
     (
-        places_df[["place_name", "state_code"]]
+        places_df[["place_name", "state_code", "alt_name"]]
         .drop_duplicates()
         .sort_values("place_name")
         .to_json(PUBLIC_DIR / "places_list.json", orient="records")

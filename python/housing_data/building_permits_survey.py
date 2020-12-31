@@ -303,6 +303,7 @@ CORRECTIONS = {
     "Otsego Co. Pt Uninc. Area": "Otsego Co. Pt. Uninc. Area",
     "Washington Dc": "Washington",
     "Washington D.C": "Washington",
+    "Washington D.C.": "Washington",
     ".Pike County": "Pike County",
 }
 
