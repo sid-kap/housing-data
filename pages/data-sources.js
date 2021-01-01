@@ -2,7 +2,7 @@ import { Nav, GitHubFooter } from '../lib/common_elements.js'
 import Head from 'next/head'
 
 export default function DataSources () {
-  const faq = 'font-semibold mt-4'
+  const faq = 'font-semibold mt-4 mb-1'
   const link = 'text-blue-500 hover:text-blue-300'
   const para = 'mb-2'
 
@@ -26,7 +26,22 @@ export default function DataSources () {
         <h2 className={faq}>How accurate is the data?</h2>
         <p className={para}>I'm not sure! They claim that only <a className={link} href='https://www.census.gov/construction/bps/how_the_data_are_collected/#nonresponse'>5% of rows</a> in the 2019 annual data survey had to be imputed because of nonresponse, but that doesn't mean that the officials in each city know how to fill out the form accurately. From other folks who've played with this data, I've gathered that the data is generally more reliable for bigger cities, whose bureaucracy is presumably more competent at filling out these forms, and less so for small towns.</p>
         <h2 className={faq}>I think some of the numbers here look wrong?</h2>
-        <p>The Census Bureau has their own <a className={link} href='https://socds.huduser.gov/permits/'>tool</a> for making tables from the BPS, so trying the same state/city and year there and comparing the two numbers might be a good start.</p>
+        <p className={para}>The Census Bureau has their own <a className={link} href='https://socds.huduser.gov/permits/'>tool</a> for making tables from the BPS, so trying the same state/city and year there and comparing the two numbers might be a good start.</p>
+        <h2 className={faq}>Where is the population data from?</h2>
+        <p className={para}>Most of the data is from Census yearly intercensal estimates. The only exception is places/cities only for the years 1981–1989, for which intercensal estimates weren't available, so I had to take the Census's decade estimates (for 1980 and 1990) and linearly interpolate between those two. In most cases the approximation shouldn't affect things too much (this isn't <em>that</em> different from how the census creates intercensal estimates) but for extremely small cities that may cause some issues.</p>
+        <h2 className={faq}>Can I play with the data?</h2>
+        <p className={para}>Yes! The data for states, metros, counties, and places/cities are available at:</p>
+        <ul className={para + ' list-disc list-inside ml-2'}>
+          <li><a className={link} href='https://housingdata.app/states_annual.parquet'><code>https://housingdata.app/states_annual.parquet</code></a></li>
+          <li><a className={link} href='https://housingdata.app/metros_annual.parquet'><code>https://housingdata.app/metros_annual.parquet</code></a></li>
+          <li><a className={link} href='https://housingdata.app/counties_annual.parquet'><code>https://housingdata.app/counties_annual.parquet</code></a></li>
+          <li><a className={link} href='https://housingdata.app/places_annual.parquet'><code>https://housingdata.app/places_annual.parquet</code></a></li>
+        </ul>
+        <p className={para}>If you're familiar with <code>pandas</code>, it's as easy as</p>
+        <pre className={para}>
+          import pandas as pd<br />
+          df = pd.read_parquet('https://housingdata.app/states_annual.parquet')
+        </pre>
       </div>
       <GitHubFooter />
     </div>

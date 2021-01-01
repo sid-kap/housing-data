@@ -88,6 +88,8 @@ def load_states():
     for col in NUMERICAL_COLUMNS:
         states_df[col + "_per_capita"] = states_df[col] / states_df["population"]
 
+    states_df.to_parquet(PUBLIC_DIR / "states_annual.parquet")
+
     states_df.to_json(PUBLIC_DIR / "state_annual.json", orient="records")
 
 
@@ -315,7 +317,7 @@ def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
 
     add_alt_names(raw_places_df)
 
-    raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
+    # raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
     place_populations_df = place_population.get_place_population_estimates()
 
@@ -392,7 +394,7 @@ def load_counties(
         metadata_df, on=["fips_state", "fips_county"], how="left"
     )
 
-    counties_df.to_parquet(PUBLIC_DIR / "counties_annual_without_population.parquet")
+    # counties_df.to_parquet(PUBLIC_DIR / "counties_annual_without_population.parquet")
 
     if population_df is None:
         population_df = county_population.get_county_population_estimates()
