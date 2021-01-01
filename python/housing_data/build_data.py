@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from housing_data import building_permits_survey as bps
-from housing_data import place_population, population
+from housing_data import county_population, place_population, population
 from tqdm import tqdm
 
 PUBLIC_DIR = Path("../public")
@@ -53,8 +53,11 @@ def main():
     # Make sure the public/ directory exists
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
-    load_states()
-    raw_places_df = load_places()
+    # load_states()
+    # raw_places_df = load_places()
+    raw_places_df = pd.read_parquet(
+        PUBLIC_DIR / "places_annual_without_population.parquet"
+    )
     counties_df = load_counties(raw_places_df)
     load_metros(counties_df)
 
@@ -244,12 +247,14 @@ def add_population_data(
         )
     )
 
-    for col in NUMERICAL_NON_REPORTED_COLUMNS:
-        final_places_df[col + "_per_capita"] = (
-            final_places_df[col] / final_places_df["population"]
-        )
+    add_per_capita_columns(final_places_df)
 
     return final_places_df
+
+
+def add_per_capita_columns(df):
+    for col in NUMERICAL_NON_REPORTED_COLUMNS:
+        df[col + "_per_capita"] = df[col] / df["population"]
 
 
 def _make_nyc_rows(raw_places_df):
@@ -361,6 +366,17 @@ def load_counties(places_df=None):
         metadata_df, on=["fips_state", "fips_county"], how="left"
     )
 
+    counties_df.to_parquet(PUBLIC_DIR / "counties_annual_without_population.parquet")
+
+    population_df = county_population.get_county_population_estimates()
+    counties_df = counties_df.merge(
+        population_df,
+        how="left",
+        left_on=["fips_county", "fips_state", "year"],
+        right_on=["county_code", "state_code", "year"],
+    )
+    add_per_capita_columns(counties_df)
+
     counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")
 
     (
@@ -395,6 +411,10 @@ def impute_pre_1990_counties(counties_df, places_df):
 
 
 def load_metros(counties_df):
+    counties_df = counties_df.drop(
+        columns=[col for col in counties_df.columns if "_per_capita" in col]
+    )
+
     crosswalk_df = pd.read_csv(
         "http://data.nber.org/cbsa-csa-fips-county-crosswalk/cbsa2fipsxw.csv"
     )
@@ -434,6 +454,7 @@ def load_metros(counties_df):
     aggregate_functions["county_names"] = pd.NamedAgg(
         column="county_name", aggfunc=lambda counties: counties.tolist()
     )
+    aggregate_functions["population"] = pd.NamedAgg(column="population", aggfunc="sum")
 
     cbsas_df = (
         merged_df.drop(columns=["csa_name"] + columns_to_drop)
@@ -454,6 +475,8 @@ def load_metros(counties_df):
     )
 
     metros_df = pd.concat([cbsas_df, csas_df])
+
+    add_per_capita_columns(metros_df)
     metros_df["path"] = metros_df["metro_name"].str.replace("/", "-")
 
     metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
