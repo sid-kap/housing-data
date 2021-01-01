@@ -249,7 +249,7 @@ def load_data(
         df = place_cleanup(df, year)
 
     if scale == "county":
-        county_cleanup(df)
+        df = county_cleanup(df)
 
     return df
 
@@ -441,3 +441,18 @@ def county_cleanup(df):
         + df["3_to_4_units_units"]
         + df["5_plus_units_units"]
     )
+
+    df = df.rename(
+        columns={
+            "5+units rep_bldgs": "5_plus_units_bldgs_reported",
+            "5+units rep_units": "5_plus_units_units_reported",
+            "5+units rep_value": "5_plus_units_value_reported",
+            "34_unit rep_bldgs": "3_to_4_units_bldgs_reported",
+            "34_unit rep_value": "3_to_4_units_value_reported",
+            "34_unit rep_units": "3_to_4_units_units_reported",
+            "5_unit rep_bldgs": "5_plus_units_bldgs_reported",
+            "5_unit rep_units": "5_plus_units_units_reported",
+        }
+    )
+
+    return df

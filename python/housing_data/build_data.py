@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from housing_data import building_permits_survey as bps
-from housing_data import place_population, population
+from housing_data import county_population, place_population, population
 from tqdm import tqdm
 
 PUBLIC_DIR = Path("../public")
@@ -54,8 +54,13 @@ def main():
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
     load_states()
-    raw_places_df = load_places()
-    counties_df = load_counties(raw_places_df)
+
+    print("Loading county population data...")
+    county_population_df = county_population.get_county_population_estimates()
+    county_population_df.to_parquet(PUBLIC_DIR / "county_populations.parquet")
+
+    raw_places_df = load_places(county_population_df)
+    counties_df = load_counties(raw_places_df, county_population_df)
     load_metros(counties_df)
 
 
@@ -244,12 +249,17 @@ def add_population_data(
         )
     )
 
-    for col in NUMERICAL_NON_REPORTED_COLUMNS:
-        final_places_df[col + "_per_capita"] = (
-            final_places_df[col] / final_places_df["population"]
-        )
+    add_per_capita_columns(final_places_df)
 
     return final_places_df
+
+
+def add_per_capita_columns(df):
+    # There are three cities (Sitka, Weeki Wachee, and Carlton Landing) that had population 0 in some years
+    population = df["population"].where(df["population"] != 0, pd.NA)
+
+    for col in NUMERICAL_NON_REPORTED_COLUMNS:
+        df[col + "_per_capita"] = df[col] / population
 
 
 def _make_nyc_rows(raw_places_df):
@@ -290,7 +300,7 @@ def add_alt_names(raw_places_df):
     ] = "Manhattan Bronx Brooklyn Queens Staten Island"
 
 
-def load_places():
+def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
     dfs = []
     for year in range(1980, 2020):
         for region in ["west", "midwest", "south", "northeast"]:
@@ -308,7 +318,21 @@ def load_places():
     raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
     place_populations_df = place_population.get_place_population_estimates()
-    place_populations_df.to_parquet(PUBLIC_DIR / "places_population.parquet")
+
+    if counties_population_df is not None:
+        nyc_counties = [61, 47, 5, 81, 85]
+
+        nyc_counties_df = counties_population_df[
+            counties_population_df["county_code"].isin(nyc_counties)
+            & (counties_population_df["state_code"] == 36)  # NY
+        ].copy()
+        nyc_counties_df["place_or_county_code"] = (
+            nyc_counties_df["county_code"].astype(str) + "_county"
+        )
+
+        place_populations_df = pd.concat([place_populations_df, nyc_counties_df])
+
+    # place_populations_df.to_parquet(PUBLIC_DIR / "places_population.parquet")
 
     places_df = add_population_data(raw_places_df, place_populations_df)
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
@@ -327,7 +351,14 @@ def load_places():
     return raw_places_df
 
 
-def load_counties(places_df=None):
+def load_counties(
+    places_df: pd.DataFrame = None, population_df: pd.DataFrame = None
+) -> pd.DataFrame:
+    """
+    :param population_df: (Optional) pass in a pre-loaded population df, so that we don't have to load it twice.
+        Useful since county population data is used twice (here, and also in `load_places` for NYC boroughs,
+        which show up in places also).
+    """
     dfs = []
 
     # The county data only goes back to 1990 :(
@@ -360,6 +391,19 @@ def load_counties(places_df=None):
     counties_df = counties_df.drop(columns=["county_name"]).merge(
         metadata_df, on=["fips_state", "fips_county"], how="left"
     )
+
+    counties_df.to_parquet(PUBLIC_DIR / "counties_annual_without_population.parquet")
+
+    if population_df is None:
+        population_df = county_population.get_county_population_estimates()
+
+    counties_df = counties_df.merge(
+        population_df,
+        how="left",
+        left_on=["fips_county", "fips_state", "year"],
+        right_on=["county_code", "state_code", "year"],
+    )
+    add_per_capita_columns(counties_df)
 
     counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")
 
@@ -395,6 +439,10 @@ def impute_pre_1990_counties(counties_df, places_df):
 
 
 def load_metros(counties_df):
+    counties_df = counties_df.drop(
+        columns=[col for col in counties_df.columns if "_per_capita" in col]
+    )
+
     crosswalk_df = pd.read_csv(
         "http://data.nber.org/cbsa-csa-fips-county-crosswalk/cbsa2fipsxw.csv"
     )
@@ -434,6 +482,7 @@ def load_metros(counties_df):
     aggregate_functions["county_names"] = pd.NamedAgg(
         column="county_name", aggfunc=lambda counties: counties.tolist()
     )
+    aggregate_functions["population"] = pd.NamedAgg(column="population", aggfunc="sum")
 
     cbsas_df = (
         merged_df.drop(columns=["csa_name"] + columns_to_drop)
@@ -454,6 +503,8 @@ def load_metros(counties_df):
     )
 
     metros_df = pd.concat([cbsas_df, csas_df])
+
+    add_per_capita_columns(metros_df)
     metros_df["path"] = metros_df["metro_name"].str.replace("/", "-")
 
     metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
