@@ -54,8 +54,13 @@ def main():
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
     load_states()
-    raw_places_df = load_places()
-    counties_df = load_counties(raw_places_df)
+
+    print("Loading county population data...")
+    county_population_df = county_population.get_county_population_estimates()
+    county_population_df.to_parquet(PUBLIC_DIR / "county_populations.parquet")
+
+    raw_places_df = load_places(county_population_df)
+    counties_df = load_counties(raw_places_df, county_population_df)
     load_metros(counties_df)
 
 
@@ -250,8 +255,11 @@ def add_population_data(
 
 
 def add_per_capita_columns(df):
+    # There are three cities (Sitka, Weeki Wachee, and Carlton Landing) that had population 0 in some years
+    population = df["population"].where(df["population"] != 0, pd.NA)
+
     for col in NUMERICAL_NON_REPORTED_COLUMNS:
-        df[col + "_per_capita"] = df[col] / df["population"]
+        df[col + "_per_capita"] = df[col] / population
 
 
 def _make_nyc_rows(raw_places_df):
@@ -292,7 +300,7 @@ def add_alt_names(raw_places_df):
     ] = "Manhattan Bronx Brooklyn Queens Staten Island"
 
 
-def load_places():
+def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
     dfs = []
     for year in range(1980, 2020):
         for region in ["west", "midwest", "south", "northeast"]:
@@ -310,7 +318,21 @@ def load_places():
     raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
     place_populations_df = place_population.get_place_population_estimates()
-    place_populations_df.to_parquet(PUBLIC_DIR / "places_population.parquet")
+
+    if counties_population_df is not None:
+        nyc_counties = [61, 47, 5, 81, 85]
+
+        nyc_counties_df = counties_population_df[
+            counties_population_df["county_code"].isin(nyc_counties)
+            & (counties_population_df["state_code"] == 36)  # NY
+        ].copy()
+        nyc_counties_df["place_or_county_code"] = (
+            nyc_counties_df["county_code"].astype(str) + "_county"
+        )
+
+        place_populations_df = pd.concat([place_populations_df, nyc_counties_df])
+
+    # place_populations_df.to_parquet(PUBLIC_DIR / "places_population.parquet")
 
     places_df = add_population_data(raw_places_df, place_populations_df)
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
@@ -329,7 +351,14 @@ def load_places():
     return raw_places_df
 
 
-def load_counties(places_df=None):
+def load_counties(
+    places_df: pd.DataFrame = None, population_df: pd.DataFrame = None
+) -> pd.DataFrame:
+    """
+    :param population_df: (Optional) pass in a pre-loaded population df, so that we don't have to load it twice.
+        Useful since county population data is used twice (here, and also in `load_places` for NYC boroughs,
+        which show up in places also).
+    """
     dfs = []
 
     # The county data only goes back to 1990 :(
@@ -365,7 +394,9 @@ def load_counties(places_df=None):
 
     counties_df.to_parquet(PUBLIC_DIR / "counties_annual_without_population.parquet")
 
-    population_df = county_population.get_county_population_estimates()
+    if population_df is None:
+        population_df = county_population.get_county_population_estimates()
+
     counties_df = counties_df.merge(
         population_df,
         how="left",
