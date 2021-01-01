@@ -334,8 +334,6 @@ def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
 
         place_populations_df = pd.concat([place_populations_df, nyc_counties_df])
 
-    # place_populations_df.to_parquet(PUBLIC_DIR / "places_population.parquet")
-
     places_df = add_population_data(raw_places_df, place_populations_df)
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
@@ -393,8 +391,6 @@ def load_counties(
     counties_df = counties_df.drop(columns=["county_name"]).merge(
         metadata_df, on=["fips_state", "fips_county"], how="left"
     )
-
-    # counties_df.to_parquet(PUBLIC_DIR / "counties_annual_without_population.parquet")
 
     if population_df is None:
         population_df = county_population.get_county_population_estimates()
