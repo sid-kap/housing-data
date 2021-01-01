@@ -53,11 +53,8 @@ def main():
     # Make sure the public/ directory exists
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
-    # load_states()
-    # raw_places_df = load_places()
-    raw_places_df = pd.read_parquet(
-        PUBLIC_DIR / "places_annual_without_population.parquet"
-    )
+    load_states()
+    raw_places_df = load_places()
     counties_df = load_counties(raw_places_df)
     load_metros(counties_df)
 
