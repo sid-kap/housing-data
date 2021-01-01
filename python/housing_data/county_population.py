@@ -144,7 +144,6 @@ def get_county_populations_1990s() -> pd.DataFrame:
         id_vars=["county_code", "state_code"], var_name="year", value_name="population"
     )
 
-    # df['population'] = df['population'].str.replace(',', '').str.strip('\x00\xa0\x9e\x850').astype(float).astype('Int64')
     df["population"] = (
         df["population"]
         .str.replace(",", "")
