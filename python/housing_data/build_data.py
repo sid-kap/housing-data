@@ -66,7 +66,7 @@ def main():
 
 def load_states():
     dfs = []
-    for year in range(1980, 2020):
+    for year in range(1980, 2021):
         data = bps.load_data(
             scale="state", time_scale="annual", year=year, month=None, region=None
         ).assign(year=str(year))
@@ -304,7 +304,7 @@ def add_alt_names(raw_places_df):
 
 def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
     dfs = []
-    for year in range(1980, 2020):
+    for year in range(1980, 2021):
         for region in ["west", "midwest", "south", "northeast"]:
             data = bps.load_data(
                 scale="place", time_scale="annual", year=year, month=None, region=region
@@ -365,7 +365,7 @@ def load_counties(
     # TODO: maybe try to reconstruct the data by summing up the cities?
     # Can verify to see if this is reasonably by comparing on the [1990, 2020] period
     # Note: most cities do have a county code, which seems to stay consistent! So maybe I can just sum up over that.
-    for year in range(1990, 2020):
+    for year in range(1990, 2021):
         df = bps.load_data(
             scale="county", time_scale="annual", year=year, month=None, region=None
         ).assign(year=str(year))
