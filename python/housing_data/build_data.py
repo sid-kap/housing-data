@@ -145,8 +145,8 @@ def make_bps_fips_mapping(
 
     # Fix NYC boroughs: we don't want to use the whole city population as the denominator in per-capite calculations.
     # The boroughs all have place_or_county_code = 51000, state_code = 36, and place_name = the borough name.
-    # The third condition is needed because there is also a "New York City" row which has the same state code and place code,
-    # but which we don't want to change.
+    # The third condition is needed because there is also a "New York City" total row which has the same state and
+    # place code, but which we don't want to change.
     nyc_borough_rows = (
         (mapping["place_or_county_code"] == "51000")
         & (mapping["state_code"] == 36)
