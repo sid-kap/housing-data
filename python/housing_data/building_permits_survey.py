@@ -68,79 +68,65 @@ def slugify(str):
     return str.lower().replace("-", "_").strip()
 
 
-def _fix_column_names(header_row_0, header_row_1, fix_row_lengths=True) -> List[str]:
+def _merge_column_names(header_row_0: List[str], header_row_1: List[str]) -> pd.Series:
+    for i, col in enumerate(header_row_0.copy()):
+        if "unit" in col:
+            header_row_0[i - 1] = col
+            header_row_0[i + 1] = col
+
+    fixed_columns = []
+
+    for val_0, val_1 in zip(header_row_0, header_row_1):
+        if val_0.startswith("Unnamed:"):
+            val_0 = ""
+        if val_1.startswith("Unnamed:"):
+            val_1 = ""
+
+        val_0 = val_0.strip()
+        val_1 = val_1.strip()
+
+        if val_0 in COLUMN_NAMES_MAPPING:
+            val_0, suffix = COLUMN_NAMES_MAPPING[val_0]
+        else:
+            suffix = ""
+
+        # Don't add a space for 'MSA/CMSA'
+        join_str = "" if val_0.endswith("/") else "_"
+
+        col_pieces = [val_0, val_1, suffix]
+        col_pieces = [slugify(p) for p in col_pieces if p.strip()]
+        fixed_columns.append(join_str.join(col_pieces))
+
+    columns = pd.Series(fixed_columns)
+    columns = columns.str.strip()
+
+
+def _fix_column_names(
+    header_row_0: List[str], header_row_1: List[str], fix_row_lengths: bool = True
+) -> pd.Series:
     if fix_row_lengths:
         assert len(header_row_1) == len(header_row_0) + 1
         header_row_0.append("")
 
-    for i, col in enumerate(header_row_0.copy()):
-        if "unit" in col:
-            header_row_0[i - 1] = col
-            header_row_0[i + 1] = col
-
-    fixed_columns = []
-
-    for val_0, val_1 in zip(header_row_0, header_row_1):
-        if val_0.startswith("Unnamed:"):
-            val_0 = ""
-        if val_1.startswith("Unnamed:"):
-            val_1 = ""
-
-        val_0 = val_0.strip()
-        val_1 = val_1.strip()
-
-        if val_0 in COLUMN_NAMES_MAPPING:
-            val_0, suffix = COLUMN_NAMES_MAPPING[val_0]
-        else:
-            suffix = ""
-
-        # Don't add a space for 'MSA/CMSA'
-        join_str = "" if val_0.endswith("/") else "_"
-
-        col_pieces = [val_0, val_1, suffix]
-        col_pieces = [slugify(p) for p in col_pieces if p.strip()]
-        fixed_columns.append(join_str.join(col_pieces))
-
-    columns = pd.Series(fixed_columns)
-    columns = columns.str.strip()
+    columns = _merge_column_names(header_row_0, header_row_1)
 
     return columns
 
 
-def _fix_column_names_old_county_level(header_row_0, header_row_1) -> List[str]:
+def _fix_column_names_old_county_level(
+    header_row_0: List[str], header_row_1: List[str]
+) -> pd.Series:
+    """
+    For the very early county-level data between 1990 and 1998 (county doesn't exist before 1990),
+    the number of columns in the first two rows is inconsistent and needs to be fixed.
+
+    Also, the string representation of the unit count is a little different
+    ("34unit" instead of "3_to_4_units", for example).
+    """
     assert len(header_row_1) == len(header_row_0) - 1
     header_row_0.pop()
 
-    for i, col in enumerate(header_row_0.copy()):
-        if "unit" in col:
-            header_row_0[i - 1] = col
-            header_row_0[i + 1] = col
-
-    fixed_columns = []
-
-    for val_0, val_1 in zip(header_row_0, header_row_1):
-        if val_0.startswith("Unnamed:"):
-            val_0 = ""
-        if val_1.startswith("Unnamed:"):
-            val_1 = ""
-
-        val_0 = val_0.strip()
-        val_1 = val_1.strip()
-
-        if val_0 in COLUMN_NAMES_MAPPING:
-            val_0, suffix = COLUMN_NAMES_MAPPING[val_0]
-        else:
-            suffix = ""
-
-        # Don't add a space for 'MSA/CMSA'
-        join_str = "" if val_0.endswith("/") else "_"
-
-        col_pieces = [val_0, val_1, suffix]
-        col_pieces = [slugify(p) for p in col_pieces if p.strip()]
-        fixed_columns.append(join_str.join(col_pieces))
-
-    columns = pd.Series(fixed_columns)
-    columns = columns.str.strip()
+    columns = _merge_column_names(header_row_0, header_row_1)
 
     # TODO this doesn't handle the reported columns, will fix that later (because I don't care about them anyways)
     replace_strs = {
