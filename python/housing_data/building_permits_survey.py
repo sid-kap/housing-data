@@ -100,6 +100,8 @@ def _merge_column_names(header_row_0: List[str], header_row_1: List[str]) -> pd.
     columns = pd.Series(fixed_columns)
     columns = columns.str.strip()
 
+    return columns
+
 
 def _fix_column_names(
     header_row_0: List[str], header_row_1: List[str], fix_row_lengths: bool = True
@@ -108,9 +110,7 @@ def _fix_column_names(
         assert len(header_row_1) == len(header_row_0) + 1
         header_row_0.append("")
 
-    columns = _merge_column_names(header_row_0, header_row_1)
-
-    return columns
+    return _merge_column_names(header_row_0, header_row_1)
 
 
 def _fix_column_names_old_county_level(
