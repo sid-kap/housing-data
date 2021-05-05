@@ -143,10 +143,19 @@ def make_bps_fips_mapping(
         ~mapping["fips place_code"].isin([0, 99990]), county_code_str + "_county"
     )
 
-    # Fix NYC boroughs - we don't want the population denominator to be the population of the whole city
+    # Fix NYC boroughs: we don't want to use the whole city population as the denominator in per-capite calculations
+    # for the borough plots.
+    # The boroughs all have place_or_county_code = 51000, state_code = 36, and place_name = the borough name.
+    # The third condition below is needed because there is also a "New York City" total row which has the same state and
+    # place code, but which we don't want to change.
+    nyc_borough_rows = (
+        (mapping["place_or_county_code"] == "51000")
+        & (mapping["state_code"] == 36)
+        & (mapping["place_name"] != "New York City")
+    )
+
     mapping["place_or_county_code"] = mapping["place_or_county_code"].where(
-        (mapping["place_or_county_code"] != "51000")
-        | (mapping["place_name"] == "New York City"),  # New York City boroughs
+        ~nyc_borough_rows,
         mapping["place_name"].map(
             {
                 "Manhattan": "61_county",
@@ -188,12 +197,15 @@ def make_place_name_fips_mapping(merged_rows):
     return mapping
 
 
-def add_population_data(
+def add_place_population_data(
     places_df: pd.DataFrame, place_population_df: pd.DataFrame
 ) -> pd.DataFrame:
     bps_fips_mapping = make_bps_fips_mapping(places_df, place_population_df)
 
     places_df = places_df.drop(columns=["fips place_code", "county_code"])
+
+    # BPS changed their 6-digit IDs starting in 1992. So for rows from before 1992, we add '_pre_1992'
+    # to the ID to distinguish them.
     places_df["6_digit_id"] = (
         places_df["6_digit_id"]
         .astype(str)
@@ -334,7 +346,7 @@ def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
 
         place_populations_df = pd.concat([place_populations_df, nyc_counties_df])
 
-    places_df = add_population_data(raw_places_df, place_populations_df)
+    places_df = add_place_population_data(raw_places_df, place_populations_df)
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
     (
