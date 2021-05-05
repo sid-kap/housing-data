@@ -437,8 +437,9 @@ def county_cleanup(df):
 
     # Miami-Dade County was called Dade County until 1997.
     # We need to fix the old rows to use the new name.
-    miami_dade_rows = (df["county_name"] == "Dade County") & (df["state_code"] == 12)
+    miami_dade_rows = (df["county_name"] == "Dade County") & (df["fips_state"] == 12)
     df["county_name"] = df["county_name"].where(~miami_dade_rows, "Miami-Dade County")
+    df["fips_county"] = df["fips_county"].where(~miami_dade_rows, 86)
 
     df["total_units"] = (
         df["1_unit_units"]
