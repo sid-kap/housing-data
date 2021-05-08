@@ -9,7 +9,9 @@ if TYPE_CHECKING:
     from typing import Optional
 
 
-def get_url_text(url: str, data_path: Optional[str]) -> str:
+def get_url_text(
+    url: str, data_path: Optional[str], encoding: Optional[str] = None
+) -> str:
     """
     If data_path is not None, returns the file from that path
     (assuming it's stored there with the same filename as in the URL).
@@ -18,7 +20,7 @@ def get_url_text(url: str, data_path: Optional[str]) -> str:
     """
     if data_path is not None:
         path = Path(data_path, Path(url).name)
-        return path.read_text()
+        return path.read_text(encoding=encoding)
     else:
         return requests.get(url).text
 

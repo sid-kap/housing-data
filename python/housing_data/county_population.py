@@ -126,6 +126,7 @@ def get_county_populations_1990s(data_path: Optional[str] = None) -> pd.DataFram
     table_text = get_url_text(
         "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/counties/totals/99c8_00.txt",
         data_path,
+        encoding="latin_1",
     )
 
     table_text = table_text[: table_text.index("Block 2")].strip()
