@@ -34,7 +34,8 @@ CENSUS_DATA_PATH = "https://www2.census.gov/econ/bps"
 # The same data files saved on GitHub and served using GitHack, a free CDN that delivers data from GitHub repos
 # (RIP RawGit). See https://github.com/sid-kap/housing-data-data for more details.
 # 17a39f4b3e5ab5acfd82727d7a0ae48e044e6626 is the latest commit ID on the main branch.
-GITHUB_DATA_PATH = "https://rawcdn.githack.com/sid-kap/housing-data-data/17a39f4b3e5ab5acfd82727d7a0ae48e044e6626/data"
+# GITHUB_DATA_PATH = "https://rawcdn.githack.com/sid-kap/housing-data-data/17a39f4b3e5ab5acfd82727d7a0ae48e044e6626/data"
+GITHUB_DATA_PATH = "https://cdn.jsdelivr.net/gh/sid-kap/housing-data-data@main/data"
 
 
 def _validate_load_data_inputs(
