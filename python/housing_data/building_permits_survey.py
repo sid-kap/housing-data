@@ -9,7 +9,7 @@ import requests
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import Dict, List, Optional
 
 Region = Literal["west", "midwest", "south", "northeast"]
 
@@ -182,8 +182,8 @@ def load_data(
         }
         filename_part_1 = region_mapping[region]
         extra_path: Optional[str] = quote(
-            region.capitalize() + " Region"
-        )  # type: ignore
+            region.capitalize() + " Region"  # type: ignore
+        )
     elif scale == "county":
         if region is not None:
             raise ValueError("region must be None in since scale = 'county'")
