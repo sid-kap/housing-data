@@ -1,9 +1,13 @@
 from io import StringIO
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import requests
 import us
 from housing_data.data_loading_helpers import get_path, get_url_text
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 
 def get_county_populations_2010s(data_path: Optional[str] = None):
