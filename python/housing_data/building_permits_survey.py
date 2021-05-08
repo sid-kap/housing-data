@@ -179,8 +179,10 @@ def load_data(
             "northeast": "ne",
             "west": "we",
             "midwest": "mw",
-        }[region]
-        extra_path = quote(region.capitalize() + " Region")
+        }[
+            region
+        ]  # type: ignore
+        extra_path = quote(region.capitalize() + " Region")  # type: ignore
     elif scale == "county":
         if region is not None:
             raise ValueError("region must be None in since scale = 'county'")
