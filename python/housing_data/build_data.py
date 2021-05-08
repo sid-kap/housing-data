@@ -61,8 +61,7 @@ def main():
         [
             "git",
             "clone",
-            " https://github.com/sid-kap/housing-data-data",
-            "-o",
+            "https://github.com/sid-kap/housing-data-data",
             str(GITHUB_DATA_REPO_DIR),
         ]
     ).wait()
