@@ -3,11 +3,15 @@ from io import StringIO
 import pandas as pd
 import requests
 import us
+from housing_data.data_loading_helpers import get_path, get_url_text
 
 
-def get_county_populations_2010s():
+def get_county_populations_2010s(data_path: Optional[str] = None):
     df = pd.read_csv(
-        "https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/counties/totals/co-est2019-alldata.csv",
+        get_path(
+            "https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/counties/totals/co-est2019-alldata.csv",
+            data_path,
+        ),
         encoding="latin_1",
     )
 
@@ -23,7 +27,7 @@ def get_county_populations_2010s():
     return df
 
 
-def get_county_populations_2000s() -> pd.DataFrame:
+def get_county_populations_2000s(data_path: Optional[str] = None) -> pd.DataFrame:
     urls = [
         (
             state.fips,
@@ -54,7 +58,11 @@ def get_county_populations_2000s() -> pd.DataFrame:
     dfs = []
     for state_code, url in urls:
         df = pd.read_csv(
-            url, names=col_names, skiprows=4, skipfooter=8, encoding="latin_1"
+            get_path(url, data_path),
+            names=col_names,
+            skiprows=4,
+            skipfooter=8,
+            encoding="latin_1",
         )
         df["state_code"] = state_code
         df["County Name"] = df["County Name"].str.lstrip(".")
@@ -88,9 +96,12 @@ def get_county_populations_2000s() -> pd.DataFrame:
     return df
 
 
-def get_county_fips_crosswalk() -> pd.DataFrame:
+def get_county_fips_crosswalk(data_path: Optional[str] = None) -> pd.DataFrame:
     df = pd.read_excel(
-        "https://www2.census.gov/programs-surveys/popest/geographies/2019/all-geocodes-v2019.xlsx",
+        get_path(
+            "https://www2.census.gov/programs-surveys/popest/geographies/2019/all-geocodes-v2019.xlsx",
+            data_path,
+        ),
         skiprows=4,
     )
     df = df[df["County Code (FIPS)"] != 0]
@@ -105,10 +116,11 @@ def get_county_fips_crosswalk() -> pd.DataFrame:
     return df
 
 
-def get_county_populations_1990s() -> pd.DataFrame:
-    table_text = requests.get(
-        "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/counties/totals/99c8_00.txt"
-    ).text
+def get_county_populations_1990s(data_path: Optional[str] = None) -> pd.DataFrame:
+    table_text = get_url_text(
+        "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/counties/totals/99c8_00.txt",
+        data_path,
+    )
 
     table_text = table_text[: table_text.index("Block 2")].strip()
 
@@ -156,11 +168,14 @@ def get_county_populations_1990s() -> pd.DataFrame:
     return df
 
 
-def get_county_populations_1980s() -> pd.DataFrame:
+def get_county_populations_1980s(data_path: Optional[str] = None) -> pd.DataFrame:
     dfs = []
     for year in range(1980, 1990):
         df = pd.read_excel(
-            f"https://www2.census.gov/programs-surveys/popest/tables/1980-1990/counties/asrh/pe-02-{year}.xls",
+            get_path(
+                f"https://www2.census.gov/programs-surveys/popest/tables/1980-1990/counties/asrh/pe-02-{year}.xls",
+                data_path,
+            ),
             skiprows=5,
         )
         df = df.rename(
@@ -193,15 +208,15 @@ def get_county_populations_1980s() -> pd.DataFrame:
     return combined_df
 
 
-def get_county_population_estimates():
+def get_county_population_estimates(data_path: Optional[str] = None):
     print("Loading 1980 populations...")
-    df_1980s = get_county_populations_1980s()
+    df_1980s = get_county_populations_1980s(data_path)
     print("Loading 1990s populations...")
-    df_1990s = get_county_populations_1990s()
+    df_1990s = get_county_populations_1990s(data_path)
     print("Loading 2000s populations...")
-    df_2000s = get_county_populations_2000s()
+    df_2000s = get_county_populations_2000s(data_path)
     print("Loading 2010s populations...")
-    df_2010s = get_county_populations_2010s()
+    df_2010s = get_county_populations_2010s(data_path)
 
     df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s])
 

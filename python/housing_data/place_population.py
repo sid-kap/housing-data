@@ -6,13 +6,16 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 import requests
+from housing_data.data_loading_helpers import get_path, get_url_text
 
 if TYPE_CHECKING:
     from typing import List
 
 
-def _get_places_crosswalk_df() -> pd.DataFrame:
-    df = pd.read_fwf("https://www2.census.gov/geo/tiger/PREVGENZ/pl/us_places.txt")
+def _get_places_crosswalk_df(data_path: Optional[str] = None) -> pd.DataFrame:
+    df = pd.read_fwf(
+        get_path("https://www2.census.gov/geo/tiger/PREVGENZ/pl/us_places.txt")
+    )
 
     df["State Code"] = df["CENSUS"] // 10000
     df["Place Code"] = df["CENSUS"] % 10000
@@ -78,7 +81,7 @@ def get_unincorporated_places_populations_1980() -> pd.DataFrame:
     return remainder_df
 
 
-def get_place_populations_1980() -> pd.DataFrame:
+def get_place_populations_1980(data_path: Optional[str] = None) -> pd.DataFrame:
     # Assuming this is run from `python/`
     # For the header row, use the nice descriptive names that IPUMS provides rather than the code names
     df = pd.read_csv("../raw_data/nhgis0015_ds104_1980_place_070.csv", header=1)
@@ -97,7 +100,7 @@ def get_place_populations_1980() -> pd.DataFrame:
 
     # In 1980, FIPS wasn't a thing so the census had a separate coding system for places.
     # Luckily, there is a crosswalk available that we can use to convert 1980 Census Place Codes to FIPS.
-    crosswalk_df = _get_places_crosswalk_df()
+    crosswalk_df = _get_places_crosswalk_df(data_path)
     old_len = len(df)
     df = df.merge(
         crosswalk_df.drop(columns=["NAME"]), how="left", on=["Place Code", "State Code"]
@@ -141,7 +144,7 @@ def get_place_populations_1980() -> pd.DataFrame:
     return df
 
 
-def _load_raw_place_populations_1990s() -> pd.DataFrame:
+def _load_raw_place_populations_1990s(data_path: Optional[str] = None) -> pd.DataFrame:
     tables = requests.get(
         "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/"
         "2000-subcounties-evaluation-estimates/sc2000f_us.txt"
@@ -385,7 +388,7 @@ def _get_recent_decades_df(
     )
 
 
-def get_place_populations_2000s() -> pd.DataFrame:
+def get_place_populations_2000s(data_path: Optional[str] = None) -> pd.DataFrame:
     # This one doesn't include consolidated cities, so no need to remove those rows
     return _get_recent_decades_df(
         "https://www2.census.gov/programs-surveys/popest/datasets/2000-2010/intercensal/cities/sub-est00int.csv",
@@ -394,7 +397,7 @@ def get_place_populations_2000s() -> pd.DataFrame:
     )
 
 
-def get_place_populations_2010s() -> pd.DataFrame:
+def get_place_populations_2010s(data_path: Optional[str] = None) -> pd.DataFrame:
     # This one has consolidated cities that need to be removed
     return _get_recent_decades_df(
         "https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/cities/totals/sub-est2019_all.csv",
@@ -403,15 +406,15 @@ def get_place_populations_2010s() -> pd.DataFrame:
     )
 
 
-def get_place_population_estimates():
+def get_place_population_estimates(data_path: Optional[str] = None):
     print("Loading 1980 populations...")
-    df_1980 = get_place_populations_1980()
+    df_1980 = get_place_populations_1980(data_path)
     print("Loading 1990s populations...")
     df_1990s = get_place_populations_1990s()
     print("Loading 2000s populations...")
-    df_2000s = get_place_populations_2000s()
+    df_2000s = get_place_populations_2000s(data_path)
     print("Loading 2010s populations...")
-    df_2010s = get_place_populations_2010s()
+    df_2010s = get_place_populations_2010s(data_path)
 
     # Remove the dupes by only taking [1990, 2000) from the 90s dataset,
     # [2000, 2010) from the 2000s dataset, etc. since these decade ones have both the start and end year.
