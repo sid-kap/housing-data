@@ -29,6 +29,12 @@ Scale = Literal["county", "metro", "place", "state"]
 
 ERROR_STRING = "Sorry, the page you requested has either been moved or is no longer available on this server."
 
+CENSUS_DATA_PATH = "https://www2.census.gov/econ/bps"
+
+# The same data files saved on GitHub and served using GitHack, a free CDN that delivers data from GitHub repos
+# (RIP RawGit). See https://github.com/sid-kap/housing-data-data for more details.
+GITHUB_DATA_PATH = "https://raw.githack.com/sid-kap/housing-data-data/data"
+
 
 def _validate_load_data_inputs(
     scale: Scale,
@@ -146,6 +152,7 @@ def load_data(
     year: int,
     month: Optional[int] = None,
     region: Optional[Region] = None,
+    use_github_data: bool = False,
 ) -> pd.DataFrame:
     """
     :param region: Only required if scale is 'place'
@@ -190,12 +197,17 @@ def load_data(
         filename_part_1 = "st"
         extra_path = None
 
+    if use_github_clone:
+        root_path = GITHUB_DATA_PATH
+    else:
+        root_path = CENSUS_DATA_PATH
+
     scale_path = scale.capitalize()
 
     if extra_path is not None:
-        path = f"https://www2.census.gov/econ/bps/{scale_path}/{extra_path}/{filename_part_1}{filename_part_2}.txt"
+        path = f"{root_path}/{scale_path}/{extra_path}/{filename_part_1}{filename_part_2}.txt"
     else:
-        path = f"https://www2.census.gov/econ/bps/{scale_path}/{filename_part_1}{filename_part_2}.txt"
+        path = f"{root_path}/{scale_path}/{filename_part_1}{filename_part_2}.txt"
 
     print(f"Downloading data from {path}")
 
