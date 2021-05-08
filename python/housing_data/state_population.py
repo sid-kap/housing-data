@@ -150,9 +150,12 @@ def _get_counties_population_table_1990s(year: int, data_path: Optional[str] = N
     return df
 
 
-def get_state_populations_1990s():
+def get_state_populations_1990s(data_path: Optional[str] = None):
     df = pd.concat(
-        [_get_counties_population_table_1990s(year) for year in range(1990, 2000)]
+        [
+            _get_counties_population_table_1990s(year, data_path)
+            for year in range(1990, 2000)
+        ]
     )
 
     return (

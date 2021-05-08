@@ -9,7 +9,7 @@ import requests
 from housing_data.data_loading_helpers import get_path, get_url_text
 
 if TYPE_CHECKING:
-    from typing import List
+    from typing import List, Optional
 
 
 def _get_places_crosswalk_df(data_path: Optional[str] = None) -> pd.DataFrame:

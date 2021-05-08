@@ -1,4 +1,12 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+import requests
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 
 def get_url_text(url: str, data_path: Optional[str]) -> str:
@@ -10,7 +18,7 @@ def get_url_text(url: str, data_path: Optional[str]) -> str:
     """
     if data_path is not None:
         path = Path(data_path, Path(url).name)
-        return Path.read_text()
+        return path.read_text()
     else:
         return requests.get(url).text
 
