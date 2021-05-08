@@ -328,11 +328,9 @@ def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
                 time_scale="annual",
                 year=year,
                 month=None,
-                region=region,
+                region=region,  # type: ignore
                 use_github_data=True,
-            ).assign(
-                year=str(year)
-            )  # type: ignore
+            ).assign(year=str(year))
             dfs.append(data)
 
     raw_places_df = pd.concat(dfs)
