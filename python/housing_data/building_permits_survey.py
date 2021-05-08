@@ -197,7 +197,7 @@ def load_data(
         filename_part_1 = "st"
         extra_path = None
 
-    if use_github_clone:
+    if use_github_data:
         root_path = GITHUB_DATA_PATH
     else:
         root_path = CENSUS_DATA_PATH
