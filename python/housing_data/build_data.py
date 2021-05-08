@@ -68,7 +68,12 @@ def load_states():
     dfs = []
     for year in range(1980, 2020):
         data = bps.load_data(
-            scale="state", time_scale="annual", year=year, month=None, region=None
+            scale="state",
+            time_scale="annual",
+            year=year,
+            month=None,
+            region=None,
+            use_github_data=True,
         ).assign(year=str(year))
         dfs.append(data)
 
@@ -319,7 +324,12 @@ def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
     for year in range(1980, 2020):
         for region in ["west", "midwest", "south", "northeast"]:
             data = bps.load_data(
-                scale="place", time_scale="annual", year=year, month=None, region=region
+                scale="place",
+                time_scale="annual",
+                year=year,
+                month=None,
+                region=region,
+                use_github_data=True,
             ).assign(year=str(year))
             dfs.append(data)
 
@@ -379,7 +389,12 @@ def load_counties(
     # Note: most cities do have a county code, which seems to stay consistent! So maybe I can just sum up over that.
     for year in range(1990, 2020):
         df = bps.load_data(
-            scale="county", time_scale="annual", year=year, month=None, region=None
+            scale="county",
+            time_scale="annual",
+            year=year,
+            month=None,
+            region=None,
+            use_github_data=True,
         ).assign(year=str(year))
         dfs.append(df)
 
