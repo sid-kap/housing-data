@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import StringIO
+from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import quote
 
