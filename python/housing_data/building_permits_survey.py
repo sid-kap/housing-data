@@ -31,12 +31,6 @@ ERROR_STRING = "Sorry, the page you requested has either been moved or is no lon
 
 CENSUS_DATA_PATH = "https://www2.census.gov/econ/bps"
 
-# The same data files saved on GitHub and served using GitHack, a free CDN that delivers data from GitHub repos
-# (RIP RawGit). See https://github.com/sid-kap/housing-data-data for more details.
-# 17a39f4b3e5ab5acfd82727d7a0ae48e044e6626 is the latest commit ID on the main branch.
-# GITHUB_DATA_PATH = "https://rawcdn.githack.com/sid-kap/housing-data-data/17a39f4b3e5ab5acfd82727d7a0ae48e044e6626/data"
-GITHUB_DATA_PATH = "https://cdn.jsdelivr.net/gh/sid-kap/housing-data-data@main/data"
-
 
 def _validate_load_data_inputs(
     scale: Scale,
@@ -154,7 +148,7 @@ def load_data(
     year: int,
     month: Optional[int] = None,
     region: Optional[Region] = None,
-    use_github_data: bool = False,
+    data_path: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     :param region: Only required if scale is 'place'
@@ -202,26 +196,26 @@ def load_data(
         filename_part_1 = "st"
         extra_path = None
 
-    if use_github_data:
-        root_path = GITHUB_DATA_PATH
-    else:
-        root_path = CENSUS_DATA_PATH
-
     scale_path = scale.capitalize()
 
     if extra_path is not None:
-        path = f"{root_path}/{scale_path}/{extra_path}/{filename_part_1}{filename_part_2}.txt"
+        path = f"{scale_path}/{extra_path}/{filename_part_1}{filename_part_2}.txt"
     else:
-        path = f"{root_path}/{scale_path}/{filename_part_1}{filename_part_2}.txt"
+        path = f"{scale_path}/{filename_part_1}{filename_part_2}.txt"
 
-    print(f"Downloading data from {path}")
+    if data_path is not None:
+        full_path = f"{data_path}/{path}"
+        print(f"Reading data from {full_path}")
+        text = Path(full_path).read_text()
+    else:
+        full_path = f"{CENSUS_DATA_PATH}/{path}"
+        print(f"Downloading data from {full_path}")
+        text = requests.get(full_path, stream=True).text
 
     result = (
-        requests.get(path, stream=True)
-        .text
+        text
         # OMG so dumb that they didn't wrap with quotations
-        .replace("Bristol, VA", '"Bristol, VA"')
-        .replace("Bristol, TN", '"Bristol, TN"')
+        .replace("Bristol, VA", '"Bristol, VA"').replace("Bristol, TN", '"Bristol, TN"')
     )
     if ERROR_STRING in result:
         raise ValueError(f"Path {path} is not valid")

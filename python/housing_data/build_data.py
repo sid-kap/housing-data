@@ -1,5 +1,6 @@
 import shutil
 from pathlib import Path
+from subprocess import Popen
 
 import numpy as np
 import pandas as pd
@@ -8,6 +9,8 @@ from housing_data import county_population, place_population, population
 from tqdm import tqdm
 
 PUBLIC_DIR = Path("../public")
+GITHUB_DATA_REPO_DIR = Path("../housing-data-data")
+GITHUB_DATA_DIR = str(Path(GITHUB_DATA_REPO_DIR, "data"))
 
 UNITS_COLUMNS = [
     "1_unit_units",
@@ -53,6 +56,17 @@ def main():
     # Make sure the public/ directory exists
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
+    # Download the source data repo
+    Popen(
+        [
+            "git",
+            "clone",
+            " https://github.com/sid-kap/housing-data-data",
+            "-o",
+            str(GITHUB_DATA_REPO_DIR),
+        ]
+    ).wait()
+
     load_states()
 
     print("Loading county population data...")
@@ -73,7 +87,7 @@ def load_states():
             year=year,
             month=None,
             region=None,
-            use_github_data=True,
+            data_path=GITHUB_DATA_DIR,
         ).assign(year=str(year))
         dfs.append(data)
 
@@ -329,7 +343,7 @@ def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
                 year=year,
                 month=None,
                 region=region,  # type: ignore
-                use_github_data=True,
+                data_path=GITHUB_DATA_DIR,
             ).assign(year=str(year))
             dfs.append(data)
 
@@ -394,7 +408,7 @@ def load_counties(
             year=year,
             month=None,
             region=None,
-            use_github_data=True,
+            data_path=GITHUB_DATA_DIR,
         ).assign(year=str(year))
         dfs.append(df)
 
