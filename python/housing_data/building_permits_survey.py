@@ -175,12 +175,12 @@ def load_data(
         filename_part_2 = f"{year:04d}a"
 
     if scale == "place":
-        region_mapping: Dict[Region, str] = {
+        region_mapping = {
             "south": "so",
             "northeast": "ne",
             "west": "we",
             "midwest": "mw",
-        }
+        }  # type: ignore
         filename_part_1 = region_mapping[region]
         extra_path: Optional[str] = quote(
             region.capitalize() + " Region"  # type: ignore
