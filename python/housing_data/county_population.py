@@ -14,13 +14,13 @@ if TYPE_CHECKING:
 def get_county_populations_2010s(data_path: Optional[str] = None):
     df = pd.read_csv(
         get_path(
-            "https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/counties/totals/co-est2019-alldata.csv",
+            "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/counties/totals/co-est2020-alldata.csv",
             data_path,
         ),
         encoding="latin_1",
     )
 
-    rename_cols = {"POPESTIMATE" + str(year): str(year) for year in range(2010, 2020)}
+    rename_cols = {"POPESTIMATE" + str(year): str(year) for year in range(2010, 2021)}
     rename_cols.update({"STATE": "state_code", "COUNTY": "county_code"})
 
     df = df[rename_cols.keys()].rename(columns=rename_cols)
