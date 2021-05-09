@@ -419,6 +419,11 @@ def place_cleanup(df, year):
         + df["5_plus_units_units"]
     )
 
+    # Miami-Dade County was called Dade County until 1997.
+    # We need to fix the old rows to use the new FIPS code (change 25 to 86).
+    dade_county_rows = (df["county_code"] == 25) & (df["state_code"] == 12)
+    df.loc[dade_county_rows, "county_code"] = 86
+
     return df
 
 
@@ -426,10 +431,10 @@ def county_cleanup(df):
     df["county_name"] = df["county_name"].str.strip()
 
     # Miami-Dade County was called Dade County until 1997.
-    # We need to fix the old rows to use the new name.
-    miami_dade_rows = (df["county_name"] == "Dade County") & (df["fips_state"] == 12)
-    df["county_name"] = df["county_name"].where(~miami_dade_rows, "Miami-Dade County")
-    df["fips_county"] = df["fips_county"].where(~miami_dade_rows, 86)
+    # We need to fix the old rows to use the new name and FIPS code.
+    dade_county_rows = (df["fips_county"] == 25) & (df["fips_state"] == 12)
+    df.loc[dade_county_rows, "county_name"] = "Miami-Dade County"
+    df.loc[dade_county_rows, "fips_county"] = 86
 
     df["total_units"] = (
         df["1_unit_units"]

@@ -81,17 +81,17 @@ def main():
             ]
         ).wait()
 
-    load_states(args.use_data_repo)
+    # load_states(args.use_data_repo)
 
     print("Loading county population data...")
     county_population_df = county_population.get_county_population_estimates(
         data_path=COUNTY_POPULATION_DIR if args.use_data_repo else None
     )
-    county_population_df.to_parquet(PUBLIC_DIR / "county_populations.parquet")
+    # county_population_df.to_parquet(PUBLIC_DIR / "county_populations.parquet")
 
     raw_places_df = load_places(args.use_data_repo, county_population_df)
     counties_df = load_counties(args.use_data_repo, raw_places_df, county_population_df)
-    load_metros(counties_df, args.use_data_repo)
+    # load_metros(counties_df, args.use_data_repo)
 
 
 def load_states(use_data_repo: bool):
@@ -239,7 +239,10 @@ def add_place_population_data(
 ) -> pd.DataFrame:
     bps_fips_mapping = make_bps_fips_mapping(places_df, place_population_df)
 
-    places_df = places_df.drop(columns=["fips place_code", "county_code"])
+    # places_df = places_df.drop(columns=["fips place_code", "county_code"])
+    places_df = places_df.rename(
+        columns={"fips place_code": "raw_fips_place", "county_code": "raw_fips_county"}
+    )
 
     # BPS changed their 6-digit IDs starting in 1992. So for rows from before 1992, we add '_pre_1992'
     # to the ID to distinguish them.
@@ -373,7 +376,7 @@ def load_places(
 
     add_alt_names(raw_places_df)
 
-    # raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
+    raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
     place_populations_df = place_population.get_place_population_estimates(
         data_path=PLACE_POPULATION_DIR if use_data_repo else None
@@ -395,16 +398,16 @@ def load_places(
     places_df = add_place_population_data(raw_places_df, place_populations_df)
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
-    (
-        places_df[["place_name", "state_code", "alt_name"]]
-        .drop_duplicates()
-        .sort_values("place_name")
-        .to_json(PUBLIC_DIR / "places_list.json", orient="records")
-    )
+    # (
+    #     places_df[["place_name", "state_code", "alt_name"]]
+    #     .drop_duplicates()
+    #     .sort_values("place_name")
+    #     .to_json(PUBLIC_DIR / "places_list.json", orient="records")
+    # )
 
-    write_to_json_directory(
-        places_df, Path(PUBLIC_DIR, "places_data"), ["place_name", "state_code"]
-    )
+    # write_to_json_directory(
+    #     places_df, Path(PUBLIC_DIR, "places_data"), ["place_name", "state_code"]
+    # )
 
     return raw_places_df
 
@@ -488,13 +491,13 @@ def load_counties(
 
 
 def impute_pre_1990_counties(counties_df, places_df):
-    summed_places_df = (
-        places_df.groupby(["county_code", "state_code", "year"])[NUMERICAL_COLUMNS]
+    imputed_counties_df = (
+        places_df.loc[lambda x: x["year"] < "1990"]
+        .groupby(["county_code", "state_code", "year"])[NUMERICAL_COLUMNS]
         .sum()
         .reset_index()
     )
 
-    imputed_counties_df = summed_places_df[summed_places_df["year"] < "1990"].copy()
     imputed_counties_df["imputed"] = True
     imputed_counties_df = imputed_counties_df.rename(
         columns={"county_code": "fips_county", "state_code": "fips_state"}
