@@ -1,13 +1,19 @@
 import shutil
 from pathlib import Path
+from subprocess import Popen
 
 import numpy as np
 import pandas as pd
 from housing_data import building_permits_survey as bps
-from housing_data import county_population, place_population, population
+from housing_data import county_population, place_population, state_population
 from tqdm import tqdm
 
 PUBLIC_DIR = Path("../public")
+GITHUB_DATA_REPO_DIR = Path("../housing-data-data")
+BPS_DIR = str(Path(GITHUB_DATA_REPO_DIR, "data", "bps"))
+STATE_POPULATION_DIR = str(Path(GITHUB_DATA_REPO_DIR, "data", "population", "state"))
+COUNTY_POPULATION_DIR = str(Path(GITHUB_DATA_REPO_DIR, "data", "population", "county"))
+PLACE_POPULATION_DIR = str(Path(GITHUB_DATA_REPO_DIR, "data", "population", "place"))
 
 UNITS_COLUMNS = [
     "1_unit_units",
@@ -53,10 +59,22 @@ def main():
     # Make sure the public/ directory exists
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
+    # Download the source data repo
+    Popen(
+        [
+            "git",
+            "clone",
+            "https://github.com/sid-kap/housing-data-data",
+            str(GITHUB_DATA_REPO_DIR),
+        ]
+    ).wait()
+
     load_states()
 
     print("Loading county population data...")
-    county_population_df = county_population.get_county_population_estimates()
+    county_population_df = county_population.get_county_population_estimates(
+        data_path=COUNTY_POPULATION_DIR
+    )
     county_population_df.to_parquet(PUBLIC_DIR / "county_populations.parquet")
 
     raw_places_df = load_places(county_population_df)
@@ -68,14 +86,21 @@ def load_states():
     dfs = []
     for year in range(1980, 2020):
         data = bps.load_data(
-            scale="state", time_scale="annual", year=year, month=None, region=None
+            scale="state",
+            time_scale="annual",
+            year=year,
+            month=None,
+            region=None,
+            data_path=BPS_DIR,
         ).assign(year=str(year))
         dfs.append(data)
 
     states_df = pd.concat(dfs)
     states_df = states_df.astype({"survey_date": str})
 
-    population_df = population.get_state_population_estimates()
+    population_df = state_population.get_state_population_estimates(
+        STATE_POPULATION_DIR
+    )
     population_df.to_parquet(PUBLIC_DIR / "population_df.parquet")
 
     states_df = states_df.merge(
@@ -319,7 +344,12 @@ def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
     for year in range(1980, 2020):
         for region in ["west", "midwest", "south", "northeast"]:
             data = bps.load_data(
-                scale="place", time_scale="annual", year=year, month=None, region=region
+                scale="place",
+                time_scale="annual",
+                year=year,
+                month=None,
+                region=region,  # type: ignore
+                data_path=BPS_DIR,
             ).assign(year=str(year))
             dfs.append(data)
 
@@ -331,7 +361,9 @@ def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
 
     # raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
-    place_populations_df = place_population.get_place_population_estimates()
+    place_populations_df = place_population.get_place_population_estimates(
+        data_path=PLACE_POPULATION_DIR
+    )
 
     if counties_population_df is not None:
         nyc_counties = [61, 47, 5, 81, 85]
@@ -379,7 +411,12 @@ def load_counties(
     # Note: most cities do have a county code, which seems to stay consistent! So maybe I can just sum up over that.
     for year in range(1990, 2020):
         df = bps.load_data(
-            scale="county", time_scale="annual", year=year, month=None, region=None
+            scale="county",
+            time_scale="annual",
+            year=year,
+            month=None,
+            region=None,
+            data_path=BPS_DIR,
         ).assign(year=str(year))
         dfs.append(df)
 
@@ -405,7 +442,9 @@ def load_counties(
     )
 
     if population_df is None:
-        population_df = county_population.get_county_population_estimates()
+        population_df = county_population.get_county_population_estimates(
+            COUNTY_POPULATION_DIR
+        )
 
     counties_df = counties_df.merge(
         population_df,
