@@ -69,8 +69,6 @@ def main():
         ]
     ).wait()
 
-    Popen(["ls", "-ltra", str(GITHUB_DATA_REPO_DIR)]).wait()
-
     load_states()
 
     print("Loading county population data...")
