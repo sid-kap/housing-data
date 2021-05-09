@@ -3,10 +3,9 @@ from __future__ import annotations
 from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING
-from urllib.parse import quote
 
 import pandas as pd
-import requests
+from housing_data.data_loading_helpers import get_url_text
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
@@ -178,9 +177,6 @@ def load_data(
         }  # type: ignore
         filename_part_1 = region_mapping[region]  # type: ignore
         extra_path: Optional[str] = region.capitalize() + " Region"  # type: ignore
-        if data_path is None:
-            # Hacky but w/e. When downloaded, the path should be (e.g.) 'West Region', not 'West%20Region'.
-            extra_path = quote(extra_path)  # type: ignore
     elif scale == "county":
         if region is not None:
             raise ValueError("region must be None in since scale = 'county'")
@@ -205,14 +201,7 @@ def load_data(
     else:
         path = f"{scale_path}/{filename_part_1}{filename_part_2}.txt"
 
-    if data_path is not None:
-        full_path = f"{data_path}/{path}"
-        print(f"Reading data from {full_path}")
-        text = Path(full_path).read_text()
-    else:
-        full_path = f"{CENSUS_DATA_PATH}/{path}"
-        print(f"Downloading data from {full_path}")
-        text = requests.get(full_path, stream=True).text
+    text = get_url_text(f"{CENSUS_DATA_PATH}/{path}", data_path, encode_url=True)
 
     result = (
         text
