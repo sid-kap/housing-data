@@ -65,7 +65,7 @@ def main():
         action="store_true",
     )
     args = parser.parse_args()
-    print(args)
+    print("Args:", args)
 
     # Make sure the public/ directory exists
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
