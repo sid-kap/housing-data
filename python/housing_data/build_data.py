@@ -60,7 +60,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--use-data-repo",
-        help="Use data from https://github.com/sid-kap/housing-data-data rather than pulling directly from the Census website.",
+        help="Use data from https://github.com/sid-kap/housing-data-data "
+        "rather than pulling directly from the Census website.",
         action="store_true",
     )
     args = parser.parse_args()
