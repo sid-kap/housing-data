@@ -81,17 +81,17 @@ def main():
             ]
         ).wait()
 
-    # load_states(args.use_data_repo)
+    load_states(args.use_data_repo)
 
     print("Loading county population data...")
     county_population_df = county_population.get_county_population_estimates(
         data_path=COUNTY_POPULATION_DIR if args.use_data_repo else None
     )
-    # county_population_df.to_parquet(PUBLIC_DIR / "county_populations.parquet")
+    county_population_df.to_parquet(PUBLIC_DIR / "county_populations.parquet")
 
     raw_places_df = load_places(args.use_data_repo, county_population_df)
     counties_df = load_counties(args.use_data_repo, raw_places_df, county_population_df)
-    # load_metros(counties_df, args.use_data_repo)
+    load_metros(counties_df, args.use_data_repo)
 
 
 def load_states(use_data_repo: bool):
@@ -398,16 +398,16 @@ def load_places(
     places_df = add_place_population_data(raw_places_df, place_populations_df)
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
-    # (
-    #     places_df[["place_name", "state_code", "alt_name"]]
-    #     .drop_duplicates()
-    #     .sort_values("place_name")
-    #     .to_json(PUBLIC_DIR / "places_list.json", orient="records")
-    # )
+    (
+        places_df[["place_name", "state_code", "alt_name"]]
+        .drop_duplicates()
+        .sort_values("place_name")
+        .to_json(PUBLIC_DIR / "places_list.json", orient="records")
+    )
 
-    # write_to_json_directory(
-    #     places_df, Path(PUBLIC_DIR, "places_data"), ["place_name", "state_code"]
-    # )
+    write_to_json_directory(
+        places_df, Path(PUBLIC_DIR, "places_data"), ["place_name", "state_code"]
+    )
 
     return raw_places_df
 
