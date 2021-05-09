@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from io import StringIO
 from typing import TYPE_CHECKING
+from urllib.parse import quote
 
 import pandas as pd
 from housing_data.data_loading_helpers import get_url_text
@@ -200,7 +201,9 @@ def load_data(
     else:
         path = f"{scale_path}/{filename_part_1}{filename_part_2}.txt"
 
-    text = get_url_text((CENSUS_DATA_PATH, path), data_path, encode_url=True)
+    if data_path is None:
+        path = quote(path)
+    text = get_url_text((CENSUS_DATA_PATH, path), data_path)
 
     result = (
         text

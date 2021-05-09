@@ -1,3 +1,4 @@
+import argparse
 import shutil
 from pathlib import Path
 from subprocess import Popen
@@ -56,42 +57,53 @@ NUMERICAL_NON_REPORTED_COLUMNS = [
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--use-data-repo",
+        help="Use data from https://github.com/sid-kap/housing-data-data "
+        "rather than pulling directly from the Census website.",
+        action="store_true",
+    )
+    args = parser.parse_args()
+    print(args)
+
     # Make sure the public/ directory exists
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Download the source data repo
-    Popen(
-        [
-            "git",
-            "clone",
-            "https://github.com/sid-kap/housing-data-data",
-            str(GITHUB_DATA_REPO_DIR),
-        ]
-    ).wait()
+    if args.use_data_repo:
+        # Download the source data repo
+        Popen(
+            [
+                "git",
+                "clone",
+                "https://github.com/sid-kap/housing-data-data",
+                str(GITHUB_DATA_REPO_DIR),
+            ]
+        ).wait()
 
-    load_states()
+    load_states(args.use_data_repo)
 
     print("Loading county population data...")
     county_population_df = county_population.get_county_population_estimates(
-        data_path=COUNTY_POPULATION_DIR
+        data_path=COUNTY_POPULATION_DIR if args.use_data_repo else None
     )
     county_population_df.to_parquet(PUBLIC_DIR / "county_populations.parquet")
 
-    raw_places_df = load_places(county_population_df)
-    counties_df = load_counties(raw_places_df, county_population_df)
-    load_metros(counties_df)
+    raw_places_df = load_places(args.use_data_repo, county_population_df)
+    counties_df = load_counties(args.use_data_repo, raw_places_df, county_population_df)
+    load_metros(counties_df, args.use_data_repo)
 
 
-def load_states():
+def load_states(use_data_repo: bool):
     dfs = []
-    for year in range(1980, 2020):
+    for year in range(1980, 2021):
         data = bps.load_data(
             scale="state",
             time_scale="annual",
             year=year,
             month=None,
             region=None,
-            data_path=BPS_DIR,
+            data_path=BPS_DIR if use_data_repo else None,
         ).assign(year=str(year))
         dfs.append(data)
 
@@ -99,7 +111,7 @@ def load_states():
     states_df = states_df.astype({"survey_date": str})
 
     population_df = state_population.get_state_population_estimates(
-        STATE_POPULATION_DIR
+        STATE_POPULATION_DIR if use_data_repo else None
     )
     population_df.to_parquet(PUBLIC_DIR / "population_df.parquet")
 
@@ -339,9 +351,11 @@ def add_alt_names(raw_places_df):
     ] = "Manhattan Bronx Brooklyn Queens Staten Island"
 
 
-def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
+def load_places(
+    use_data_repo: bool, counties_population_df: pd.DataFrame = None
+) -> pd.DataFrame:
     dfs = []
-    for year in range(1980, 2020):
+    for year in range(1980, 2021):
         for region in ["west", "midwest", "south", "northeast"]:
             data = bps.load_data(
                 scale="place",
@@ -349,7 +363,7 @@ def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
                 year=year,
                 month=None,
                 region=region,  # type: ignore
-                data_path=BPS_DIR,
+                data_path=BPS_DIR if use_data_repo else None,
             ).assign(year=str(year))
             dfs.append(data)
 
@@ -362,7 +376,7 @@ def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
     # raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
     place_populations_df = place_population.get_place_population_estimates(
-        data_path=PLACE_POPULATION_DIR
+        data_path=PLACE_POPULATION_DIR if use_data_repo else None
     )
 
     if counties_population_df is not None:
@@ -396,7 +410,9 @@ def load_places(counties_population_df: pd.DataFrame = None) -> pd.DataFrame:
 
 
 def load_counties(
-    places_df: pd.DataFrame = None, population_df: pd.DataFrame = None
+    use_data_repo: bool,
+    places_df: pd.DataFrame = None,
+    population_df: pd.DataFrame = None,
 ) -> pd.DataFrame:
     """
     :param population_df: (Optional) pass in a pre-loaded population df, so that we don't have to load it twice.
@@ -409,14 +425,14 @@ def load_counties(
     # TODO: maybe try to reconstruct the data by summing up the cities?
     # Can verify to see if this is reasonably by comparing on the [1990, 2020] period
     # Note: most cities do have a county code, which seems to stay consistent! So maybe I can just sum up over that.
-    for year in range(1990, 2020):
+    for year in range(1990, 2021):
         df = bps.load_data(
             scale="county",
             time_scale="annual",
             year=year,
             month=None,
             region=None,
-            data_path=BPS_DIR,
+            data_path=BPS_DIR if use_data_repo else None,
         ).assign(year=str(year))
         dfs.append(df)
 
@@ -443,7 +459,7 @@ def load_counties(
 
     if population_df is None:
         population_df = county_population.get_county_population_estimates(
-            COUNTY_POPULATION_DIR
+            COUNTY_POPULATION_DIR if use_data_repo else None
         )
 
     counties_df = counties_df.merge(
@@ -487,7 +503,7 @@ def impute_pre_1990_counties(counties_df, places_df):
     return imputed_counties_df
 
 
-def load_metros(counties_df):
+def load_metros(counties_df: pd.DataFrame, use_data_repo: bool) -> None:
     counties_df = counties_df.drop(
         columns=[col for col in counties_df.columns if "_per_capita" in col]
     )

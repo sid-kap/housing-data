@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
-from urllib.parse import quote
 
 import requests
 
@@ -15,7 +14,6 @@ def get_url_text(
     url: Union[str, Tuple[str, str]],
     data_path: Optional[str],
     encoding: Optional[str] = None,
-    encode_url: bool = False,
 ) -> str:
     """
     If data_path is not None, returns the file from that path
@@ -38,8 +36,6 @@ def get_url_text(
         return path.read_text(encoding=encoding)
     else:
         web_url = os.path.join(web_prefix, common_path)
-        if encode_url:
-            web_url = quote(web_url)
         return requests.get(web_url).text
 
 
