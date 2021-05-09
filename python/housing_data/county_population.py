@@ -211,6 +211,10 @@ def get_county_populations_1980s(data_path: Optional[str] = None) -> pd.DataFram
 
     combined_df = combined_df.drop(columns=["combined_fips"])
 
+    # Fix fips code for Miami-Dade County, since it changed
+    dade_county = (combined_df["state_code"] == 12) & (combined_df["county_code"] == 25)
+    combined_df.loc[dade_county, "county_code"] = 86
+
     return combined_df
 
 
