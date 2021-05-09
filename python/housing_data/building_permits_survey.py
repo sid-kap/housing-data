@@ -200,7 +200,7 @@ def load_data(
     else:
         path = f"{scale_path}/{filename_part_1}{filename_part_2}.txt"
 
-    text = get_url_text(f"{CENSUS_DATA_PATH}/{path}", data_path, encode_url=True)
+    text = get_url_text((CENSUS_DATA_PATH, path), data_path, encode_url=True)
 
     result = (
         text
