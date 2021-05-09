@@ -8,7 +8,7 @@ from urllib.parse import quote
 import requests
 
 if TYPE_CHECKING:
-    from typing import Optional, Tuple
+    from typing import Optional, Tuple, Union
 
 
 def get_url_text(
