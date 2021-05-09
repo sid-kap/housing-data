@@ -206,7 +206,7 @@ def get_state_populations_2000s(data_path: Optional[str] = None) -> pd.DataFrame
 
 
 def get_state_populations_2010_through_2019(
-    data_path: Optional[str] = None
+    data_path: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     This function is not used anymore
