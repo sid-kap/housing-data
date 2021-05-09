@@ -14,8 +14,9 @@ if TYPE_CHECKING:
 
 def _get_places_crosswalk_df(data_path: Optional[str] = None) -> pd.DataFrame:
     df = pd.read_fwf(
-        get_path("https://www2.census.gov/geo/tiger/PREVGENZ/pl/us_places.txt"),
-        data_path,
+        get_path(
+            "https://www2.census.gov/geo/tiger/PREVGENZ/pl/us_places.txt", data_path
+        )
     )
 
     df["State Code"] = df["CENSUS"] // 10000

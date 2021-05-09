@@ -4,7 +4,6 @@ from io import StringIO
 from typing import TYPE_CHECKING
 
 import pandas as pd
-import requests
 import us
 from housing_data.data_loading_helpers import get_path, get_url_text
 
