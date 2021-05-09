@@ -239,7 +239,7 @@ def add_place_population_data(
 ) -> pd.DataFrame:
     bps_fips_mapping = make_bps_fips_mapping(places_df, place_population_df)
 
-    # places_df = places_df.drop(columns=["fips place_code", "county_code"])
+    # These aren't used, but good to keep just in case I guess.
     places_df = places_df.rename(
         columns={"fips place_code": "raw_fips_place", "county_code": "raw_fips_county"}
     )
