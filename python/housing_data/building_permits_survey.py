@@ -178,7 +178,7 @@ def load_data(
         }  # type: ignore
         filename_part_1 = region_mapping[region]  # type: ignore
         extra_path: Optional[str] = region.capitalize() + " Region"  # type: ignore
-        if data_path is not None:
+        if data_path is None:
             # Hacky but w/e. When downloaded, the path should be (e.g.) 'West Region', not 'West%20Region'.
             extra_path = quote(extra_path)
     elif scale == "county":
