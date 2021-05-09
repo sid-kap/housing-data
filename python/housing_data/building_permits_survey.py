@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from io import StringIO
 from typing import TYPE_CHECKING
-from urllib.parse import quote
 
 import pandas as pd
-import requests
+from housing_data.data_loading_helpers import get_url_text
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
@@ -28,6 +27,8 @@ TimeScale = Literal["monthly_current", "monthly_year_to_date", "annual"]
 Scale = Literal["county", "metro", "place", "state"]
 
 ERROR_STRING = "Sorry, the page you requested has either been moved or is no longer available on this server."
+
+CENSUS_DATA_PATH = "https://www2.census.gov/econ/bps"
 
 
 def _validate_load_data_inputs(
@@ -146,6 +147,7 @@ def load_data(
     year: int,
     month: Optional[int] = None,
     region: Optional[Region] = None,
+    data_path: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     :param region: Only required if scale is 'place'
@@ -166,13 +168,14 @@ def load_data(
         filename_part_2 = f"{year:04d}a"
 
     if scale == "place":
-        filename_part_1 = {
+        region_mapping = {
             "south": "so",
             "northeast": "ne",
             "west": "we",
             "midwest": "mw",
-        }[region]
-        extra_path = quote(region.capitalize() + " Region")
+        }  # type: ignore
+        filename_part_1 = region_mapping[region]  # type: ignore
+        extra_path: Optional[str] = region.capitalize() + " Region"  # type: ignore
     elif scale == "county":
         if region is not None:
             raise ValueError("region must be None in since scale = 'county'")
@@ -193,18 +196,16 @@ def load_data(
     scale_path = scale.capitalize()
 
     if extra_path is not None:
-        path = f"https://www2.census.gov/econ/bps/{scale_path}/{extra_path}/{filename_part_1}{filename_part_2}.txt"
+        path = f"{scale_path}/{extra_path}/{filename_part_1}{filename_part_2}.txt"
     else:
-        path = f"https://www2.census.gov/econ/bps/{scale_path}/{filename_part_1}{filename_part_2}.txt"
+        path = f"{scale_path}/{filename_part_1}{filename_part_2}.txt"
 
-    print(f"Downloading data from {path}")
+    text = get_url_text((CENSUS_DATA_PATH, path), data_path, encode_url=True)
 
     result = (
-        requests.get(path, stream=True)
-        .text
+        text
         # OMG so dumb that they didn't wrap with quotations
-        .replace("Bristol, VA", '"Bristol, VA"')
-        .replace("Bristol, TN", '"Bristol, TN"')
+        .replace("Bristol, VA", '"Bristol, VA"').replace("Bristol, TN", '"Bristol, TN"')
     )
     if ERROR_STRING in result:
         raise ValueError(f"Path {path} is not valid")
