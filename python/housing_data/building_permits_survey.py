@@ -10,7 +10,7 @@ import requests
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Optional
+    from typing import List, Optional
 
 Region = Literal["west", "midwest", "south", "northeast"]
 
@@ -176,7 +176,7 @@ def load_data(
             "west": "we",
             "midwest": "mw",
         }  # type: ignore
-        filename_part_1 = region_mapping[region]
+        filename_part_1 = region_mapping[region]  # type: ignore
         extra_path: Optional[str] = quote(
             region.capitalize() + " Region"  # type: ignore
         )
