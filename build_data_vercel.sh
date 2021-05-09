@@ -4,4 +4,4 @@ pip3 install --user poetry
 cd python || exit
 export PATH=$PATH:$HOME/.local/bin
 poetry install --no-dev
-poetry run build_data
+poetry run build_data --use-data-repo

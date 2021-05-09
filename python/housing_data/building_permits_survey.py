@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from urllib.parse import quote
 
 import pandas as pd
-import requests
+from housing_data.data_loading_helpers import get_url_text
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
@@ -28,6 +28,8 @@ TimeScale = Literal["monthly_current", "monthly_year_to_date", "annual"]
 Scale = Literal["county", "metro", "place", "state"]
 
 ERROR_STRING = "Sorry, the page you requested has either been moved or is no longer available on this server."
+
+CENSUS_DATA_PATH = "https://www2.census.gov/econ/bps"
 
 
 def _validate_load_data_inputs(
@@ -68,11 +70,7 @@ def slugify(str):
     return str.lower().replace("-", "_").strip()
 
 
-def _fix_column_names(header_row_0, header_row_1, fix_row_lengths=True) -> List[str]:
-    if fix_row_lengths:
-        assert len(header_row_1) == len(header_row_0) + 1
-        header_row_0.append("")
-
+def _merge_column_names(header_row_0: List[str], header_row_1: List[str]) -> pd.Series:
     for i, col in enumerate(header_row_0.copy()):
         if "unit" in col:
             header_row_0[i - 1] = col
@@ -107,40 +105,30 @@ def _fix_column_names(header_row_0, header_row_1, fix_row_lengths=True) -> List[
     return columns
 
 
-def _fix_column_names_old_county_level(header_row_0, header_row_1) -> List[str]:
+def _fix_column_names(
+    header_row_0: List[str], header_row_1: List[str], fix_row_lengths: bool = True
+) -> pd.Series:
+    if fix_row_lengths:
+        assert len(header_row_1) == len(header_row_0) + 1
+        header_row_0.append("")
+
+    return _merge_column_names(header_row_0, header_row_1)
+
+
+def _fix_column_names_old_county_level(
+    header_row_0: List[str], header_row_1: List[str]
+) -> pd.Series:
+    """
+    For the very early county-level data between 1990 and 1998 (county doesn't exist before 1990),
+    the number of columns in the first two rows is inconsistent and needs to be fixed.
+
+    Also, the string representation of the unit count is a little different
+    ("34unit" instead of "3_to_4_units", for example).
+    """
     assert len(header_row_1) == len(header_row_0) - 1
     header_row_0.pop()
 
-    for i, col in enumerate(header_row_0.copy()):
-        if "unit" in col:
-            header_row_0[i - 1] = col
-            header_row_0[i + 1] = col
-
-    fixed_columns = []
-
-    for val_0, val_1 in zip(header_row_0, header_row_1):
-        if val_0.startswith("Unnamed:"):
-            val_0 = ""
-        if val_1.startswith("Unnamed:"):
-            val_1 = ""
-
-        val_0 = val_0.strip()
-        val_1 = val_1.strip()
-
-        if val_0 in COLUMN_NAMES_MAPPING:
-            val_0, suffix = COLUMN_NAMES_MAPPING[val_0]
-        else:
-            suffix = ""
-
-        # Don't add a space for 'MSA/CMSA'
-        join_str = "" if val_0.endswith("/") else "_"
-
-        col_pieces = [val_0, val_1, suffix]
-        col_pieces = [slugify(p) for p in col_pieces if p.strip()]
-        fixed_columns.append(join_str.join(col_pieces))
-
-    columns = pd.Series(fixed_columns)
-    columns = columns.str.strip()
+    columns = _merge_column_names(header_row_0, header_row_1)
 
     # TODO this doesn't handle the reported columns, will fix that later (because I don't care about them anyways)
     replace_strs = {
@@ -160,6 +148,7 @@ def load_data(
     year: int,
     month: Optional[int] = None,
     region: Optional[Region] = None,
+    data_path: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     :param region: Only required if scale is 'place'
@@ -180,13 +169,14 @@ def load_data(
         filename_part_2 = f"{year:04d}a"
 
     if scale == "place":
-        filename_part_1 = {
+        region_mapping = {
             "south": "so",
             "northeast": "ne",
             "west": "we",
             "midwest": "mw",
-        }[region]
-        extra_path = quote(region.capitalize() + " Region")
+        }  # type: ignore
+        filename_part_1 = region_mapping[region]  # type: ignore
+        extra_path: Optional[str] = region.capitalize() + " Region"  # type: ignore
     elif scale == "county":
         if region is not None:
             raise ValueError("region must be None in since scale = 'county'")
@@ -207,18 +197,18 @@ def load_data(
     scale_path = scale.capitalize()
 
     if extra_path is not None:
-        path = f"https://www2.census.gov/econ/bps/{scale_path}/{extra_path}/{filename_part_1}{filename_part_2}.txt"
+        path = f"{scale_path}/{extra_path}/{filename_part_1}{filename_part_2}.txt"
     else:
-        path = f"https://www2.census.gov/econ/bps/{scale_path}/{filename_part_1}{filename_part_2}.txt"
+        path = f"{scale_path}/{filename_part_1}{filename_part_2}.txt"
 
-    print(f"Downloading data from {path}")
+    if data_path is None:
+        path = quote(path)
+    text = get_url_text((CENSUS_DATA_PATH, path), data_path)
 
     result = (
-        requests.get(path, stream=True)
-        .text
+        text
         # OMG so dumb that they didn't wrap with quotations
-        .replace("Bristol, VA", '"Bristol, VA"')
-        .replace("Bristol, TN", '"Bristol, TN"')
+        .replace("Bristol, VA", '"Bristol, VA"').replace("Bristol, TN", '"Bristol, TN"')
     )
     if ERROR_STRING in result:
         raise ValueError(f"Path {path} is not valid")
