@@ -393,7 +393,10 @@ def _get_recent_decades_df(
 def get_place_populations_2000s(data_path: Optional[str] = None) -> pd.DataFrame:
     # This one doesn't include consolidated cities, so no need to remove those rows
     return _get_recent_decades_df(
-        "https://www2.census.gov/programs-surveys/popest/datasets/2000-2010/intercensal/cities/sub-est00int.csv",
+        get_path(
+            "https://www2.census.gov/programs-surveys/popest/datasets/2000-2010/intercensal/cities/sub-est00int.csv",
+            data_path,
+        ),
         has_consolidated_cities=False,
         years=list(range(2000, 2011)),
     )
@@ -402,9 +405,12 @@ def get_place_populations_2000s(data_path: Optional[str] = None) -> pd.DataFrame
 def get_place_populations_2010s(data_path: Optional[str] = None) -> pd.DataFrame:
     # This one has consolidated cities that need to be removed
     return _get_recent_decades_df(
-        "https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/cities/totals/sub-est2019_all.csv",
+        get_path(
+            "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/cities/SUB-EST2020_ALL.csv",
+            data_path,
+        ),
         has_consolidated_cities=True,
-        years=list(range(2010, 2020)),
+        years=list(range(2010, 2021)),
     )
 
 
