@@ -11,16 +11,39 @@ import React, {
   memo,
   useRef,
   useEffect,
-  useCallback
+  useCallback,
+  FunctionComponent
 } from 'react'
-import useSelect from './useSelect.js'
+import useSelect from 'lib/useSelect'
 import Option from 'react-select-search/dist/cjs/Components/Option'
 import isSelected from 'react-select-search/dist/cjs/lib/isSelected'
 
 // Not in the original file
 import { FixedSizeList } from 'react-window'
 
-const WindowSelectSearch = forwardRef(({
+type WindowSelectSearchProps = {
+    value?: any,
+    disabled?: any,
+    placeholder?: any,
+    multiple?: boolean,
+    search?: boolean,
+    autoFocus?: any,
+    autoComplete?: any,
+    options?: any,
+    id?: any,
+    onChange?: any,
+    printOptions?: any,
+    closeOnSelect?: any,
+    className?: any,
+    renderValue?: any,
+    renderOption?: any,
+    renderGroupHeader?: any,
+    getOptions?: any,
+    emptyMessage?: any,
+    fuzzysortOptions?: any,
+}
+
+const WindowSelectSearch = forwardRef<HTMLDivElement, WindowSelectSearchProps>(({
   value: defaultValue,
   disabled,
   placeholder,
@@ -41,7 +64,7 @@ const WindowSelectSearch = forwardRef(({
   emptyMessage,
   fuzzysortOptions
 }, ref) => {
-  const selectRef = useRef(null)
+  const selectRef = useRef<HTMLDivElement>(null)
   const [snapshot, valueProps, optionProps] = useSelect({
     options: defaultOptions,
     value: defaultValue,
@@ -109,7 +132,7 @@ const WindowSelectSearch = forwardRef(({
     }
 
     const query = (highlighted > -1) ? `[data-index="${highlighted}"]` : `[data-value="${escape(value.value)}"]`
-    const selected = current.querySelector(query)
+    const selected = current.querySelector(query) as HTMLElement
 
     if (selected) {
       const rect = current.getBoundingClientRect()

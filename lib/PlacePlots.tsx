@@ -1,13 +1,14 @@
-import { useFetch } from '../lib/queries.js'
+import { useFetch } from 'lib/queries.js'
 import { useMemo, useCallback } from 'react'
-import WindowSelectSearch from '../lib/WindowSelectSearch.js'
-import BarPlot from './BarPlot.js'
+import WindowSelectSearch from 'lib/WindowSelectSearch'
+import BarPlot from 'lib/BarPlot.js'
 import us from 'us'
 import { useRouter } from 'next/router'
-import { makeUnitsSelect, usePerCapitaInput } from '../lib/selects.js'
+import { makeUnitsSelect, usePerCapitaInput } from 'lib/selects.js'
+import { PathMapping } from 'lib/utils'
 
 function getJsonUrl (place, state) {
-  if (place === null) {
+    if (place === null) {
     return null
   }
   place = place.replace('#', '%23')
@@ -18,8 +19,8 @@ function getStateFips (stateStr) {
   return parseInt(us.lookup(stateStr).fips)
 }
 
-function getStateAbbreviation (stateCode) {
-  const twoDigitStringCode = String(stateCode).padStart(2, 0)
+function getStateAbbreviation (stateCode: number): string {
+  const twoDigitStringCode = String(stateCode).padStart(2, '0')
   const state = us.lookup(twoDigitStringCode)
   if (typeof state === 'undefined') {
     return ''
@@ -29,7 +30,6 @@ function getStateAbbreviation (stateCode) {
 }
 
 function makePlaceOptions (placesList) {
-  const placeLookup = {}
   const options = []
   for (let i = 0; i < placesList.length; i++) {
     const place = placesList[i]
@@ -42,13 +42,10 @@ function makePlaceOptions (placesList) {
         name: place.place_name + ', ' + abbr,
         alt_name: place.alt_name
       })
-
-      // This feels stupid but I don't know if there's a better way
-      placeLookup[place.place_name + '/' + place.state_code] = i
     }
   }
 
-  return [options, placeLookup]
+  return options
 }
 
 const fuzzysortOptions = { keys: ['name', 'alt_name'], threshold: -10000 }
@@ -58,21 +55,16 @@ export default function PlacePlots ({ place, state }) {
 
   const { status, data: placesList } = useFetch('/places_list.json')
 
-  const [placeOptions, placeLookup] = useMemo(
+  const placeOptions = useMemo(
     () => makePlaceOptions(placesList ?? []),
-    [status]
+    [placesList]
   )
+  const pathMapping = useMemo(() => new PathMapping(placesList || [], (row) => row.place_name + '/' + row.state_code), [placesList])
 
-  const optionVal = useMemo(() => {
-    if (place !== null && state !== null) {
-      const fips = getStateFips(state)
-      const index = placeLookup[place + '/' + fips]
-      if (typeof index !== 'undefined') {
-        return placeOptions[index].value
-      }
-    }
-    return null
-  }, [place, state, status, placeLookup.length])
+  const optionVal = useMemo(
+    () => pathMapping.getEntryForPath(place + '/' + state),
+    [place, state, pathMapping]
+  )
 
   const { data } = useFetch(getJsonUrl(place, state))
 

@@ -1,4 +1,5 @@
 import SelectSearch from 'react-select-search/dist/cjs'
+import WindowSelectSearch from 'lib/WindowSelectSearch'
 import { useState, useMemo, useCallback } from 'react'
 import { useFetch } from '../lib/queries.js'
 import { VegaLite } from 'react-vega'
@@ -66,6 +67,12 @@ function spec (width, height, perCapita) {
   }
 }
 
+const fuseOptions = {
+  keys: ['name'],
+  threshold: 0.1,
+  distance: 5
+}
+
 const options = [
   { value: 'all', name: 'All' },
   { value: 'region', name: 'Region' },
@@ -103,6 +110,48 @@ const regionOptions = [
   }
 ]
 
+function makeOptions (statesData, metrosList, countiesList, placesList) {
+  const stateOptions = []
+  const cbsaOptions = []
+  const csaOptions = []
+  const countyOptions = []
+  const placeOptions = []
+
+  for (const metro of metrosList) {
+    const option = {
+      value: metro.path,
+      name: metro.metro_name,
+      path: metro.path
+    }
+    switch (metro.metro_type) {
+      case 'cbsa': {
+        cbsaOptions.push(option)
+        break
+      }
+      case 'csa': {
+        csaOptions.push(option)
+        break
+      }
+      default: {
+        throw new Error('Unknown metro_type: ' + metro.metro_type)
+      }
+    }
+  }
+
+  return [
+    {
+      name: 'CBSAs',
+      type: 'group',
+      items: cbsaOptions
+    },
+    {
+      name: 'CSAs',
+      type: 'group',
+      items: cbsaOptions
+    }
+  ]
+}
+
 function filterData (data, type, region) {
   if (type !== 'all') {
     data = data.filter((row) => row.type === type)
@@ -121,12 +170,30 @@ function filterData (data, type, region) {
   return data
 }
 
+// Not sure if I need to specify this, or if I can just use the default...
+function renderOption (domProps, option, snapshot, className) {
+  return (
+    <button className={className} {...domProps}>
+      {option.name}
+    </button>
+  )
+  // <span className='text-xs rounded bg-purple-200 p-1'>{option.metro_type.toUpperCase()}</span>
+}
+
 export default function Home () {
-  const { status, data: response } = useFetch('/state_annual.json')
+  const { status, data: statesResponse } = useFetch('/state_annual.json')
+  const { metrosListStatus, data: metrosListResponse } = useFetch('/metros_list.json')
+  const { countiesListStatus, data: countiesListResponse } = useFetch('/counties_list.json')
+  const { placesListStatus, data: placesListResponse } = useFetch('/places_list.json')
 
   const [selectedType, setSelectedOption] = useState('all')
 
   const [selectedRegion, setSelectedRegion] = useState('all')
+
+  const options = useMemo(
+    () => makeOptions(statesResponse || [], metrosListResponse || [], countiesListResponse || [], placesListResponse || []),
+    [statesResponse, metrosListResponse, countiesListResponse, placesListResponse]
+  )
 
   const regionSelect = (
     selectedType === 'state'
@@ -146,7 +213,7 @@ export default function Home () {
     () => {
       return {
         table: filterData(
-          response || [],
+          statesResponse || [],
           selectedType,
           selectedType === 'state' ? selectedRegion : null
         )
@@ -168,6 +235,15 @@ export default function Home () {
     </div>
   )
 
+  // <SelectSearch
+  //   value={selectedType}
+  //   onChange={setSelectedOption}
+  //   options={options}
+  // />
+  // {regionSelect}
+
+  // renderOption={renderOption}
+
   return (
     <Page title='Housing Data' navIndex={0}>
       <div className='flex flex-col justify-center items-center mx-auto mb-10'>
@@ -177,12 +253,14 @@ export default function Home () {
         </h1>
 
         <div className='flex m-2'>
-          <SelectSearch
-            value={selectedType}
-            onChange={setSelectedOption}
+          <WindowSelectSearch
+            search
+            multiple
+            onChange={() => {}}
             options={options}
+            fuseOptions={fuseOptions}
+            value={null}
           />
-          {regionSelect}
         </div>
 
         <div className='w-full flex flex-row'>

@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import PlacePlots from '../../lib/PlacePlots.js'
+import PlacePlots from '../../lib/PlacePlots.tsx'
 import { Page } from '../../lib/common_elements.js'
 
 export default function Place () {
