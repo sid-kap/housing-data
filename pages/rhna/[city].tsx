@@ -241,10 +241,7 @@ export default function RhnaCity (): JSX.Element {
         </div>
     )
   }
-    /* onMouseEnter={(e) => e.target.getCanvas().style.cursor = "pointer"}
-     * onMouseLeave={(e) => e.target.getCanvas().style.cursor = "default"} */
 
-  // <Image id={'permit'} url={'https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png'} />
   return (
     <Page title={cityName} navIndex={5}>
       {page}
@@ -253,14 +250,13 @@ export default function RhnaCity (): JSX.Element {
 }
 
 function makeTableRow(results) {
-    console.log(results)
     return results.map(
         (d) => {
             return (
                 <>
                     <td>
-                        {formatPercent(d?.fraction)}&nbsp;
-                        <span className="text-gray-400">({d?.matches}/{d?.sites})</span>
+                        {formatPercent(d.fraction)}&nbsp;
+                        <span className="text-gray-400">({d.matches}/{d.sites})</span>
                     </td>
                 </>
             )
@@ -269,21 +265,23 @@ function makeTableRow(results) {
 }
 
 function makeMatchTable(result) {
-    const statsList = result ? [
+    if (typeof(result) == 'undefined') {
+        return <></>
+    }
+    const statsList = [
         result.overall_match_stats,
         result.nonvacant_match_stats,
         result.vacant_match_stats,
-    ] : [{}, {}, {}]
+    ]
 
-    const apnResults = statsList.map(d => d?.apn)
-    const geoResults = statsList.map(d => d?.geo)
-    const bothResults = statsList.map(d => d?.either)
-    console.log(apnResults)
+    const apnResults = statsList.map(d => d.apn)
+    const geoResults = statsList.map(d => d.geo)
+    const bothResults = statsList.map(d => d.either)
 
     return (
         <table className="table-auto match-table mt-4">
             <tr>
-                <th className="text-center" colspan="4">Likelihood of development for {result.city}</th>
+                <th className="text-center" colSpan={4}>Likelihood of development for {result.city}</th>
             </tr>
             <tr className="bg-blue-300">
                 <th>Matching logic</th>
