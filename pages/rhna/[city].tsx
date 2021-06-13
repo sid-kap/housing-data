@@ -281,7 +281,7 @@ function makeMatchTable(result) {
     console.log(apnResults)
 
     return (
-        <table class="table-auto match-table mt-4">
+        <table className="table-auto match-table mt-4">
             <tr>
                 <th className="text-center" colspan="4">Likelihood of development for {result.city}</th>
             </tr>
