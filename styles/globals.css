@@ -240,3 +240,12 @@ div.vega-embed {
     margin-left: auto;
     margin-right: auto;
 }
+
+@layer components {
+    table.match-table td {
+        @apply p-2;
+    }
+    table.match-table th {
+        @apply p-1;
+    }
+}
