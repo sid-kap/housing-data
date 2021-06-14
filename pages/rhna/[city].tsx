@@ -264,7 +264,7 @@ function makeTableRow(results) {
     )
 }
 
-function makeMatchTable(result): HTMLElement {
+function makeMatchTable(result) {
     const statsList = [
         result.overall_match_stats,
         result.nonvacant_match_stats,
