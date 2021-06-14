@@ -237,7 +237,7 @@ export default function RhnaCity (): JSX.Element {
                     )}
                 </Map>
             </div>
-            {makeMatchTable(currentOption)}
+            {currentOption && makeMatchTable(currentOption)}
         </div>
     )
   }
@@ -264,10 +264,7 @@ function makeTableRow(results) {
     )
 }
 
-function makeMatchTable(result) {
-    if (typeof(result) == 'undefined') {
-        return <></>
-    }
+function makeMatchTable(result): HTMLElement {
     const statsList = [
         result.overall_match_stats,
         result.nonvacant_match_stats,

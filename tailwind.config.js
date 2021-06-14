@@ -3,7 +3,11 @@ module.exports = {
     enabled: process.env.NODE_ENV === 'production',
     content: [
       './lib/**/*.js',
-      './pages/**/*.js'
+      './lib/**/*.ts',
+      './lib/**/*.tsx',
+      './pages/**/*.js',
+      './pages/**/*.ts',
+      './pages/**/*.tsx'
     ]
   },
   darkMode: false, // or 'media' or 'class'
