@@ -48,7 +48,7 @@ export function useLenientSelector () {
             <input id="conservative" type='radio' checked={!lenient} value='conservative' onChange={() => setLenient(false)} />
             <label htmlFor='conservative' className='ml-1 mr-3 text-sm'>Conservative (1 meter)</label>
             <input id="lenient" type='radio' checked={lenient} value='lenient' onChange={() => setLenient(true)} />
-            <label htmlFor='lenient' className='ml-1 mr-3 text-sm'>Lenient (15 meters)</label>
+            <label htmlFor='lenient' className='ml-1 mr-3 text-sm'>Lenient (8 meters)</label>
         </div>
     )
 
@@ -273,6 +273,7 @@ const isOverview = cityName == 'Overview'
                     <h1 className='mt-4 text-center text-4xl'>{cityName}</h1>
                 </div>
                 <div className="col-span-1 m-4">
+                    {!isOverview && lenientInput}
                 </div>
             </div>
             <div className='w-full justify-center flex flex-row'>
@@ -363,7 +364,7 @@ const isOverview = cityName == 'Overview'
                     />
                     {clickedElement && (
                         <Popup key={clickedElement.element.id} coordinates={clickedElement.location}>
-                            {renderPopup(clickedElement.layer, clickedElement.element.properties)}
+                            {renderPopup(isLenient, clickedElement.layer, clickedElement.element.properties)}
                         </Popup>
                     )}
                     {isOverview ? <></> : legend}
@@ -541,11 +542,11 @@ function renderPermit (permit) {
   )
 }
 
-function renderPopup (layer, element) {
+function renderPopup (isLenient, layer, element) {
   // Really ugly way of checking if they clicked on a site or a permit. TODO make this less dumb
   if (layer == 'sitesWithMatchesLayer') {
     // It's a site
-    const matchResults = JSON.parse(element.match_results)
+    const matchResults = JSON.parse(isLenient ? element.match_results_lax : element.match_results)
     return (
       <>
         <p>Expected capacity in housing element: {element.site_capacity_units} units</p>
