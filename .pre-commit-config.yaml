@@ -14,6 +14,6 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/sid-kap/standard
-    rev: patch-1  # my branch that excludes typescript files
+    rev: 093b05608589e9345535db1f7d61cb5c4c006829
     hooks:
       - id: standard

@@ -2,10 +2,11 @@ import { Page } from '../../lib/common_elements.js'
 import { useRouter } from 'next/router'
 import { useFetch } from '../../lib/queries.js'
 import { useMemo, useState, useCallback } from 'react'
-import WindowSelectSearch from '../../lib/WindowSelectSearch.js'
+import SelectSearch from 'react-select-search/dist/cjs'
 import { titleCase } from 'title-case'
+import Head from 'next/head'
 
-import ReactMapboxGl, { Layer, Source, Popup } from 'react-mapbox-gl'
+import ReactMapboxGl, { Layer, Source, Popup, MapContext } from 'react-mapbox-gl'
 import { LngLat } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -22,7 +23,10 @@ function makeOptions (summaryResponse) {
   const summary = summaryResponse || []
   const indexLookup = {}
 
-  const options = []
+    const options = [{
+        name: 'Overview',
+        value: 'Overview',
+    }]
   for (let i = 0; i < summary.length; i++) {
     const row = summary[i]
     options.push({
@@ -30,10 +34,28 @@ function makeOptions (summaryResponse) {
       value: row.city,
       name: row.city
     })
-    indexLookup[row.city] = i
+    indexLookup[row.city] = i + 1
   }
 
   return [options, indexLookup]
+}
+
+export function useLenientSelector () {
+    const [lenient, setLenient] = useState(false)
+    const lenientInput = (
+        <div>
+            <p className="text-sm text-gray-500">Geomatching radius:</p>
+            <input id="conservative" type='radio' checked={!lenient} value='conservative' onChange={() => setLenient(false)} />
+            <label htmlFor='conservative' className='ml-1 mr-3 text-sm'>Conservative (1 meter)</label>
+            <input id="lenient" type='radio' checked={lenient} value='lenient' onChange={() => setLenient(true)} />
+            <label htmlFor='lenient' className='ml-1 mr-3 text-sm'>Lenient (15 meters)</label>
+        </div>
+    )
+
+    return {
+        isLenient: lenient,
+        lenientInput: lenientInput
+    }
 }
 
 function formatPercent(x: number | undefined): string {
@@ -63,19 +85,55 @@ type ClickedElement = {
     location: LngLat,
 }
 
+const sitesOutlinePaintStyle = {
+    'line-color': 'black',
+    'line-width': 0.5,
+}
+
+const siteTypeOptions = [
+    {
+        name: 'All sites',
+        value: 'overall_match_stats',
+    },
+    {
+        name: 'Nonvacant sites',
+        value: 'nonvacant_match_stats',
+    },
+    {
+        name: 'Vacant sites',
+        value: 'vacant_match_stats',
+    },
+]
+
+const matchingLogicOptions = [
+    {
+        name: 'APN and geo',
+        value: 'either',
+    },
+    {
+        name: 'APN',
+        value: 'apn',
+    },
+    {
+        name: 'Geo',
+        value: 'geo',
+    },
+]
+
+
+
 export default function RhnaCity (): JSX.Element {
   const router = useRouter()
-  const cityName = (router.query.city as string) ?? null
+  const cityName = (router.query.city as string) ?? 'Overview'
+
+const isOverview = cityName == 'Overview'
 
   const [clickedElement, setClickedElement] = useState<ClickedElement>(null)
 
-  const sitesUrl = '/rhna_data/' + cityName + '/sites_with_matches.geojson'
-  // const { status: sitesStatus, data: sitesWithMatches } = useFetch(sitesUrl)
-  const permitsUrl = '/rhna_data/' + cityName + '/permits.geojson'
-  // const { status: permitsStatus, data: permits } = useFetch(permitsUrl)
+  const sitesUrl = !isOverview ? '/rhna_data/' + cityName + '/sites_with_matches.geojson': null
+  const permitsUrl = !isOverview ? '/rhna_data/' + cityName + '/permits.geojson' : null
 
   const { data: summaryData } = useFetch('/rhna_data/summary.json')
-    console.log(summaryData)
 
   const [cityOptions, indexLookup] = useMemo(
     () => makeOptions(summaryData),
@@ -85,60 +143,90 @@ export default function RhnaCity (): JSX.Element {
     () => cityOptions[indexLookup[cityName]],
     [summaryData, cityName]
   )
-  console.log(currentOption)
 
   let page = null
-  // if ((sitesStatus != 'success') || (permitsStatus != 'success')) {
   const loading = false
   if (loading) {
     page = (
       <h1 className='mt-4 text-center text-2xl'>Loading (or city doesn't exist)...</h1>
     )
   } else {
+    const [siteType, setSiteType] = useState('overall_match_stats')
+    const [matchingLogic, setMatchingLogic] = useState('either')
+
+    const { isLenient, lenientInput } = useLenientSelector()
+    const geoMatchedField = isLenient ? 'geo_matched_lax' : 'geo_matched'
+    const matchingLogicSuffix = (isLenient && matchingLogic != 'apn') ? '_lax' : ''
+
+
+    console.log(siteType)
+    console.log(matchingLogic)
+
     const sitesPaintStyle = {
       // This is the world's dumbest query language
       'fill-color': [
         'case',
-        ['all', ['get', 'apn_matched'], ['get', 'geo_matched']], 'green',
+        ['all', ['get', 'apn_matched'], ['get', geoMatchedField]], 'green',
         ['get', 'apn_matched'], 'yellow',
-        ['get', 'geo_matched'], 'blue',
+        ['get', geoMatchedField], 'blue',
         'red'
       ],
       'fill-opacity': 0.3,
     }
 
-      const sitesOutlinePaintStyle = {
-          // This is the world's dumbest query language
-          'line-color': 'black',
-          'line-width': 0.5,
-      }
+    const pdevField = [
+        'get',
+        'fraction',
+        [
+            'get',
+            matchingLogic + matchingLogicSuffix,
+            [
+                'get',
+                siteType,
+            ]
+        ]
+    ]
+    console.log(cityName)
+    const summaryPaintStyle = {
+        'fill-color': [
+            'interpolate',
+            ['linear'],
+            pdevField,
+            -0.1,
+            'white',
+            0.5,
+            'blue',
+            1,
+            'blue',
+        ],
+        'fill-opacity': isOverview ? 0.5 : 0,
+    }
 
     const permitsPaintStyle = {
-      'circle-color': [
-        'case',
-        ['==', ['get', 'permit_category'], 'ADU'], 'hsl(169, 76%, 50%)',
-        ['==', ['get', 'permit_category'], 'SU'], 'hsl(169, 76%, 50%)',
-        'green'
-      ],
-      'circle-radius': {
-        base: 1.75,
-        stops: [
-          [12, 1.5],
-          [15, 4],
-          [22, 180]
-        ]
-      }
-      // 'icon-image': 'permit',
-      // 'icon-size': 0.25,
-      // 'text-field': "{permit_address}",
+        'circle-color': [
+            'case',
+            ['==', ['get', 'permit_category'], 'ADU'], 'hsl(169, 76%, 50%)',
+            ['==', ['get', 'permit_category'], 'SU'], 'hsl(169, 76%, 50%)',
+            'green'
+        ],
+        'circle-radius': {
+            base: 1.75,
+            stops: [
+                [12, 1.5],
+                [15, 4],
+                [22, 180]
+            ]
+        },
     }
 
     const onClickSiteOrPermit = (map, e) => {
         const features = map.queryRenderedFeatures(e.point, {
-            layers: ['sitesWithMatchesLayer', 'permitsLayer']
+            layers: ['sitesWithMatchesLayer', 'permitsLayer', 'summaryLayer']
         })
         if (features.length > 0) {
+            console.log(features)
             setClickedElement({
+                layer: features[0].layer.id,
                 element: features[0],
                 location: e.lngLat.toArray()
             })
@@ -165,12 +253,12 @@ export default function RhnaCity (): JSX.Element {
         }
     }
 
-    // <div className='max-w-md max-h-md mx-auto align-center'>
+
     page = (
         <div className="mx-auto mb-10 align-center items-center justify-center flex flex-col">
             <div className="lg:grid lg:grid-cols-3 flex flex-col">
                 <div className="m-4 col-span-1">
-                    <WindowSelectSearch
+                    <SelectSearch
                     // @ts-ignore
                         search
                         onChange={onChange}
@@ -183,7 +271,7 @@ export default function RhnaCity (): JSX.Element {
                 <div className="col-span-1">
                     <h1 className='mt-4 text-center text-4xl'>{cityName}</h1>
                 </div>
-                <div className="col-span-1">
+                <div className="col-span-1 m-4">
                 </div>
             </div>
             <div className='w-full justify-center flex flex-row'>
@@ -197,13 +285,27 @@ export default function RhnaCity (): JSX.Element {
                     onMouseMove={onMapMove}
                     onClick={onClickSiteOrPermit}
                 >
+                    <MapContext.Consumer>
+                        {(map) => {
+                            console.log(map.getStyle().layers)
+                            // Hide all the city names
+                            for (let layer of map.getStyle().layers) {
+                                if (layer.id.includes('place-')) {
+                                    map.setLayoutProperty(layer.id, 'visibility', isOverview ? 'none' : 'visible')
+                                }
+                            }
+                        }}
+                    </MapContext.Consumer>
                     <Source id='permits' geoJsonSource={{ data: permitsUrl, type: 'geojson' }} />
                     <Source id='sitesWithMatches' geoJsonSource={{ data: sitesUrl, type: 'geojson' }} />
+                    <Source id='summary' geoJsonSource={{ data: '/rhna_data/summary.geojson', type: 'geojson' }} />
+                    <Source id='summaryCentroids' geoJsonSource={{ data: '/rhna_data/summary_centroids.geojson', type: 'geojson' }} />
                     <Layer
                         id="sitesWithMatchesLayer"
                         type='fill'
                         sourceId='sitesWithMatches'
                         paint={sitesPaintStyle}
+                        layout={{visibility: isOverview ? 'none': 'visible'}}
                     />
                     <Layer
                         id="sitesWithMatchesOutlineLayer"
@@ -211,6 +313,7 @@ export default function RhnaCity (): JSX.Element {
                         sourceId='sitesWithMatches'
                         paint={sitesOutlinePaintStyle}
                         minZoom={15}
+                        layout={{visibility: isOverview ? 'none': 'visible'}}
                     />
                     <Layer
                         id="sitesWithMatchesTextLayer"
@@ -223,31 +326,135 @@ export default function RhnaCity (): JSX.Element {
                             'text-color': 'hsl(0, 0, 35%)',
                         }}
                         minZoom={17}
+                        layout={{visibility: isOverview ? 'none': 'visible'}}
                     />
                     <Layer
                         id="permitsLayer"
                         type='circle'
                         sourceId='permits'
                         paint={permitsPaintStyle}
+                        layout={{visibility: isOverview ? 'none': 'visible'}}
+                    />
+                    <Layer
+                        id="summaryLayer"
+                        type="fill"
+                        sourceId="summary"
+                        paint={summaryPaintStyle}
+                        layout={{visibility: isOverview ? 'visible': 'none'}}
+                    />
+                    <Layer
+                        id="summaryTextLayer"
+                        type='symbol'
+                        sourceId='summaryCentroids'
+                        layout={{
+                            'text-field': [
+                                'concat',
+                                ['get', 'city'],
+                                '\n',
+                                ['number-format', ['*', 1.6, pdevField], {'max-fraction-digits': 3}]
+                            ],
+                            visibility: isOverview ? 'visible' : 'none'
+                        }}
+                        paint={{
+                            'text-color': 'hsl(0, 0, 35%)',
+                        }}
                     />
                     {clickedElement && (
                         <Popup key={clickedElement.element.id} coordinates={clickedElement.location}>
-                            {renderPopup(clickedElement.element.properties)}
+                            {renderPopup(clickedElement.layer, clickedElement.element.properties)}
                         </Popup>
                     )}
+                    {isOverview ? '' : legend}
                 </Map>
             </div>
-            {currentOption && makeMatchTable(currentOption)}
+            {currentOption && makeMatchTable(currentOption, isLenient)}
+            {isOverview &&
+            <div className="lg:grid lg:grid-cols-3 flex flex-col">
+                <div className="m-4 col-span-1">
+                    <SelectSearch
+                    // @ts-ignore
+                        search
+                        onChange={setSiteType}
+                        options={siteTypeOptions}
+                        fuseOptions={fuseOptions}
+                        value={siteType}
+                        renderOption={renderOption}
+                    />
+                </div>
+                <div className="m-4 col-span-1">
+                    <SelectSearch
+                    // @ts-ignore
+                        search
+                        onChange={setMatchingLogic}
+                        options={matchingLogicOptions}
+                        fuseOptions={fuseOptions}
+                        value={matchingLogic}
+                        renderOption={renderOption}
+                    />
+                </div>
+                <div className="m-4 col-span-1">
+                    {lenientInput}
+                </div>
+            </div>
+            }
         </div>
     )
   }
 
   return (
-    <Page title={cityName} navIndex={5}>
-      {page}
-    </Page>
+    <div>
+        <Head>
+            <title>{cityName}</title>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+        </Head>
+
+        {page}
+    </div>
   )
 }
+
+const legendSpanClass = "mx-1 w-3 h-3 inline-block border border-black border-opacity-100"
+const legendCircle = "mx-1 w-3 h-3 inline-block rounded-full"
+const legend = (
+    <div className="p-2 absolute right-6 bottom-10 border bg-opacity-80 bg-white">
+        <div>
+            <span
+                className={legendSpanClass}
+                style={{'background-color': 'red', 'opacity': 0.3}}></span>
+            Unmatched site
+        </div>
+        <div>
+            <span
+                className={legendSpanClass}
+                style={{'background-color': 'green', 'opacity': 0.3}}></span>
+            Matched site (APN and address)
+        </div>
+        <div>
+            <span
+                className={legendSpanClass}
+                style={{'background-color': 'blue', 'opacity': 0.3}}></span>
+            Matched site (Address only)
+        </div>
+        <div>
+            <span
+                className={legendSpanClass}
+                style={{'background-color': 'yellow', 'opacity': 0.3}}></span>
+            Matched site (APN only)
+        </div>
+        <div>
+            <span
+                className={legendCircle}
+                style={{'background-color': 'green'}}></span>
+            Permit (single-family or multifamily)
+        </div>
+        <div>
+            <span
+                className={legendCircle}
+                style={{'background-color': 'hsl(169, 76%, 50%)'}}></span>
+            Permit (ADU)
+        </div>
+    </div>
+)
 
 function makeTableRow(results) {
     return results.map(
@@ -255,7 +462,7 @@ function makeTableRow(results) {
             return (
                 <>
                     <td>
-                        {formatPercent(d.fraction)}&nbsp;
+                        {formatPercent(8/5 * d.fraction)}&nbsp;
                         <span className="text-gray-400">({d.matches}/{d.sites})</span>
                     </td>
                 </>
@@ -264,7 +471,7 @@ function makeTableRow(results) {
     )
 }
 
-function makeMatchTable(result) {
+function makeMatchTable(result, isLenient) {
     const statsList = [
         result.overall_match_stats,
         result.nonvacant_match_stats,
@@ -272,13 +479,14 @@ function makeMatchTable(result) {
     ]
 
     const apnResults = statsList.map(d => d.apn)
-    const geoResults = statsList.map(d => d.geo)
-    const bothResults = statsList.map(d => d.either)
+    const geoResults = statsList.map(d => isLenient ? d.geo_lax : d.geo)
+    const bothResults = statsList.map(d => isLenient ? d.either_lax : d.either)
 
     return (
+        <>
         <table className="table-auto match-table mt-4">
             <tr>
-                <th className="text-center" colSpan={4}>Likelihood of development for {result.city}</th>
+                <th className="text-center" colSpan={4}>Likelihood of development for {result.city}<span className="text-gray-500">*</span></th>
             </tr>
             <tr className="bg-blue-300">
                 <th>Matching logic</th>
@@ -299,6 +507,8 @@ function makeMatchTable(result) {
                 {makeTableRow(bothResults)}
             </tr>
         </table>
+        <div className="mt-4 text-sm text-gray-500 max-w-md">(*The likelihood of development is extrapolated from the 2015-2019 period to 8 years, so it equals 8/5 · fraction of sites developed.)</div>
+        </>
     )
 }
 
@@ -329,9 +539,9 @@ function renderPermit (permit) {
   )
 }
 
-function renderPopup (element) {
+function renderPopup (layer, element) {
   // Really ugly way of checking if they clicked on a site or a permit. TODO make this less dumb
-  if (typeof (element.match_results) !== 'undefined') {
+  if (layer == 'sitesWithMatchesLayer') {
     // It's a site
     const matchResults = JSON.parse(element.match_results)
     return (
@@ -354,8 +564,23 @@ function renderPopup (element) {
           }
       </>
     )
-  } else {
+  } else if (layer == 'permitsLayer') {
     // It's a permit
     return renderPermit(element)
+  } else if (layer == 'summaryLayer') {
+      const elementParsed = {...element}
+      elementParsed.overall_match_stats = JSON.parse(elementParsed.overall_match_stats)
+      elementParsed.vacant_match_stats = JSON.parse(elementParsed.vacant_match_stats)
+      elementParsed.nonvacant_match_stats = JSON.parse(elementParsed.nonvacant_match_stats)
+      return (
+          <>
+          <div>Conservative:</div>
+          {makeMatchTable(elementParsed, false)}
+          <div>Lenient:</div>
+          {makeMatchTable(elementParsed, true)}
+          </>
+      )
+  } else {
+      throw 'Unknown layer clicked: ' + layer
   }
 }
