@@ -81,6 +81,7 @@ function renderOption (domProps, option, snapshot, className) {
 }
 
 type ClickedElement = {
+    layer: string,
     element: any,
     location: LngLat,
 }
@@ -294,6 +295,7 @@ const isOverview = cityName == 'Overview'
                                     map.setLayoutProperty(layer.id, 'visibility', isOverview ? 'none' : 'visible')
                                 }
                             }
+                            return <></>
                         }}
                     </MapContext.Consumer>
                     <Source id='permits' geoJsonSource={{ data: permitsUrl, type: 'geojson' }} />
@@ -321,12 +323,12 @@ const isOverview = cityName == 'Overview'
                         sourceId='sitesWithMatches'
                         layout={{
                             'text-field': '{site_capacity_units}',
+                            visibility: isOverview ? 'none': 'visible'
                         }}
                         paint={{
                             'text-color': 'hsl(0, 0, 35%)',
                         }}
                         minZoom={17}
-                        layout={{visibility: isOverview ? 'none': 'visible'}}
                     />
                     <Layer
                         id="permitsLayer"
@@ -364,7 +366,7 @@ const isOverview = cityName == 'Overview'
                             {renderPopup(clickedElement.layer, clickedElement.element.properties)}
                         </Popup>
                     )}
-                    {isOverview ? '' : legend}
+                    {isOverview ? <></> : legend}
                 </Map>
             </div>
             {currentOption && makeMatchTable(currentOption, isLenient)}
@@ -420,37 +422,37 @@ const legend = (
         <div>
             <span
                 className={legendSpanClass}
-                style={{'background-color': 'red', 'opacity': 0.3}}></span>
+                style={{backgroundColor: 'red', opacity: 0.3}}></span>
             Unmatched site
         </div>
         <div>
             <span
                 className={legendSpanClass}
-                style={{'background-color': 'green', 'opacity': 0.3}}></span>
+                style={{backgroundColor: 'green', opacity: 0.3}}></span>
             Matched site (APN and address)
         </div>
         <div>
             <span
                 className={legendSpanClass}
-                style={{'background-color': 'blue', 'opacity': 0.3}}></span>
+                style={{backgroundColor: 'blue', opacity: 0.3}}></span>
             Matched site (Address only)
         </div>
         <div>
             <span
                 className={legendSpanClass}
-                style={{'background-color': 'yellow', 'opacity': 0.3}}></span>
+                style={{backgroundColor: 'yellow', opacity: 0.3}}></span>
             Matched site (APN only)
         </div>
         <div>
             <span
                 className={legendCircle}
-                style={{'background-color': 'green'}}></span>
+                style={{backgroundColor: 'green'}}></span>
             Permit (single-family or multifamily)
         </div>
         <div>
             <span
                 className={legendCircle}
-                style={{'background-color': 'hsl(169, 76%, 50%)'}}></span>
+                style={{backgroundColor: 'hsl(169, 76%, 50%)'}}></span>
             Permit (ADU)
         </div>
     </div>
