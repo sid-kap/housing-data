@@ -40,21 +40,29 @@ function makeOptions (summaryResponse) {
   return [options, indexLookup]
 }
 
-export function useLenientSelector () {
-    const [lenient, setLenient] = useState(false)
-    const lenientInput = (
+export function useBufferSelector() {
+    const [buffer, setBuffer] = useState(25)
+
+    const bufferOptions = [0, 5, 10, 25, 50, 75, 100].map((bufferValue) => {
+        return (
+            <span key={bufferValue}>
+            <input id={"buffer-" + bufferValue} type='radio' checked={buffer == bufferValue} value='conservative' onChange={() => setBuffer(bufferValue)} />
+            <label htmlFor={"buffer-" + bufferValue} className='ml-1 mr-3 text-sm'>{bufferValue} feet</label>
+            </span>
+        )
+    })
+    const bufferInput = (
         <div>
-            <p className="text-sm text-gray-500">Geomatching radius:</p>
-            <input id="conservative" type='radio' checked={!lenient} value='conservative' onChange={() => setLenient(false)} />
-            <label htmlFor='conservative' className='ml-1 mr-3 text-sm'>Conservative (1 meter)</label>
-            <input id="lenient" type='radio' checked={lenient} value='lenient' onChange={() => setLenient(true)} />
-            <label htmlFor='lenient' className='ml-1 mr-3 text-sm'>Lenient (8 meters)</label>
+            <p className="text-sm text-gray-500">Geocoding buffer size:</p>
+            <div className="max-w-xs">
+            {bufferOptions}
+            </div>
         </div>
     )
 
     return {
-        isLenient: lenient,
-        lenientInput: lenientInput
+        buffer: buffer,
+        bufferInput: bufferInput
     }
 }
 
@@ -94,30 +102,26 @@ const sitesOutlinePaintStyle = {
 const siteTypeOptions = [
     {
         name: 'All sites',
-        value: 'overall_match_stats',
+        value: 'overall',
     },
     {
         name: 'Nonvacant sites',
-        value: 'nonvacant_match_stats',
+        value: 'nonvacant',
     },
     {
         name: 'Vacant sites',
-        value: 'vacant_match_stats',
+        value: 'vacant',
     },
 ]
 
 const matchingLogicOptions = [
     {
-        name: 'APN and geo',
-        value: 'either',
+        name: 'APN only',
+        value: 'apn_only',
     },
     {
-        name: 'APN',
-        value: 'apn',
-    },
-    {
-        name: 'Geo',
-        value: 'geo',
+        name: 'APN and geocoding',
+        value: 'apn_and_geo',
     },
 ]
 
@@ -152,16 +156,13 @@ const isOverview = cityName == 'Overview'
       <h1 className='mt-4 text-center text-2xl'>Loading (or city doesn't exist)...</h1>
     )
   } else {
-    const [siteType, setSiteType] = useState('overall_match_stats')
-    const [matchingLogic, setMatchingLogic] = useState('either')
+    const [siteType, setSiteType] = useState('overall')
+    const [matchingLogic, setMatchingLogic] = useState('apn_and_geo')
 
-    const { isLenient, lenientInput } = useLenientSelector()
-    const geoMatchedField = isLenient ? 'geo_matched_lax' : 'geo_matched'
-    const matchingLogicSuffix = (isLenient && matchingLogic != 'apn') ? '_lax' : ''
+    const { buffer, bufferInput } = useBufferSelector()
 
-
-    console.log(siteType)
-    console.log(matchingLogic)
+    const matchingLogicField = matchingLogic == 'apn_only' ? 'results_apn_only' : `results_apn_and_geo_${buffer}ft`
+    const geoMatchedField = `geo_matched_${buffer}ft`
 
     const sitesPaintStyle = {
       // This is the world's dumbest query language
@@ -174,20 +175,22 @@ const isOverview = cityName == 'Overview'
       ],
       'fill-opacity': 0.3,
     }
+    console.log(sitesPaintStyle)
 
     const pdevField = [
         'get',
-        'fraction',
+        'P(dev)',
         [
             'get',
-            matchingLogic + matchingLogicSuffix,
+            siteType,
             [
                 'get',
-                siteType,
+                matchingLogicField,
             ]
         ]
     ]
-    console.log(cityName)
+    console.log(pdevField)
+
     const summaryPaintStyle = {
         'fill-color': [
             'interpolate',
@@ -225,7 +228,6 @@ const isOverview = cityName == 'Overview'
             layers: ['sitesWithMatchesLayer', 'permitsLayer', 'summaryLayer']
         })
         if (features.length > 0) {
-            console.log(features)
             setClickedElement({
                 layer: features[0].layer.id,
                 element: features[0],
@@ -273,7 +275,7 @@ const isOverview = cityName == 'Overview'
                     <h1 className='mt-4 text-center text-4xl'>{cityName}</h1>
                 </div>
                 <div className="col-span-1 m-4">
-                    {!isOverview && lenientInput}
+                    {!isOverview && bufferInput}
                 </div>
             </div>
             <div className='w-full justify-center flex flex-row'>
@@ -289,7 +291,6 @@ const isOverview = cityName == 'Overview'
                 >
                     <MapContext.Consumer>
                         {(map) => {
-                            console.log(map.getStyle().layers)
                             // Hide all the city names
                             for (let layer of map.getStyle().layers) {
                                 if (layer.id.includes('place-')) {
@@ -364,13 +365,13 @@ const isOverview = cityName == 'Overview'
                     />
                     {clickedElement && (
                         <Popup key={clickedElement.element.id} coordinates={clickedElement.location}>
-                            {renderPopup(isLenient, clickedElement.layer, clickedElement.element.properties)}
+                            {renderPopup(buffer, clickedElement.layer, clickedElement.element.properties)}
                         </Popup>
                     )}
                     {isOverview ? <></> : legend}
                 </Map>
             </div>
-            {currentOption && makeMatchTable(currentOption, isLenient)}
+            {currentOption && makeMatchTable(currentOption, buffer)}
             {isOverview &&
             <div className="lg:grid lg:grid-cols-3 flex flex-col">
                 <div className="m-4 col-span-1">
@@ -396,7 +397,7 @@ const isOverview = cityName == 'Overview'
                     />
                 </div>
                 <div className="m-4 col-span-1">
-                    {lenientInput}
+                    {bufferInput}
                 </div>
             </div>
             }
@@ -460,36 +461,32 @@ const legend = (
 )
 
 function makeTableRow(results) {
-    return results.map(
-        (d) => {
-            return (
-                <>
-                    <td>
-                        {formatPercent(8/5 * d.fraction)}&nbsp;
-                        <span className="text-gray-400">({d.matches}/{d.sites})</span>
-                    </td>
+    return ['overall', 'nonvacant', 'vacant'].map(
+        (siteType) => {
+            console.log(results)
+            const tableValue = (
+                results[siteType]['P(dev)'] == null ? <>N/A</>
+                : <>
+                    {results[siteType]['P(dev)']?.toFixed(3)}&nbsp;
+                    <span className="text-gray-400">({results[siteType]['# matches'].replaceAll(' ', '')})</span>
                 </>
-            )
+            );
+            return <td className="text-center">{tableValue}</td>
         }
     )
 }
 
-function makeMatchTable(result, isLenient) {
-    const statsList = [
-        result.overall_match_stats,
-        result.nonvacant_match_stats,
-        result.vacant_match_stats,
-    ]
-
-    const apnResults = statsList.map(d => d.apn)
-    const geoResults = statsList.map(d => isLenient ? d.geo_lax : d.geo)
-    const bothResults = statsList.map(d => isLenient ? d.either_lax : d.either)
+function makeMatchTable(result, buffer) {
+    const apnResults = result.results_apn_only
+    const bothResults = result[`results_apn_and_geo_${buffer}ft`]
+    console.log(apnResults)
+    console.log(bothResults)
 
     return (
         <>
         <table className="table-auto match-table mt-4">
             <tr>
-                <th className="text-center" colSpan={4}>Likelihood of development for {result.city}<span className="text-gray-500">*</span></th>
+                <th className="text-center" colSpan={4}>Likelihood of development for inventory sites in {result.city}<span className="text-gray-500">*</span></th>
             </tr>
             <tr className="bg-blue-300">
                 <th>Matching logic</th>
@@ -501,16 +498,12 @@ function makeMatchTable(result, isLenient) {
                 <th className="text-left">APN</th>
                 {makeTableRow(apnResults)}
             </tr>
-            <tr className="bg-gray-100">
-                <th className="text-left">Address</th>
-                {makeTableRow(geoResults)}
-            </tr>
             <tr className="bg-blue-100">
                 <th className="text-left">APN or address</th>
                 {makeTableRow(bothResults)}
             </tr>
         </table>
-        <div className="mt-4 text-sm text-gray-500 max-w-md">(*The likelihood of development is extrapolated from the 2015-2019 period to 8 years, so it equals 8/5 · fraction of sites developed.)</div>
+        <div className="mt-4 text-sm text-gray-500 max-w-md">(*The likelihood of development is extrapolated from the 2015-2019 period to 8 years, see report for formula.)</div>
         </>
     )
 }
@@ -527,7 +520,7 @@ function renderMatch (match) {
         <div>
             <p>{address}: {match.permit_units} units ({match.permit_year}).</p>
             <p><span className='font-bold'>Type:</span> {match.permit_category}</p>
-            <p><span className='font-bold'>Match type:</span> {match.match_type.join(', ')}</p>
+            <p><span className='font-bold'>Match type:</span> {match.match_type}</p>
         </div>
         </li>
     )
@@ -542,30 +535,30 @@ function renderPermit (permit) {
   )
 }
 
-function renderPopup (isLenient, layer, element) {
+function renderPopup (buffer, layer, element) {
   // Really ugly way of checking if they clicked on a site or a permit. TODO make this less dumb
   if (layer == 'sitesWithMatchesLayer') {
     // It's a site
-    const matchResults = JSON.parse(isLenient ? element.match_results_lax : element.match_results)
+    const matchResults = JSON.parse(element['match_results_' + buffer + 'ft'])
     return (
-      <>
-        <p>Expected capacity in housing element: {element.site_capacity_units} units</p>
-        {
-          (matchResults.length > 0)
-            ? (
-              <>
-                  <p>
-                      Matched permits
-                      (total {matchResults.map(r => r.permit_units || 0).reduce((a, b) => a + b, 0)} units):
-                  </p>
-                <ul className='list-disc list-outside pl-5'>
-                  {matchResults.map(renderMatch)}
-                </ul>
-              </>
-              )
-            : (<p>Matched permits: None</p>)
-          }
-      </>
+        <div className="max-h-72 overflow-y-auto">
+            <p>Expected capacity in housing element: {element.site_capacity_units} units</p>
+            {
+                matchResults
+                ? (
+                    <>
+                        <p>
+                            Matched permits
+                            (total {matchResults.map(r => r.permit_units || 0).reduce((a, b) => a + b, 0)} units):
+                        </p>
+                        <ul className='list-disc list-outside pl-5'>
+                            {matchResults.map(renderMatch)}
+                        </ul>
+                    </>
+                )
+                : (<p>Matched permits: None</p>)
+            }
+        </div>
     )
   } else if (layer == 'permitsLayer') {
     // It's a permit
@@ -575,14 +568,7 @@ function renderPopup (isLenient, layer, element) {
       elementParsed.overall_match_stats = JSON.parse(elementParsed.overall_match_stats)
       elementParsed.vacant_match_stats = JSON.parse(elementParsed.vacant_match_stats)
       elementParsed.nonvacant_match_stats = JSON.parse(elementParsed.nonvacant_match_stats)
-      return (
-          <>
-          <div>Conservative:</div>
-          {makeMatchTable(elementParsed, false)}
-          <div>Lenient:</div>
-          {makeMatchTable(elementParsed, true)}
-          </>
-      )
+      return makeMatchTable(elementParsed, buffer)
   } else {
       throw 'Unknown layer clicked: ' + layer
   }
