@@ -175,7 +175,6 @@ const isOverview = cityName == 'Overview'
       ],
       'fill-opacity': 0.3,
     }
-    console.log(sitesPaintStyle)
 
     const pdevField = [
         'get',
@@ -189,7 +188,6 @@ const isOverview = cityName == 'Overview'
             ]
         ]
     ]
-    console.log(pdevField)
 
     const summaryPaintStyle = {
         'fill-color': [
@@ -355,7 +353,7 @@ const isOverview = cityName == 'Overview'
                                 'concat',
                                 ['get', 'city'],
                                 '\n',
-                                ['number-format', ['*', 1.6, pdevField], {'max-fraction-digits': 3}]
+                                ['number-format', pdevField, {'max-fraction-digits': 3}]
                             ],
                             visibility: isOverview ? 'visible' : 'none'
                         }}
@@ -463,7 +461,6 @@ const legend = (
 function makeTableRow(results) {
     return ['overall', 'nonvacant', 'vacant'].map(
         (siteType) => {
-            console.log(results)
             const tableValue = (
                 results[siteType]['P(dev)'] == null ? <>N/A</>
                 : <>
@@ -479,8 +476,6 @@ function makeTableRow(results) {
 function makeMatchTable(result, buffer) {
     const apnResults = result.results_apn_only
     const bothResults = result[`results_apn_and_geo_${buffer}ft`]
-    console.log(apnResults)
-    console.log(bothResults)
 
     return (
         <>
@@ -565,9 +560,11 @@ function renderPopup (buffer, layer, element) {
     return renderPermit(element)
   } else if (layer == 'summaryLayer') {
       const elementParsed = {...element}
-      elementParsed.overall_match_stats = JSON.parse(elementParsed.overall_match_stats)
-      elementParsed.vacant_match_stats = JSON.parse(elementParsed.vacant_match_stats)
-      elementParsed.nonvacant_match_stats = JSON.parse(elementParsed.nonvacant_match_stats)
+      for (let col of Object.keys(elementParsed)) {
+          if (col.includes('results')) {
+              elementParsed[col] = JSON.parse(elementParsed[col])
+          }
+      }
       return makeMatchTable(elementParsed, buffer)
   } else {
       throw 'Unknown layer clicked: ' + layer
