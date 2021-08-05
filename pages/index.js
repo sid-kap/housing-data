@@ -1,5 +1,6 @@
 import SelectSearch from 'react-select-search/dist/cjs'
 import WindowSelectSearch from 'lib/WindowSelectSearch'
+import MultiSelect from 'lib/MultiSelect'
 import { useState, useMemo, useCallback } from 'react'
 import { useFetch } from '../lib/queries.js'
 import { VegaLite } from 'react-vega'
@@ -244,6 +245,16 @@ export default function Home () {
 
   // renderOption={renderOption}
 
+  //   <WindowSelectSearch
+  // search
+  // multiple
+  // closeOnSelect
+  // onChange={() => {}}
+  // options={options}
+  // fuseOptions={fuseOptions}
+  // value={null}
+  //   />
+
   return (
     <Page title='Housing Data' navIndex={0}>
       <div className='flex flex-col justify-center items-center mx-auto mb-10'>
@@ -252,15 +263,10 @@ export default function Home () {
           Combined Plots
         </h1>
 
+        <div className='flex m-2' />
+
         <div className='flex m-2'>
-          <WindowSelectSearch
-            search
-            multiple
-            onChange={() => {}}
-            options={options}
-            fuseOptions={fuseOptions}
-            value={null}
-          />
+          <MultiSelect />
         </div>
 
         <div className='w-full flex flex-row'>

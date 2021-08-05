@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "fuzzysort": "^1.1.4",
+    "immutable": "^4.0.0-rc.14",
     "next": "10.0.4",
     "react": "^17.0.1",
     "react-container-dimensions": "^1.4.1",
