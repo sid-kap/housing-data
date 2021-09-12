@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import us
 from tqdm import tqdm
 
 UNITS_COLUMNS = [
@@ -85,3 +86,11 @@ def add_per_capita_columns(df):
 
     for col in NUMERICAL_NON_REPORTED_COLUMNS:
         df[col + "_per_capita"] = df[col] / population
+
+
+def get_state_abbrs(state_codes: pd.Series) -> pd.Series:
+    """
+    :param state_codes: state_codes: pd.Series of int
+    :return: pd.Series of state abbrs as str
+    """
+    return state_codes.astype(str).str.zfill(2).map(us.states.mapping("fips", "abbr"))

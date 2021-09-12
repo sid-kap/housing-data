@@ -9,7 +9,7 @@ from housing_data.build_data_utils import (
 )
 
 
-def load_metros(counties_df: pd.DataFrame, use_data_repo: bool) -> None:
+def load_metros(counties_df: pd.DataFrame) -> None:
     counties_df = counties_df.drop(
         columns=[col for col in counties_df.columns if "_per_capita" in col]
     )
@@ -77,6 +77,7 @@ def load_metros(counties_df: pd.DataFrame, use_data_repo: bool) -> None:
 
     add_per_capita_columns(metros_df)
     metros_df["path"] = metros_df["metro_name"].str.replace("/", "-")
+    metros_df["name"] = metros_df["metro_name"]
 
     metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
 

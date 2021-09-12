@@ -9,6 +9,7 @@ from housing_data.build_data_utils import (
     NUMERICAL_COLUMNS,
     PUBLIC_DIR,
     add_per_capita_columns,
+    get_state_abbrs,
     write_to_json_directory,
 )
 
@@ -73,6 +74,13 @@ def load_counties(
         right_on=["county_code", "state_code", "year"],
     )
     add_per_capita_columns(counties_df)
+
+    # TODO figure out why some are null/which ones are getting dropped
+    counties_df = counties_df[counties_df["county_name"].notnull()]
+
+    counties_df["name"] = (
+        counties_df["county_name"] + ", " + get_state_abbrs(counties_df["fips_state"])
+    )
 
     counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")
 

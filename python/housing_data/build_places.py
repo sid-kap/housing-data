@@ -9,6 +9,7 @@ from housing_data.build_data_utils import (
     PLACE_POPULATION_DIR,
     PUBLIC_DIR,
     add_per_capita_columns,
+    get_state_abbrs,
     write_to_json_directory,
 )
 
@@ -241,10 +242,23 @@ def load_places(
         place_populations_df = pd.concat([place_populations_df, nyc_counties_df])
 
     places_df = add_place_population_data(raw_places_df, place_populations_df)
+
+    # Add name for comparison plots
+    is_unincorporated = places_df["place_name"].str.contains("County") | places_df[
+        "place_name"
+    ].str.contains("Parish")
+
+    places_df["name"] = (
+        is_unincorporated.map({True: "Unincorporated ", False: ""})
+        + places_df["place_name"]
+        + ", "
+        + get_state_abbrs(places_df["state_code"])
+    )
+
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
     (
-        places_df[["place_name", "state_code", "alt_name"]]
+        places_df[["place_name", "state_code", "alt_name", "name"]]
         .drop_duplicates()
         .sort_values("place_name")
         .to_json(PUBLIC_DIR / "places_list.json", orient="records")
