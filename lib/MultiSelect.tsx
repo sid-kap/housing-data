@@ -75,6 +75,8 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
   const onKeyPress = useCallback((e) => {
     if (e.key === 'Enter') {
       e.preventDefault()
+      // Clear the input when someone presses enter
+      setInput('')
       const item = filteredOptions[highlightIndex]
       toggleValue(item)
     }
@@ -82,7 +84,6 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
 
   const onKeyUp = useCallback((e) => {
     if (e.key === 'Escape') {
-      e.preventDefault()
       (inputRef.current as any).blur()
     }
   }, [inputRef])
