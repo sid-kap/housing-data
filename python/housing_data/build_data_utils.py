@@ -47,7 +47,6 @@ NUMERICAL_NON_REPORTED_COLUMNS = [
 PUBLIC_DIR = Path("../public")
 GITHUB_DATA_REPO_DIR = Path("../housing-data-data")
 BPS_DIR = str(Path(GITHUB_DATA_REPO_DIR, "data", "bps"))
-
 STATE_POPULATION_DIR = str(Path(GITHUB_DATA_REPO_DIR, "data", "population", "state"))
 COUNTY_POPULATION_DIR = str(Path(GITHUB_DATA_REPO_DIR, "data", "population", "county"))
 PLACE_POPULATION_DIR = str(Path(GITHUB_DATA_REPO_DIR, "data", "population", "place"))
