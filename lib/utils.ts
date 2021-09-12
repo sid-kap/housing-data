@@ -27,7 +27,3 @@ export class PathMapping {
     return index ? this.placesList[index] : undefined
   }
 }
-
-// function useMetrosList() {
-//   const { status, data: metrosList } = useFetch('/metros_list.json')
-// }

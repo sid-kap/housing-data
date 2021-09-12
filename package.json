@@ -8,8 +8,10 @@
     "start": "next start"
   },
   "dependencies": {
+    "date-fns": "^2.23.0",
     "fuzzysort": "^1.1.4",
     "immutable": "^4.0.0-rc.14",
+    "moment": "^2.29.1",
     "next": "10.0.4",
     "react": "^17.0.1",
     "react-container-dimensions": "^1.4.1",

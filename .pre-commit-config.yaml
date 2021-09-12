@@ -18,6 +18,6 @@ repos:
 #    hooks:
 #      - id: prettier
   - repo: https://github.com/standard/standard
-    rev: master
+    rev: b9abb8453168d8b9d95ff21de7d19af5ed881eaf
     hooks:
       - id: standard

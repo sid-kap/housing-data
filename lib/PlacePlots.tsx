@@ -7,16 +7,26 @@ import { useRouter } from 'next/router'
 import { makeUnitsSelect, usePerCapitaInput } from 'lib/selects.js'
 import { PathMapping } from 'lib/utils'
 
-function getJsonUrl (place, state) {
+export function getJsonUrl (place, state) {
     if (place === null) {
     return null
   }
   place = place.replace('#', '%23')
-  return '/places_data/' + getStateFips(state) + '/' + place + '.json'
+    const stateFips = getStateFips(state)
+    if (stateFips) {
+        return '/places_data/' + stateFips + '/' + place + '.json'
+    } else {
+        return ''
+    }
 }
 
 function getStateFips (stateStr) {
-  return parseInt(us.lookup(stateStr).fips)
+    const state = us.lookup(stateStr)
+    if (state) {
+        return parseInt(state.fips)
+    } else {
+        return undefined
+    }
 }
 
 function getStateAbbreviation (stateCode: number): string {
@@ -29,7 +39,7 @@ function getStateAbbreviation (stateCode: number): string {
   }
 }
 
-function makePlaceOptions (placesList) {
+export function makePlaceOptions (placesList) {
   const options = []
   for (let i = 0; i < placesList.length; i++) {
     const place = placesList[i]
@@ -39,8 +49,9 @@ function makePlaceOptions (placesList) {
         value: i,
         abbr: abbr,
         place_name: place.place_name,
-        name: place.place_name + ', ' + abbr,
-        alt_name: place.alt_name
+        name: place.name,
+        alt_name: place.alt_name,
+        path: getJsonUrl(place.place_name, abbr),
       })
     }
   }

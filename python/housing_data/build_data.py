@@ -1,10 +1,12 @@
 import argparse
+import os
 import shutil
 from pathlib import Path
 from subprocess import Popen
 
 import numpy as np
 import pandas as pd
+import us
 from housing_data import building_permits_survey as bps
 from housing_data import county_population, place_population, state_population
 from tqdm import tqdm
@@ -393,10 +395,22 @@ def load_places(
         place_populations_df = pd.concat([place_populations_df, nyc_counties_df])
 
     places_df = add_place_population_data(raw_places_df, place_populations_df)
+
+    # Add name for comparison plots
+    is_unincorporated = places_df["place_name"].str.contains("County") | places_df[
+        "place_name"
+    ].str.contains("Parish")
+    places_df["name"] = (
+        is_unincorporated.map({True: "Unincorporated ", False: ""})
+        + places_df["place_name"]
+        + ", "
+        + get_state_abbrs(places_df["state_code"])
+    )
+
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
     (
-        places_df[["place_name", "state_code", "alt_name"]]
+        places_df[["place_name", "state_code", "alt_name", "name"]]
         .drop_duplicates()
         .sort_values("place_name")
         .to_json(PUBLIC_DIR / "places_list.json", orient="records")
@@ -455,6 +469,13 @@ def load_counties(
 
     counties_df = counties_df.drop(columns=["county_name"]).merge(
         metadata_df, on=["fips_state", "fips_county"], how="left"
+    )
+
+    # IDK why some rows are null
+    counties_df = counties_df[counties_df["county_name"].notnull()]
+
+    counties_df["name"] = (
+        counties_df["county_name"] + ", " + get_state_abbrs(counties_df["fips_state"])
     )
 
     if population_df is None:
@@ -571,6 +592,7 @@ def load_metros(counties_df: pd.DataFrame, use_data_repo: bool) -> None:
 
     add_per_capita_columns(metros_df)
     metros_df["path"] = metros_df["metro_name"].str.replace("/", "-")
+    metros_df["name"] = metros_df["metro_name"]
 
     metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
 
@@ -586,6 +608,14 @@ def load_metros(counties_df: pd.DataFrame, use_data_repo: bool) -> None:
         Path(PUBLIC_DIR, "metros_data"),
         ["path"],
     )
+
+
+def get_state_abbrs(state_codes: pd.Series) -> pd.Series:
+    """
+    :param state_codes: state_codes: pd.Series of int
+    :return: pd.Series of state abbrs as str
+    """
+    return state_codes.astype(str).str.zfill(2).map(us.states.mapping("fips", "abbr"))
 
 
 if __name__ == "__main__":
