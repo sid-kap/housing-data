@@ -4,14 +4,14 @@ import { OrderedMap } from 'immutable'
 import fuzzysort from 'fuzzysort'
 
 export default function MultiSelect ({ options, groupOptions, onChange, itemClassFn }) {
-  const [isTyping, setIsTyping] = useState(false)
+  const [isTyping, setIsTyping] = useState<boolean>(false)
 
-  const [selectedItems, setSelectedItems] = useState(new OrderedMap())
+  const [selectedItems, setSelectedItems] = useState(OrderedMap())
   useEffect(() => onChange(selectedItems), [selectedItems])
 
   const inputRef = useRef()
   const listRef = useRef()
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState<string>('')
 
   /* console.log(selectedItems.toArray()) */
 
@@ -22,7 +22,7 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
   }, [options])
 
   const allOptionsMap = useMemo(() => {
-    return new OrderedMap(allOptions.map((item) => [item.value, item]))
+    return OrderedMap(allOptions.map((item) => [item.value, item]))
   }, [allOptions])
 
   const filteredOptions = useMemo(() => {
@@ -36,7 +36,8 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
   const [highlightIndex, setHighlightIndex] = useState(null)
 
   const ensureItemInView = useCallback((index) => {
-    listRef.current.scrollToItem(index)
+    // There should be a better way to get around this TypeScript error...
+    (listRef.current as any).scrollToItem(index)
   }, [listRef])
 
   const onKeyDown = useCallback((e) => {
@@ -82,7 +83,7 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
   const onKeyUp = useCallback((e) => {
     if (e.key === 'Escape') {
       e.preventDefault()
-      inputRef.current.blur()
+      (inputRef.current as any).blur()
     }
   }, [inputRef])
 
@@ -92,13 +93,13 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
 
   const onClickX = useCallback((e) => {
     setSelectedItems((items) => items.remove(e.target.attributes['data-value'].value))
-  })
+  }, [])
 
   // on the surrounding <div>, padding only on left side (pl-2) because on the right, we'll let the clickable X have the padding
   // p-2 on the <a> because we want the gap on the left and right (and top) of the X to be clickable
   const chosenItems = (
     <div className='max-w-md p-1'>
-      {selectedItems.valueSeq().map((item) => {
+      {selectedItems.valueSeq().map((item: any) => {
         return (
           // bg-blue-700
           <div
@@ -118,6 +119,7 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
   )
 
   const toggleValue = useCallback((item) => {
+    // TODO figure out what's going on with the typechecker here
     setSelectedItems((items) => {
       if (items.includes(item.value)) {
         return items.remove(item.value)
@@ -125,8 +127,11 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
         return items.set(item.value, item)
       }
     })
-    inputRef.current.focus()
-  }, [inputRef])
+    if (inputRef.current) {
+        const current: HTMLInputElement = inputRef.current
+        current.focus()
+    }
+  }, [inputRef, setSelectedItems])
 
   const onClick = useCallback((e) => {
     const value = e.target.attributes['data-value'].value
@@ -171,7 +176,7 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
   const onInputChange = useCallback((e) => {
     setInput(e.target.value)
     setHighlightIndex(0)
-  })
+  }, [])
 
   return (
     <div className='flex flex-col items-center'>
@@ -188,7 +193,7 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
           onKeyUp={onKeyUp}
           onKeyPress={onKeyPress}
           onBlur={(e) => {
-            if (!e.relatedTarget || !e.relatedTarget.classList.contains('select-list')) {
+            if (!e.relatedTarget || !(e.relatedTarget as HTMLElement).classList.contains('select-list')) {
               setIsTyping(false)
               setInput('')
             }

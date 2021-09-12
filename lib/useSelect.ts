@@ -255,7 +255,7 @@ export default function useSelect ({
     if (state.changed !== false) {
       // No idea why I'm getting type errors here, TODO fix it
       setState((oldState) => ({ ...oldState, changed: false }));
-      onChange(...state.changed);
+      onChange.apply(null, state.changed);
     }
   }, [state.changed, onChange])
 
