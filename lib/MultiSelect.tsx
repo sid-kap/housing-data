@@ -1,3 +1,5 @@
+import '../styles/globals.css'
+
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { FixedSizeList } from 'react-window'
 import { OrderedMap } from 'immutable'
