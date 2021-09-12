@@ -9,6 +9,7 @@ repos:
     rev: 5.6.4
     hooks:
       - id: isort
+        args: [--profile, black] # make it compatible with black
   - repo: https://github.com/psf/black
     rev: 19.3b0
     hooks:
@@ -18,7 +19,7 @@ repos:
 #    hooks:
 #      - id: prettier
   - repo: https://github.com/standard/standard
-    rev: master
+    rev: b9abb8453168d8b9d95ff21de7d19af5ed881eaf
     hooks:
       - id: standard
 # Based on https://rednafi.github.io/digressions/python/2020/04/06/python-precommit.html

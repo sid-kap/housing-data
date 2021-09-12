@@ -17,6 +17,51 @@ import getNewValue from 'react-select-search/dist/cjs/lib/getNewValue'
 import getOption from 'react-select-search/dist/cjs/lib/getOption'
 import fuzzysort from 'fuzzysort'
 
+type SelectState = {
+    flat: any[],
+    addedOptions: any[],
+    value: any,
+    search: string,
+    focus: boolean,
+    searching: boolean,
+    highlighted: number,
+    changed: false | string[],
+}
+
+type ReturnType = [
+    {
+        value: any
+        highlighted: number,
+        options: any,
+        disabled: boolean,
+        displayValue: any,
+        focus: boolean,
+        search: string,
+        searching: boolean,
+    },
+    {
+        tabIndex: string,
+        readOnly: boolean,
+        onChange: (any) => void,
+        disabled: boolean,
+        onMouseDown: (any) => void,
+        onBlur: (any) => void,
+        onFocus: (any) => void,
+        onKeyPress: (any) => void,
+        onKeyDown: (any) => void,
+        onKeyUp: (any) => void,
+        ref: any,
+    },
+    {
+        tabIndex: string,
+        onMouseDown: (any) => void,
+        onKeyDown: (any) => void,
+        onKeyPress: (any) => void,
+        onBlur: (any) => void,
+    },
+    (any) => void,
+]
+
 export default function useSelect ({
   value: defaultValue = null,
   disabled = false,
@@ -29,10 +74,10 @@ export default function useSelect ({
   allowEmpty = true,
   closeOnSelect = true,
   closable = true
-}) {
+}): ReturnType {
   const ref = useRef(null)
   const flatDefaultOptions = useMemo(() => flattenOptions(defaultOptions), [defaultOptions])
-  const [state, setState] = useState({
+  const [state, setState] = useState<SelectState>({
     flat: [],
     addedOptions: [],
     value: defaultValue,
@@ -81,7 +126,7 @@ export default function useSelect ({
   const setFocus = (newFocus) => setState((oldState) => ({ ...oldState, focus: newFocus }))
   const onClick = () => setFocus(!focus)
   const onFocus = () => setFocus(true)
-  const onSelect = useCallback((id) => {
+  const onSelect = useCallback((id?: number) => {
     setState((prevState) => {
       const { flat: prevFlat, highlighted: prevHighlighted } = prevState
       // eslint-disable-next-line no-underscore-dangle,eqeqeq
@@ -143,7 +188,7 @@ export default function useSelect ({
 
   const onSearch = ({ target }) => {
     const { value: inputVal } = target
-    const newState = { search: inputVal }
+    const newState: Partial<SelectState> = { search: inputVal }
 
     let searchableOption = flatDefaultOptions
 
@@ -160,7 +205,7 @@ export default function useSelect ({
         let newOptions = foundOptions
 
         if (inputVal.length) {
-          newOptions = fuzzysort.go(inputVal, foundOptions, fuzzysortOptions).map((result) => result.obj)
+          newOptions = fuzzysort.go(inputVal, foundOptions, fuzzysortOptions).map((result: any) => result.obj)
         }
 
         setState((oldState) => ({
@@ -208,8 +253,9 @@ export default function useSelect ({
 
   useEffect(() => {
     if (state.changed !== false) {
+      // No idea why I'm getting type errors here, TODO fix it
       setState((oldState) => ({ ...oldState, changed: false }))
-      onChange(...state.changed)
+      onChange.apply(null, state.changed)
     }
   }, [state.changed, onChange])
 
