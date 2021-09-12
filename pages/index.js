@@ -72,36 +72,33 @@ function makeYearBuckets (grouping) {
   return yearBuckets
 }
 
+const midYearDatesThrough2010 = [
+  Date.parse('1982-01-01'),
+  Date.parse('1987-01-01'),
+  Date.parse('1992-01-01'),
+  Date.parse('1997-01-01'),
+  Date.parse('2002-01-01'),
+  Date.parse('2007-01-01')
+]
+
 function getYearTickValues (grouping) {
   if (grouping === 'none') {
     return null
   } else if (grouping === 'five_years') {
-    return [
-      Date.parse('1982-01-01'),
-      Date.parse('1987-01-01'),
-      Date.parse('1992-01-01'),
-      Date.parse('1997-01-01'),
-      Date.parse('2002-01-01'),
-      Date.parse('2007-01-01'),
+    return midYearDatesThrough2010.concat([
       Date.parse('2012-01-01'),
       Date.parse('2017-01-01'),
       Date.parse('2020')
-    ]
+    ])
   } else if (grouping === 'five_years_old') {
-    return [
-      Date.parse('1982-01-01'),
-      Date.parse('1987-01-01'),
-      Date.parse('1992-01-01'),
-      Date.parse('1997-01-01'),
-      Date.parse('2002-01-01'),
-      Date.parse('2007-01-01'),
+    return midYearDatesThrough2010.concat([
       Date.parse('2010'),
       Date.parse('2012'),
       Date.parse('2014'),
       Date.parse('2016'),
       Date.parse('2018'),
       Date.parse('2020')
-    ]
+    ])
   }
 }
 
