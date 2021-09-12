@@ -9,9 +9,7 @@ repos:
     rev: 5.6.4
     hooks:
       - id: isort
-        args:
-        # make it compatible with black
-        - "--profile black"
+        args: [--profile, black] # make it compatible with black
   - repo: https://github.com/psf/black
     rev: 19.3b0
     hooks:
