@@ -16,14 +16,12 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
   /* console.log(selectedItems.toArray()) */
 
   // TODO: Figure out how to add the group titles. For now, this is fine.
-  const allOptions = useMemo(() => {
+  const [allOptions, allOptionsMap] = useMemo(() => {
     // OrderedMap to preserve the order of the options from the JSON files
-    return options.concat(groupOptions.flatMap((ops) => ops.items))
+    const _allOptions = options.concat(groupOptions.flatMap((ops) => ops.items))
+    const _allOptionsMap = OrderedMap(_allOptions.map((item) => [item.value, item]))
+    return [_allOptions, _allOptionsMap]
   }, [options])
-
-  const allOptionsMap = useMemo(() => {
-    return OrderedMap(allOptions.map((item) => [item.value, item]))
-  }, [allOptions])
 
   const filteredOptions = useMemo(() => {
     let filtered = allOptions.filter((item) => !selectedItems.has(item.value))
