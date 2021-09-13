@@ -54,9 +54,7 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
           return idx
         }
       })
-    }
-
-    if (e.key === 'ArrowDown') {
+    } else if (e.key === 'ArrowDown') {
       e.preventDefault()
 
       setHighlightIndex((idx) => {
@@ -69,28 +67,21 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
           return idx
         }
       })
+    } else if (e.key === 'Escape') {
+        (inputRef.current as any).blur()
+    } else if (e.key === 'Enter') {
+        e.preventDefault()
+        // Clear the input when someone presses enter
+        setInput('')
+        setHighlightIndex((idx) => {
+            // sort of a hack, but I think performance-wise it's better to not redefine
+            // the callback everytime highlightIndex changes
+            const item = filteredOptions[idx]
+            toggleValue(item)
+            return 0
+        })
     }
-  }, [filteredOptions])
-
-  const onKeyPress = useCallback((e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      // Clear the input when someone presses enter
-      setInput('')
-      const item = filteredOptions[highlightIndex]
-      toggleValue(item)
-    }
-  }, [filteredOptions, highlightIndex])
-
-  const onKeyUp = useCallback((e) => {
-    if (e.key === 'Escape') {
-      (inputRef.current as any).blur()
-    }
-  }, [inputRef])
-
-  // const optionValueToName = useMemo(() => {
-  //   return Object.fromEntries(allOptions.map((e) => [e.value, e.name]))
-  // }, [allOptions])
+  }, [filteredOptions, inputRef])
 
   const onClickX = useCallback((e) => {
     setSelectedItems((items) => items.remove(e.target.attributes['data-value'].value))
@@ -135,6 +126,7 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
   }, [inputRef, setSelectedItems])
 
   const onClick = useCallback((e) => {
+    setInput('')
     const value = e.target.attributes['data-value'].value
     toggleValue(allOptionsMap.get(value))
   }, [toggleValue, allOptionsMap])
@@ -191,8 +183,6 @@ export default function MultiSelect ({ options, groupOptions, onChange, itemClas
           onClick={() => setIsTyping(true)}
           ref={inputRef}
           onKeyDown={onKeyDown}
-          onKeyUp={onKeyUp}
-          onKeyPress={onKeyPress}
           onBlur={(e) => {
             if (!e.relatedTarget || !(e.relatedTarget as HTMLElement).classList.contains('select-list')) {
               setIsTyping(false)
