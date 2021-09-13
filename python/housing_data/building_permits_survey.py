@@ -328,7 +328,11 @@ SUBSTRING_CORRECTIONS = {
     "Parish Pt. Uninc. Area": "Parish",
     "Parish Pt Uninc. Area": "Parish",
     "County Uninc Area": "County",
+    "ALLEN TOWN": "Allen town",
 }
+
+
+PLACES_TO_REMOVE = ["Houston (Dummy)", "Houston Part 2"]
 
 
 def parse_number_column(col: pd.Series) -> pd.Series:
@@ -391,26 +395,11 @@ def place_cleanup(df, year):
         df["central_city"] = df["central_city"].astype(str)
 
     df["uncleaned_place_name"] = df["place_name"]
-    place_names = df["place_name"]
+    df["place_name"] = clean_place_names(df["place_name"], year)
 
-    if year < 1988:
-        place_names = place_names.str.title().str.rstrip(".# ")
-
-    place_names = place_names.replace(CORRECTIONS)
-
-    for s, replacement_s in SUBSTRING_CORRECTIONS.items():
-        place_names = place_names.str.replace(s, replacement_s, regex=False)
-
-    place_names = place_names.str.rstrip()
-
-    place_types = ["township", "town", "city", "village", "borough"]
-    for place_type in place_types:
-        place_names = place_names.str.replace(f" {place_type.title()}$", "")
-        place_names = place_names.str.replace(f" {place_type}$", "")
-
-    df["place_name"] = place_names
-
-    df = df[df["place_name"].notnull()].copy()
+    df = df[
+        df["place_name"].notnull() & ~df["place_name"].isin(PLACES_TO_REMOVE)
+    ].copy()
 
     df["total_units"] = (
         df["1_unit_units"]
@@ -420,6 +409,27 @@ def place_cleanup(df, year):
     )
 
     return df
+
+
+def clean_place_names(place_names: pd.Series, year: int) -> pd.Series:
+    if year <= 1988:
+        # Mostly only an issue from 1980 to 1987, but there are like 11 places that
+        # still have the weird trailing dots in 1988 too.
+        place_names = place_names.str.title().str.rstrip(".# ")
+
+    place_names = place_names.replace(CORRECTIONS)
+
+    for s, replacement_s in SUBSTRING_CORRECTIONS.items():
+        place_names = place_names.str.replace(s, replacement_s, regex=False)
+
+    place_names = place_names.str.strip()
+
+    place_types = ["township", "town", "city", "village", "borough"]
+    for place_type in place_types:
+        place_names = place_names.str.replace(f" {place_type.title()}$", "")
+        place_names = place_names.str.replace(f" {place_type}$", "")
+
+    return place_names
 
 
 def county_cleanup(df):
