@@ -253,6 +253,13 @@ def get_state_populations_2010s(data_path: Optional[str] = None) -> pd.DataFrame
     )
 
 
+def impute_state_populations_2021(df_2010s: pd.DataFrame) -> pd.DataFrame:
+    """
+    Impute 2021 with the 2020 population; that's the best I think we can do...
+    """
+    return df_2010s[df_2010s["year"] == "2020"].assign(year="2021")
+
+
 def get_state_population_estimates(data_path: Optional[str] = None):
     print("Loading 1980s data...")
     df_1980s = get_state_populations_1980s(data_path)
@@ -266,7 +273,9 @@ def get_state_population_estimates(data_path: Optional[str] = None):
     print("Loading 2010s data...")
     df_2010s = get_state_populations_2010s(data_path)
 
-    states_df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s])
+    df_2021 = impute_state_populations_2021(df_2010s)
+
+    states_df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s, df_2021])
 
     states = us.states.mapping("name", "fips").keys()
     states_df = states_df[states_df["state"].isin(states)]

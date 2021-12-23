@@ -1,9 +1,11 @@
 import shutil
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import pandas as pd
 import us
+from housing_data import building_permits_survey as bps
 from tqdm import tqdm
 
 UNITS_COLUMNS = [
@@ -46,11 +48,15 @@ NUMERICAL_NON_REPORTED_COLUMNS = [
 ]
 
 PUBLIC_DIR = Path("../public")
-GITHUB_DATA_REPO_DIR = Path("../housing-data-data")
-BPS_DIR = str(Path(GITHUB_DATA_REPO_DIR, "data", "bps"))
-STATE_POPULATION_DIR = str(Path(GITHUB_DATA_REPO_DIR, "data", "population", "state"))
-COUNTY_POPULATION_DIR = str(Path(GITHUB_DATA_REPO_DIR, "data", "population", "county"))
-PLACE_POPULATION_DIR = str(Path(GITHUB_DATA_REPO_DIR, "data", "population", "place"))
+
+# Paths relative to the housing-data-data repo
+BPS_DIR = str(Path("data", "bps"))
+STATE_POPULATION_DIR = str(Path("data", "population", "state"))
+COUNTY_POPULATION_DIR = str(Path("data", "population", "county"))
+PLACE_POPULATION_DIR = str(Path("data", "population", "place"))
+
+# Last year and month for which monthly BPS data is available (and is cloned to housing-data-data).
+LATEST_MONTH = (2021, 11)
 
 
 def write_to_json_directory(df, path, group_cols=None):
@@ -94,3 +100,43 @@ def get_state_abbrs(state_codes: pd.Series) -> pd.Series:
     :return: pd.Series of state abbrs as str
     """
     return state_codes.astype(str).str.zfill(2).map(us.states.mapping("fips", "abbr"))
+
+
+def load_bps_all_years_plus_monthly(
+    data_repo_path: Optional[str],
+    scale: bps.Scale,
+    region: Optional[bps.Region] = None,
+    start_year: int = 1980,
+) -> pd.DataFrame:
+    """
+    Loads the annual data from 1980 to 2020, plus the year-to-date data for the current
+    year (2021).
+
+    Adds columns "year" and "month" to identify when the data came from.
+    ("month" will only be present for the final (incomplete) year.)
+    """
+    data_path = Path(data_repo_path, BPS_DIR) if data_repo_path else None
+
+    dfs = []
+    for year in range(start_year, 2021):
+        data = bps.load_data(
+            scale=scale,
+            time_scale="annual",
+            year=year,
+            month=None,
+            region=region,
+            data_path=data_path,
+        ).assign(year=str(year), month=None)
+        dfs.append(data)
+
+    current_year_data = bps.load_data(
+        scale=scale,
+        time_scale="monthly_year_to_date",
+        year=LATEST_MONTH[0],
+        month=LATEST_MONTH[1],
+        region=region,
+        data_path=data_path,
+    ).assign(year=str(LATEST_MONTH[0]), month=LATEST_MONTH[1])
+    dfs.append(current_year_data)
+
+    return pd.concat(dfs)

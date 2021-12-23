@@ -214,6 +214,13 @@ def get_county_populations_1980s(data_path: Optional[str] = None) -> pd.DataFram
     return combined_df
 
 
+def impute_county_populations_2021(df_2010s: pd.DataFrame) -> pd.DataFrame:
+    """
+    Impute 2021 with the 2020 population; that's the best I think we can do...
+    """
+    return df_2010s[df_2010s["year"] == "2020"].assign(year="2021")
+
+
 def get_county_population_estimates(data_path: Optional[str] = None):
     print("Loading 1980 populations...")
     df_1980s = get_county_populations_1980s(data_path)
@@ -224,7 +231,9 @@ def get_county_population_estimates(data_path: Optional[str] = None):
     print("Loading 2010s populations...")
     df_2010s = get_county_populations_2010s(data_path)
 
-    df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s])
+    df_2021 = impute_county_populations_2021(df_2010s)
+
+    df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s, df_2021])
 
     # Check for dupes
     assert (df.groupby(["county_code", "state_code", "year"]).size() == 1).all()
