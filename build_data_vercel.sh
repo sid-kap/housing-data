@@ -1,6 +1,7 @@
 #! /usr/bin/env bash
-yum list
-yum install -y python3.10
+# yum list
+amazon-linux-extras | grep -i python
+# yum install -y python3.10
 pip3 install --user poetry
 cd python || exit
 export PATH=$PATH:$HOME/.local/bin
