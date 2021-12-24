@@ -6,6 +6,5 @@ pip3 install --user poetry
 cd python || exit
 export PATH=$PATH:$HOME/.local/bin
 poetry install --no-dev
-git clone https://github.com/sid-kap/housing-data-data ../housing-data-data
-ls ../housing-data-data
+git clone https://github.com/sid-kap/housing-data-data ../housing-data-data -b add-monthly-year-to-date
 poetry run build_data --data-repo-path ../housing-data-data
