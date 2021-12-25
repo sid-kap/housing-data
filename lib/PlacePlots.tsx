@@ -39,7 +39,7 @@ function getStateAbbreviation(stateCode: number): string {
   }
 }
 
-interface Option {
+type Option = {
   value: number
   abbr: string
   place_name: string

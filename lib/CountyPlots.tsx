@@ -22,12 +22,12 @@ function getJsonUrl(county: string, stateCode: number): string {
   return "/counties_data/" + stateCode.toString() + "/" + county + ".json"
 }
 
-interface RawOption {
+type RawOption = {
   county_name: string
   state_code: number
 }
 
-interface Option {
+type Option = {
   value: number
   abbr: string
   county_name: string

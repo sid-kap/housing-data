@@ -6,12 +6,12 @@ import BarPlot from "../lib/BarPlot"
 import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects"
 import { PlainObject } from "react-vega/src/types"
 
-interface RawOption {
+type RawOption = {
   type: string
   state_name: string
 }
 
-interface Option {
+type Option = {
   value: string
   name: string
   path: string

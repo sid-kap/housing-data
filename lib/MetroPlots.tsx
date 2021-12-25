@@ -14,7 +14,7 @@ function getJsonUrl(metro: string): string {
   return "/metros_data/" + metro + ".json"
 }
 
-interface RawOption {
+type RawOption = {
   path: string
   name: string
   metro_name: string
@@ -22,7 +22,7 @@ interface RawOption {
   county_names: string[]
 }
 
-interface Option {
+type Option = {
   value: number
   path: string
   name: string
@@ -31,7 +31,7 @@ interface Option {
   county_names: string[]
 }
 
-interface Group<T> {
+type Group<T> = {
   name: string
   type: string
   items: T[]
