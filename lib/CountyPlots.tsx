@@ -79,7 +79,7 @@ export default function CountyPlots({
   )
 
   const optionVal: Option = useMemo(
-    () => pathMapping.getEntryForPath(countyName + "/" + stateCode.toString()),
+    () => pathMapping.getEntryForPath(countyName + "/" + stateCode),
     [countyName, stateCode, pathMapping]
   )
 

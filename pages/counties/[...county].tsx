@@ -5,7 +5,10 @@ import { useRouter } from "next/router"
 
 export default function County(): JSX.Element {
   const router = useRouter()
-  const [stateAbbr, countyName] = router.query.county ?? [null, null]
+  const [stateAbbr, countyName] = (router.query.county as [string, string]) ?? [
+    null,
+    null,
+  ]
   const stateCode = stateAbbr ? getStateFips(stateAbbr) : null
 
   return (

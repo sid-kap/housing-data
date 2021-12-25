@@ -9,7 +9,7 @@ import { makeCountyOptions } from "lib/CountyPlots"
 import { makeOptions as makeMetroOptions } from "lib/MetroPlots"
 import { makeStateOptions } from "lib/StatePlots"
 import { OrderedMap } from "immutable"
-import { useQueries } from "react-query"
+import { useQueries, UseQueryOptions, QueryKey } from "react-query"
 import { expressionFunction } from "vega"
 import { TopLevelSpec } from "vega-lite"
 
@@ -376,7 +376,7 @@ function getData(path: string): object {
   return window.fetch(path).then(async (res) => await res.json())
 }
 
-function combineDatas(datas: Array<{ data: any[] }>): object[] {
+function combineDatas(datas) {
   const data = datas.flatMap((d) => d.data ?? [])
 
   const dataCopied = []
@@ -388,7 +388,7 @@ function combineDatas(datas: Array<{ data: any[] }>): object[] {
   return dataCopied
 }
 
-interface Option {
+type Option = {
   value: number
   path: string
 }
@@ -419,17 +419,16 @@ export default function Home(): JSX.Element {
     ]
   )
 
-  const datas: any[] = useQueries(
-    selectedLocations
-      .valueSeq()
-      .toArray()
-      .map((item) => {
-        return {
-          queryKey: item.value.toString(),
-          queryFn: () => getData(item.path),
-        }
-      })
-  )
+  const queries = selectedLocations
+    .valueSeq()
+    .toArray()
+    .map((item) => {
+      return {
+        queryKey: [item.value],
+        queryFn: () => getData(item.path),
+      }
+    })
+  const datas: any = useQueries({ queries })
 
   const data = useMemo(
     () => combineDatas(datas),

@@ -144,7 +144,7 @@ const WindowSelectSearch = forwardRef<HTMLDivElement, WindowSelectSearchProps>(
         highlighted > -1
           ? `[data-index="${highlighted}"]`
           : `[data-value="${escape(value.value)}"]`
-      const selected = current.querySelector(query)
+      const selected = current.querySelector<HTMLElement>(query)
 
       if (selected) {
         const rect = current.getBoundingClientRect()
