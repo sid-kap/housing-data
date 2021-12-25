@@ -18,14 +18,10 @@ repos:
     rev: v2.5.1
     hooks:
       - id: prettier
-  # - repo: https://github.com/standard/standard
-  #   rev: b9abb8453168d8b9d95ff21de7d19af5ed881eaf
-  #   hooks:
-  #     - id: standard
-  # - repo: ~/clones/ts-standard
-  #   rev: faa1bb30c75ea7c3647f25d0383d976da7789a97
-  #   hooks:
-  #     - id: ts-standard
+  #  - repo: https://github.com/standard/standard
+  #    rev: b9abb8453168d8b9d95ff21de7d19af5ed881eaf
+  #    hooks:
+  #      - id: standard
   # Based on https://rednafi.github.io/digressions/python/2020/04/06/python-precommit.html
   - repo: https://github.com/pycqa/flake8
     rev: 3.9.2

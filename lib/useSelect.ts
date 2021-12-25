@@ -12,7 +12,7 @@ import getNewValue from "react-select-search/dist/cjs/lib/getNewValue"
 import getOption from "react-select-search/dist/cjs/lib/getOption"
 import fuzzysort from "fuzzysort"
 
-interface SelectState {
+type SelectState = {
   flat: any[]
   addedOptions: any[]
   value: any

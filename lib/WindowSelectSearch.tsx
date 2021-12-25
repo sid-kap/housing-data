@@ -21,7 +21,7 @@ import isSelected from "react-select-search/dist/cjs/lib/isSelected"
 // Not in the original file
 import { FixedSizeList } from "react-window"
 
-interface WindowSelectSearchProps {
+type WindowSelectSearchProps = {
   value?: any
   disabled?: any
   placeholder?: any
