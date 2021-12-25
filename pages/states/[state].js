@@ -1,8 +1,8 @@
-import { useRouter } from 'next/router'
-import StatePlots from '../../lib/StatePlots.js'
-import { Page } from '../../lib/common_elements.js'
+import { useRouter } from "next/router"
+import StatePlots from "../../lib/StatePlots.js"
+import { Page } from "../../lib/common_elements.js"
 
-export default function State () {
+export default function State() {
   const router = useRouter()
   const { state } = router.query
 
