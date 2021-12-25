@@ -153,9 +153,6 @@ function makeSpec(
         type: "nominal",
         legend: { titleFontSize: 12, labelFontSize: 12, title: "Unit count" },
       },
-      order: {
-        field: "bar_chart_order",
-      },
     },
     transform: transforms,
     data: { name: "table" }, // note: vega-lite data attribute is a plain object instead of an array
