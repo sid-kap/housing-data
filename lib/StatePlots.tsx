@@ -1,40 +1,40 @@
-import { useRouter } from "next/router";
-import { useFetch } from "../lib/queries";
-import SelectSearch from "react-select-search/dist/cjs";
-import { useMemo } from "react";
-import BarPlot from "../lib/BarPlot";
-import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects";
-import { PlainObject } from "react-vega/src/types";
+import { useRouter } from "next/router"
+import { useFetch } from "../lib/queries"
+import SelectSearch from "react-select-search/dist/cjs"
+import { useMemo } from "react"
+import BarPlot from "../lib/BarPlot"
+import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects"
+import { PlainObject } from "react-vega/src/types"
 
 interface RawOption {
-  type: string;
-  state_name: string;
+  type: string
+  state_name: string
 }
 
 interface Option {
-  value: string;
-  name: string;
-  path: string;
+  value: string
+  name: string
+  path: string
 }
 
 export function makeStateOptions(statesList: RawOption[]): Option[] {
   let stateNames = statesList
     .filter((row) => row.type === "state")
     .map((row) => row.state_name)
-    .filter((row) => row !== null); // TODO remove null row from data file
-  stateNames = Array.from(new Set(stateNames));
+    .filter((row) => row !== null) // TODO remove null row from data file
+  stateNames = Array.from(new Set(stateNames))
 
   return stateNames.map((state) => ({
     value: state,
     name: state,
     path: `/states_data/${state}.json`,
-  }));
+  }))
 }
 
 function prepareData(stateData: RawOption[], stateName: string): PlainObject {
-  const filteredData = stateData.filter((row) => row.state_name === stateName);
+  const filteredData = stateData.filter((row) => row.state_name === stateName)
 
-  return { table: filteredData };
+  return { table: filteredData }
 }
 
 function makeStateSelect(
@@ -52,36 +52,36 @@ function makeStateSelect(
       options={stateOptions}
       placeholder="Change state..."
     />
-  );
+  )
 }
 
 export default function StatePlots({
   stateName,
 }: {
-  stateName: string;
+  stateName: string
 }): JSX.Element {
-  const router = useRouter();
+  const router = useRouter()
 
-  const { status, data: stateData } = useFetch("/state_annual.json");
+  const { status, data: stateData } = useFetch("/state_annual.json")
 
   const data = useMemo(
     () => prepareData(stateData ?? [], stateName),
     [status, stateName]
-  );
+  )
 
   const stateOptions = useMemo(
     () => makeStateOptions(stateData ?? []),
     [status]
-  );
+  )
 
   const stateSelect = useMemo(
     () => makeStateSelect(stateOptions, stateName, router),
     [stateOptions, stateName, router]
-  );
-  const { selectedUnits, unitsSelect } = makeUnitsSelect();
+  )
+  const { selectedUnits, unitsSelect } = makeUnitsSelect()
 
-  const { denom, populationInput } = usePerCapitaInput();
-  const perCapita = denom === "per_capita";
+  const { denom, populationInput } = usePerCapitaInput()
+  const perCapita = denom === "per_capita"
 
   return (
     <div className="flex flex-col justify-center items-center mx-auto mb-10">
@@ -96,5 +96,5 @@ export default function StatePlots({
       </div>
       {populationInput}
     </div>
-  );
+  )
 }

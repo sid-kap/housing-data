@@ -1,35 +1,35 @@
-import { useState } from "react";
-import SelectSearch from "react-select-search/dist/cjs";
+import { useState } from "react"
+import SelectSearch from "react-select-search/dist/cjs"
 
 const unitsOptions = [
   { value: "units", name: "Units" },
   { value: "bldgs", name: "Buildings" },
   { value: "value", name: "Property value" },
-];
+]
 
 export function makeUnitsSelect(): {
-  selectedUnits: string;
-  unitsSelect: JSX.Element;
+  selectedUnits: string
+  unitsSelect: JSX.Element
 } {
-  const [selectedUnits, setSelectedUnits] = useState("units");
+  const [selectedUnits, setSelectedUnits] = useState("units")
   const unitsSelect = (
     <SelectSearch
       value={selectedUnits}
       onChange={setSelectedUnits}
       options={unitsOptions}
     />
-  );
+  )
   return {
     selectedUnits,
     unitsSelect,
-  };
+  }
 }
 
 export function usePerCapitaInput(): {
-  denom: string;
-  populationInput: JSX.Element;
+  denom: string
+  populationInput: JSX.Element
 } {
-  const [denom, setDenom] = useState("total");
+  const [denom, setDenom] = useState("total")
   const populationInput = (
     <div>
       <input
@@ -51,10 +51,10 @@ export function usePerCapitaInput(): {
         Per capita
       </label>
     </div>
-  );
+  )
 
   return {
     denom: denom,
     populationInput: populationInput,
-  };
+  }
 }

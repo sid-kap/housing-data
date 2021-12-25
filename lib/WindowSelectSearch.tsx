@@ -13,34 +13,34 @@ import React, {
   useEffect,
   useCallback,
   FunctionComponent,
-} from "react";
-import useSelect from "lib/useSelect";
-import Option from "react-select-search/dist/cjs/Components/Option";
-import isSelected from "react-select-search/dist/cjs/lib/isSelected";
+} from "react"
+import useSelect from "lib/useSelect"
+import Option from "react-select-search/dist/cjs/Components/Option"
+import isSelected from "react-select-search/dist/cjs/lib/isSelected"
 
 // Not in the original file
-import { FixedSizeList } from "react-window";
+import { FixedSizeList } from "react-window"
 
 interface WindowSelectSearchProps {
-  value?: any;
-  disabled?: any;
-  placeholder?: any;
-  multiple?: boolean;
-  search?: boolean;
-  autoFocus?: any;
-  autoComplete?: any;
-  options?: any;
-  id?: any;
-  onChange?: any;
-  printOptions?: any;
-  closeOnSelect?: any;
-  className?: any;
-  renderValue?: any;
-  renderOption?: any;
-  renderGroupHeader?: any;
-  getOptions?: any;
-  emptyMessage?: any;
-  fuzzysortOptions?: any;
+  value?: any
+  disabled?: any
+  placeholder?: any
+  multiple?: boolean
+  search?: boolean
+  autoFocus?: any
+  autoComplete?: any
+  options?: any
+  id?: any
+  onChange?: any
+  printOptions?: any
+  closeOnSelect?: any
+  className?: any
+  renderValue?: any
+  renderOption?: any
+  renderGroupHeader?: any
+  getOptions?: any
+  emptyMessage?: any
+  fuzzysortOptions?: any
 }
 
 const WindowSelectSearch = forwardRef<HTMLDivElement, WindowSelectSearchProps>(
@@ -68,7 +68,7 @@ const WindowSelectSearch = forwardRef<HTMLDivElement, WindowSelectSearchProps>(
     },
     ref
   ) => {
-    const selectRef = useRef<HTMLDivElement>(null);
+    const selectRef = useRef<HTMLDivElement>(null)
     const [snapshot, valueProps, optionProps] = useSelect({
       options: defaultOptions,
       value: defaultValue,
@@ -81,7 +81,7 @@ const WindowSelectSearch = forwardRef<HTMLDivElement, WindowSelectSearchProps>(
       closable: !multiple || printOptions === "on-focus",
       allowEmpty: !!placeholder,
       fuzzysortOptions: fuzzysortOptions,
-    });
+    })
 
     const {
       focus,
@@ -91,26 +91,26 @@ const WindowSelectSearch = forwardRef<HTMLDivElement, WindowSelectSearchProps>(
       searching,
       displayValue,
       search: searchValue,
-    } = snapshot;
+    } = snapshot
 
     const cls = useCallback(
       (key) => {
         if (typeof className === "function") {
-          return className(key);
+          return className(key)
         }
 
         if (key.indexOf("container") === 0) {
-          return key.replace("container", className);
+          return key.replace("container", className)
         }
 
         if (key.indexOf("is-") === 0 || key.indexOf("has-") === 0) {
-          return key;
+          return key
         }
 
-        return `${className.split(" ")[0]}__${key}`;
+        return `${className.split(" ")[0]}__${key}`
       },
       [className]
-    );
+    )
 
     // const renderEmptyMessage = useCallback(() => {
     //   if (emptyMessage === null) {
@@ -129,67 +129,67 @@ const WindowSelectSearch = forwardRef<HTMLDivElement, WindowSelectSearchProps>(
       focus ? cls("has-focus") : false,
     ]
       .filter((single) => !!single)
-      .join(" ");
+      .join(" ")
 
-    const inputValue = focus && search ? searchValue : displayValue;
+    const inputValue = focus && search ? searchValue : displayValue
 
     useEffect(() => {
-      const { current } = selectRef;
+      const { current } = selectRef
 
       if (!current || multiple || (highlighted < 0 && !value)) {
-        return;
+        return
       }
 
       const query =
         highlighted > -1
           ? `[data-index="${highlighted}"]`
-          : `[data-value="${escape(value.value)}"]`;
-      const selected = current.querySelector(query);
+          : `[data-value="${escape(value.value)}"]`
+      const selected = current.querySelector(query)
 
       if (selected) {
-        const rect = current.getBoundingClientRect();
-        const selectedRect = selected.getBoundingClientRect();
+        const rect = current.getBoundingClientRect()
+        const selectedRect = selected.getBoundingClientRect()
 
         current.scrollTop =
-          selected.offsetTop - rect.height / 2 + selectedRect.height / 2;
+          selected.offsetTop - rect.height / 2 + selectedRect.height / 2
       }
-    }, [focus, value, highlighted, selectRef, multiple]);
+    }, [focus, value, highlighted, selectRef, multiple])
 
-    let shouldRenderOptions;
+    let shouldRenderOptions
 
     switch (printOptions) {
       case "never":
-        shouldRenderOptions = false;
-        break;
+        shouldRenderOptions = false
+        break
       case "always":
-        shouldRenderOptions = true;
-        break;
+        shouldRenderOptions = true
+        break
       case "on-focus":
-        shouldRenderOptions = focus;
-        break;
+        shouldRenderOptions = focus
+        break
       default:
-        shouldRenderOptions = !disabled && (focus || multiple);
-        break;
+        shouldRenderOptions = !disabled && (focus || multiple)
+        break
     }
 
-    const flattenedOptions = flattenOptions(options);
+    const flattenedOptions = flattenOptions(options)
 
     const renderItem = function (row) {
-      const { index, style } = row;
-      const option = flattenedOptions[index];
-      const isGroup = option.type === "group";
+      const { index, style } = row
+      const option = flattenedOptions[index]
+      const isGroup = option.type === "group"
       const base = {
         cls,
         optionProps: Object.assign(optionProps, { style: style }),
         renderOption,
-      };
+      }
 
       if (isGroup) {
         return (
           <div key={option.value} className={cls("group-header")} style={style}>
             {renderGroupHeader(option.name)}
           </div>
-        );
+        )
       } else {
         return (
           <Option
@@ -199,12 +199,12 @@ const WindowSelectSearch = forwardRef<HTMLDivElement, WindowSelectSearchProps>(
             {...base}
             {...option}
           />
-        );
+        )
       }
       // if no items, need to return renderEmptyMessage()
-    };
+    }
 
-    const initialOffset = focus ? 0 : value ? value.index * 36 : 0;
+    const initialOffset = focus ? 0 : value ? value.index * 36 : 0
 
     return (
       <div ref={ref} className={wrapperClass} id={id}>
@@ -237,25 +237,25 @@ const WindowSelectSearch = forwardRef<HTMLDivElement, WindowSelectSearchProps>(
           </div>
         )}
       </div>
-    );
+    )
   }
-);
+)
 
 function flattenOptions(options) {
-  const output = [];
+  const output = []
   for (const option of options) {
     if (option.type === "group") {
-      const { items, ...header } = option;
-      output.push(header);
+      const { items, ...header } = option
+      output.push(header)
       for (const item of option.items) {
-        output.push(item);
+        output.push(item)
       }
     } else {
-      output.push(option);
+      output.push(option)
     }
   }
 
-  return output;
+  return output
 }
 
 /* eslint-disable */
@@ -284,7 +284,7 @@ WindowSelectSearch.defaultProps = {
   getOptions: null,
   emptyMessage: null,
   fuzzysortOptions: { keys: ["name"], threshold: -10000 },
-};
+}
 /* eslint-enable */
 
-export default memo(WindowSelectSearch);
+export default memo(WindowSelectSearch)

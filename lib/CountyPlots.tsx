@@ -1,55 +1,55 @@
-import { useRouter } from "next/router";
-import BarPlot from "./BarPlot";
-import { useMemo, useCallback } from "react";
-import { useFetch } from "./queries";
-import us from "us";
-import WindowSelectSearch from "lib/WindowSelectSearch";
-import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects";
-import { PathMapping } from "../lib/utils";
+import { useRouter } from "next/router"
+import BarPlot from "./BarPlot"
+import { useMemo, useCallback } from "react"
+import { useFetch } from "./queries"
+import us from "us"
+import WindowSelectSearch from "lib/WindowSelectSearch"
+import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects"
+import { PathMapping } from "../lib/utils"
 
 function getStateAbbreviation(stateCode: number): string {
-  const twoDigitStringCode = String(stateCode).padStart(2, "0");
-  const state = us.lookup(twoDigitStringCode);
+  const twoDigitStringCode = String(stateCode).padStart(2, "0")
+  const state = us.lookup(twoDigitStringCode)
   if (typeof state === "undefined") {
-    return "";
+    return ""
   } else {
-    return state.abbr;
+    return state.abbr
   }
 }
 
 function getJsonUrl(county: string, stateCode: number): string {
-  county = county.replace("#", "%23");
-  return "/counties_data/" + stateCode.toString() + "/" + county + ".json";
+  county = county.replace("#", "%23")
+  return "/counties_data/" + stateCode.toString() + "/" + county + ".json"
 }
 
 interface RawOption {
-  county_name: string;
-  state_code: number;
+  county_name: string
+  state_code: number
 }
 
 interface Option {
-  value: number;
-  abbr: string;
-  county_name: string;
-  name: string;
-  path: string;
+  value: number
+  abbr: string
+  county_name: string
+  name: string
+  path: string
 }
 
 export function makeCountyOptions(countiesList: RawOption[]): Option[] {
-  const options = [];
+  const options = []
   for (let i = 0; i < countiesList.length; i++) {
-    const county = countiesList[i];
-    const abbr = getStateAbbreviation(county.state_code);
+    const county = countiesList[i]
+    const abbr = getStateAbbreviation(county.state_code)
     options.push({
       value: i,
       abbr: abbr,
       county_name: county.county_name,
       name: county.county_name + ", " + abbr,
       path: getJsonUrl(county.county_name, county.state_code),
-    });
+    })
   }
 
-  return options;
+  return options
 }
 
 export default function CountyPlots({
@@ -57,18 +57,18 @@ export default function CountyPlots({
   stateAbbr,
   stateCode,
 }: {
-  countyName: string;
-  stateAbbr: string;
-  stateCode: number;
+  countyName: string
+  stateAbbr: string
+  stateCode: number
 }): JSX.Element {
-  const router = useRouter();
+  const router = useRouter()
 
-  const { status, data: countiesList } = useFetch("/counties_list.json");
+  const { status, data: countiesList } = useFetch("/counties_list.json")
 
   const countyOptions = useMemo(
     () => makeCountyOptions(countiesList ?? []),
     [status]
-  );
+  )
   const pathMapping = useMemo(
     () =>
       new PathMapping<Option>(
@@ -76,19 +76,19 @@ export default function CountyPlots({
         (row) => row.county_name + "/" + row.state_code.toString()
       ),
     [countyOptions]
-  );
+  )
 
   const optionVal: Option = useMemo(
     () => pathMapping.getEntryForPath(countyName + "/" + stateCode.toString()),
     [countyName, stateCode, pathMapping]
-  );
+  )
 
-  const url = countyName ? getJsonUrl(countyName, stateCode) : null;
-  const { data } = useFetch(url);
+  const url = countyName ? getJsonUrl(countyName, stateCode) : null
+  const { data } = useFetch(url)
 
   const onChange = useCallback(
     (newCounty) => {
-      const chosenOption = countyOptions[newCounty];
+      const chosenOption = countyOptions[newCounty]
       if (
         chosenOption.county_name !== countyName ||
         chosenOption.abbr !== stateAbbr
@@ -98,16 +98,16 @@ export default function CountyPlots({
             chosenOption.abbr +
             "/" +
             chosenOption.county_name.replace("#", "%23")
-        );
+        )
       }
     },
     [countyName, stateAbbr, status]
-  );
+  )
 
-  const { selectedUnits, unitsSelect } = makeUnitsSelect();
+  const { selectedUnits, unitsSelect } = makeUnitsSelect()
 
-  const { denom, populationInput } = usePerCapitaInput();
-  const perCapita = denom === "per_capita";
+  const { denom, populationInput } = usePerCapitaInput()
+  const perCapita = denom === "per_capita"
 
   // fuseOptions={fuseOptions}
   return (
@@ -138,5 +138,5 @@ export default function CountyPlots({
       </div>
       {populationInput}
     </div>
-  );
+  )
 }

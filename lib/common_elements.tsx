@@ -1,9 +1,9 @@
-import Link from "next/link";
-import Head from "next/head";
-import { useState, useCallback } from "react";
+import Link from "next/link"
+import Head from "next/head"
+import { useState, useCallback } from "react"
 
 export function GitHubFooter(props) {
-  const linkClasses = "text-blue-500 hover:text-blue-300";
+  const linkClasses = "text-blue-500 hover:text-blue-300"
 
   return (
     <div>
@@ -33,7 +33,7 @@ export function GitHubFooter(props) {
         .
       </p>
     </div>
-  );
+  )
 }
 
 // from https://css-tricks.com/snippets/svg/svg-hamburger-menu/
@@ -43,14 +43,14 @@ const hamburger = (
     <rect y="30" width="100" height="15" rx="5" style={{ fill: "white" }} />
     <rect y="60" width="100" height="15" rx="5" style={{ fill: "white" }} />
   </svg>
-);
+)
 
 function HideableNav({ logo, items, currentIndex }) {
-  const [open, setOpenState] = useState(false);
+  const [open, setOpenState] = useState(false)
   const toggle = useCallback(
     () => setOpenState((currentOpen) => !currentOpen),
     []
-  );
+  )
 
   const button = (
     <button
@@ -59,15 +59,15 @@ function HideableNav({ logo, items, currentIndex }) {
     >
       {hamburger}
     </button>
-  );
+  )
 
-  const commonClasses = "py-2 px-3 hover:bg-purple-100";
-  const classes = [];
+  const commonClasses = "py-2 px-3 hover:bg-purple-100"
+  const classes = []
   for (let i = 0; i < items.length; i++) {
     if (i === currentIndex) {
-      classes.push(commonClasses + " bg-purple-400");
+      classes.push(commonClasses + " bg-purple-400")
     } else {
-      classes.push(commonClasses + " bg-purple-300");
+      classes.push(commonClasses + " bg-purple-300")
     }
   }
 
@@ -75,7 +75,7 @@ function HideableNav({ logo, items, currentIndex }) {
     <Link href={item.url} key={item.url}>
       <a className={classes[index]}>{item.name}</a>
     </Link>
-  ));
+  ))
 
   // Note: I had to set the visible nav using media queries and hidden rather than JS if/else
   // because otherwise NextJS throws an error. (It doesn't like when the static-rendered page
@@ -96,21 +96,21 @@ function HideableNav({ logo, items, currentIndex }) {
         {children}
       </div>
     </nav>
-  );
+  )
 
   const desktopNav = (
     <nav className="flex-row bg-purple-200 hidden wide-enough-for-nav:flex">
       {logo}
       {children}
     </nav>
-  );
+  )
 
   return (
     <>
       {mobileNav}
       {desktopNav}
     </>
-  );
+  )
 }
 
 const logo = (
@@ -121,7 +121,7 @@ const logo = (
       <span className="text-gray-600">.app</span>
     </a>
   </Link>
-);
+)
 
 const navItems = [
   {
@@ -148,12 +148,12 @@ const navItems = [
     url: "/data-sources",
     name: "Data Sources/FAQ",
   },
-];
+]
 
 export function Nav({ currentIndex }) {
   return (
     <HideableNav logo={logo} items={navItems} currentIndex={currentIndex} />
-  );
+  )
 }
 
 function Favicons() {
@@ -189,7 +189,7 @@ function Favicons() {
       <meta name="msapplication-TileColor" content="#da532c" />
       <meta name="theme-color" content="#eeeeee" />
     </>
-  );
+  )
 }
 
 export function Page({ title, navIndex, children }) {
@@ -205,5 +205,5 @@ export function Page({ title, navIndex, children }) {
       {children}
       <GitHubFooter />
     </div>
-  );
+  )
 }

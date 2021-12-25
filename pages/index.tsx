@@ -1,24 +1,24 @@
-import MultiSelect from "lib/MultiSelect";
-import { useState, useMemo, useCallback } from "react";
-import { useFetch } from "lib/queries";
-import { VegaLite } from "react-vega";
-import { Page } from "lib/common_elements";
-import ContainerDimensions from "react-container-dimensions";
-import { makePlaceOptions } from "lib/PlacePlots";
-import { makeCountyOptions } from "lib/CountyPlots";
-import { makeOptions as makeMetroOptions } from "lib/MetroPlots";
-import { makeStateOptions } from "lib/StatePlots";
-import { OrderedMap } from "immutable";
-import { useQueries } from "react-query";
-import { expressionFunction } from "vega";
-import { TopLevelSpec } from "vega-lite";
+import MultiSelect from "lib/MultiSelect"
+import { useState, useMemo, useCallback } from "react"
+import { useFetch } from "lib/queries"
+import { VegaLite } from "react-vega"
+import { Page } from "lib/common_elements"
+import ContainerDimensions from "react-container-dimensions"
+import { makePlaceOptions } from "lib/PlacePlots"
+import { makeCountyOptions } from "lib/CountyPlots"
+import { makeOptions as makeMetroOptions } from "lib/MetroPlots"
+import { makeStateOptions } from "lib/StatePlots"
+import { OrderedMap } from "immutable"
+import { useQueries } from "react-query"
+import { expressionFunction } from "vega"
+import { TopLevelSpec } from "vega-lite"
 
 /**
  * Returns a pair (year ranges, first year not in a range)
  */
 function getYearRanges(grouping: string): [Array<[number, number]>, number] {
   if (grouping === "none") {
-    return [[], 1980];
+    return [[], 1980]
   } else if (grouping === "five_years") {
     return [
       [
@@ -32,7 +32,7 @@ function getYearRanges(grouping: string): [Array<[number, number]>, number] {
         [2015, 2019],
       ],
       2020,
-    ];
+    ]
   } else if (grouping === "five_years_old") {
     return [
       [
@@ -44,35 +44,35 @@ function getYearRanges(grouping: string): [Array<[number, number]>, number] {
         [2005, 2009],
       ],
       2010,
-    ];
+    ]
   } else {
-    throw new Error(`Grouping type ${grouping} unknown`);
+    throw new Error(`Grouping type ${grouping} unknown`)
   }
 }
 
 function makeYearBuckets(
   grouping: string
 ): Array<{ year: Date; binned_year: Date }> {
-  const [yearRanges, firstNonRangeYear] = getYearRanges(grouping);
+  const [yearRanges, firstNonRangeYear] = getYearRanges(grouping)
 
-  const yearBuckets = [];
+  const yearBuckets = []
   for (const [minYear, maxYear] of yearRanges) {
     for (let year = minYear; year <= maxYear; year++) {
-      const middleYear = (minYear + maxYear) / 2;
+      const middleYear = (minYear + maxYear) / 2
       yearBuckets.push({
         year: Date.parse(`${year}`),
         binned_year: Date.parse(`${middleYear}`),
-      });
+      })
     }
   }
   for (let year = firstNonRangeYear; year <= 2020; year++) {
     yearBuckets.push({
       year: Date.parse(`${year}`),
       binned_year: Date.parse(`${year}`),
-    });
+    })
   }
 
-  return yearBuckets;
+  return yearBuckets
 }
 
 const midYearDatesThrough2010 = [
@@ -82,17 +82,17 @@ const midYearDatesThrough2010 = [
   Date.parse("1997-01-01"),
   Date.parse("2002-01-01"),
   Date.parse("2007-01-01"),
-];
+]
 
 function getYearTickValues(grouping) {
   if (grouping === "none") {
-    return null;
+    return null
   } else if (grouping === "five_years") {
     return midYearDatesThrough2010.concat([
       Date.parse("2012-01-01"),
       Date.parse("2017-01-01"),
       Date.parse("2020"),
-    ]);
+    ])
   } else if (grouping === "five_years_old") {
     return midYearDatesThrough2010.concat([
       Date.parse("2010"),
@@ -101,43 +101,43 @@ function getYearTickValues(grouping) {
       Date.parse("2016"),
       Date.parse("2018"),
       Date.parse("2020"),
-    ]);
+    ])
   }
 }
 
 function makeYearToRangeStringMapping(grouping: string): Map<number, string> {
-  const yearRanges = getYearRanges(grouping)[0];
+  const yearRanges = getYearRanges(grouping)[0]
 
-  const mapping = new Map();
+  const mapping = new Map()
 
   for (const [minYear, maxYear] of yearRanges) {
-    const middleYear = (minYear + maxYear) / 2;
-    mapping[middleYear] = `${minYear}-${maxYear}`;
+    const middleYear = (minYear + maxYear) / 2
+    mapping[middleYear] = `${minYear}-${maxYear}`
   }
 
-  return mapping;
+  return mapping
 }
 
-const yearRangeAllMapping = makeYearToRangeStringMapping("five_years");
-const yearRangeOldMapping = makeYearToRangeStringMapping("five_years_old");
+const yearRangeAllMapping = makeYearToRangeStringMapping("five_years")
+const yearRangeOldMapping = makeYearToRangeStringMapping("five_years_old")
 
 expressionFunction("yearRangeAllFormat", function (datum, params) {
   if (typeof datum === "number") {
     // TODO figure out why the type is sometimes a number rather than a Date?
-    datum = new Date(datum);
+    datum = new Date(datum)
   }
-  const year = datum.getUTCFullYear();
-  return yearRangeAllMapping[year] || year.toString();
-});
+  const year = datum.getUTCFullYear()
+  return yearRangeAllMapping[year] || year.toString()
+})
 
 expressionFunction("yearRangeOldFormat", function (datum, params) {
   if (typeof datum === "number") {
     // TODO figure out why the type is sometimes a number rather than a Date?
-    datum = new Date(datum);
+    datum = new Date(datum)
   }
-  const year = datum.getUTCFullYear();
-  return yearRangeOldMapping[year] || year.toString();
-});
+  const year = datum.getUTCFullYear()
+  return yearRangeOldMapping[year] || year.toString()
+})
 
 function spec(
   width: number,
@@ -146,12 +146,12 @@ function spec(
   interpolate: boolean,
   grouping: string
 ): TopLevelSpec {
-  const plotWidth = Math.min(width * 0.92, 936);
+  const plotWidth = Math.min(width * 0.92, 936)
 
-  const yField = perCapita ? "total_units_per_capita_per_1000" : "total_units";
+  const yField = perCapita ? "total_units_per_capita_per_1000" : "total_units"
   const yTitle = perCapita
     ? "Units permitted per 1000 residents"
-    : "Units permitted";
+    : "Units permitted"
 
   return {
     width: plotWidth,
@@ -260,47 +260,47 @@ function spec(
         dy: 1,
       },
     },
-  };
+  }
 }
 
 function addPrefixes(options, prefix) {
-  const newOptions = [];
+  const newOptions = []
   for (const option of options) {
     // IDK if we want name or value... let's just go with name for now.
     newOptions.push(
       Object.assign(option, { value: prefix + "/" + option.name })
-    );
+    )
   }
-  return newOptions;
+  return newOptions
 }
 
 function makeOptions(statesData, metrosList, countiesList, placesList) {
-  const [cbsaOptions, csaOptions]: [any, any] = makeMetroOptions(metrosList);
+  const [cbsaOptions, csaOptions]: [any, any] = makeMetroOptions(metrosList)
   if (!(typeof cbsaOptions === "object" && cbsaOptions.name === "CBSAs")) {
-    throw new Error("first element makeMetroOptions is not CBSAs");
+    throw new Error("first element makeMetroOptions is not CBSAs")
   }
   if (!(typeof csaOptions === "object" && csaOptions.name === "CSAs")) {
-    throw new Error("second element makeMetroOptions is not CSAs");
+    throw new Error("second element makeMetroOptions is not CSAs")
   }
-  const stateOptions: any[] = makeStateOptions(statesData);
-  const countyOptions: any[] = makeCountyOptions(countiesList);
-  const placeOptions: any[] = makePlaceOptions(placesList);
+  const stateOptions: any[] = makeStateOptions(statesData)
+  const countyOptions: any[] = makeCountyOptions(countiesList)
+  const placeOptions: any[] = makePlaceOptions(placesList)
 
   // TODO maybe fix this jank
   for (const item of stateOptions) {
-    item.type = "state";
+    item.type = "state"
   }
   for (const item of countyOptions) {
-    item.type = "county";
+    item.type = "county"
   }
   for (const item of placeOptions) {
-    item.type = "place";
+    item.type = "place"
   }
   for (const item of cbsaOptions.items) {
-    item.type = "cbsa";
+    item.type = "cbsa"
   }
   for (const item of csaOptions.items) {
-    item.type = "csa";
+    item.type = "csa"
   }
 
   return [
@@ -324,7 +324,7 @@ function makeOptions(statesData, metrosList, countiesList, placesList) {
       groupName: "States",
       items: addPrefixes(stateOptions, "States"),
     },
-  ];
+  ]
 }
 
 const optionNames = [
@@ -348,64 +348,64 @@ const optionNames = [
   "eighteen",
   "nineteen",
   "twenty",
-];
-const multiselectOptions = [];
+]
+const multiselectOptions = []
 for (let i = 0; i < optionNames.length; i++) {
   multiselectOptions.push({
     name: optionNames[i],
     value: i.toString(),
-  });
+  })
 }
 
 function selectedItemClassFn(item) {
   if (item.type === "place") {
-    return "bg-green-400";
+    return "bg-green-400"
   }
   if (item.type === "county") {
-    return "bg-yellow-400";
+    return "bg-yellow-400"
   }
   if (item.type === "cbsa") {
-    return "bg-pink-500";
+    return "bg-pink-500"
   }
   if (item.type === "csa") {
-    return "bg-purple-500";
+    return "bg-purple-500"
   }
   if (item.type === "state") {
-    return "bg-blue-500";
+    return "bg-blue-500"
   }
-  return "bg-blue-700";
+  return "bg-blue-700"
 }
 
 function getData(path: string): object {
-  return window.fetch(path).then(async (res) => await res.json());
+  return window.fetch(path).then(async (res) => await res.json())
 }
 
 function combineDatas(datas: Array<{ data: any[] }>): object[] {
-  const data = datas.flatMap((d) => d.data ?? []);
+  const data = datas.flatMap((d) => d.data ?? [])
 
-  const dataCopied = [];
+  const dataCopied = []
   for (const row of data) {
-    const newRow = Object.assign({}, row);
-    newRow.year = Date.parse(newRow.year);
-    dataCopied.push(newRow);
+    const newRow = Object.assign({}, row)
+    newRow.year = Date.parse(newRow.year)
+    dataCopied.push(newRow)
   }
-  return dataCopied;
+  return dataCopied
 }
 
 interface Option {
-  value: number;
-  path: string;
+  value: number
+  path: string
 }
 
 export default function Home(): JSX.Element {
-  const { data: statesResponse } = useFetch("/state_annual.json");
-  const { data: metrosListResponse } = useFetch("/metros_list.json");
-  const { data: countiesListResponse } = useFetch("/counties_list.json");
-  const { data: placesListResponse } = useFetch("/places_list.json");
+  const { data: statesResponse } = useFetch("/state_annual.json")
+  const { data: metrosListResponse } = useFetch("/metros_list.json")
+  const { data: countiesListResponse } = useFetch("/counties_list.json")
+  const { data: placesListResponse } = useFetch("/places_list.json")
 
   const [selectedLocations, setSelectedLocations] = useState(
     OrderedMap<string, Option>()
-  );
+  )
 
   const options = useMemo(
     () =>
@@ -421,7 +421,7 @@ export default function Home(): JSX.Element {
       countiesListResponse,
       placesListResponse,
     ]
-  );
+  )
 
   const datas: any[] = useQueries(
     selectedLocations
@@ -431,20 +431,20 @@ export default function Home(): JSX.Element {
         return {
           queryKey: item.value.toString(),
           queryFn: () => getData(item.path),
-        };
+        }
       })
-  );
+  )
 
   const data = useMemo(
     () => combineDatas(datas),
     [datas.map((res) => res.status)]
-  );
+  )
 
-  const [denom, setDenom] = useState("total");
-  const setTotal = useCallback(() => setDenom("total"), []);
-  const setPerCapita = useCallback(() => setDenom("per_capita"), []);
+  const [denom, setDenom] = useState("total")
+  const setTotal = useCallback(() => setDenom("total"), [])
+  const setPerCapita = useCallback(() => setDenom("per_capita"), [])
 
-  const radioButtonLabelCss = "ml-1 mr-3";
+  const radioButtonLabelCss = "ml-1 mr-3"
 
   const populationInput = (
     <div>
@@ -468,7 +468,7 @@ export default function Home(): JSX.Element {
         Units per capita
       </label>
     </div>
-  );
+  )
 
   // const [interpolate, setInterpolate] = useState(false)
   // const interpolateInput = (
@@ -480,7 +480,7 @@ export default function Home(): JSX.Element {
   //   </div>
   // )
 
-  const [grouping, setGrouping] = useState("five_years");
+  const [grouping, setGrouping] = useState("five_years")
 
   const groupingInput = (
     <div>
@@ -514,7 +514,7 @@ export default function Home(): JSX.Element {
         No grouping
       </label>
     </div>
-  );
+  )
 
   return (
     <Page title="Housing Data" navIndex={0}>
@@ -550,5 +550,5 @@ export default function Home(): JSX.Element {
         {groupingInput}
       </div>
     </Page>
-  );
+  )
 }

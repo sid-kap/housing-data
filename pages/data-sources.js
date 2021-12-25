@@ -1,10 +1,10 @@
-import { Nav, GitHubFooter } from "../lib/common_elements";
-import Head from "next/head";
+import { Nav, GitHubFooter } from "../lib/common_elements"
+import Head from "next/head"
 
 export default function DataSources() {
-  const faq = "text-lg font-semibold mt-4 mb-1";
-  const link = "text-blue-500 hover:text-blue-300";
-  const para = "mb-2";
+  const faq = "text-lg font-semibold mt-4 mb-1"
+  const link = "text-blue-500 hover:text-blue-300"
+  const para = "mb-2"
 
   return (
     <div>
@@ -155,5 +155,5 @@ export default function DataSources() {
       </div>
       <GitHubFooter />
     </div>
-  );
+  )
 }

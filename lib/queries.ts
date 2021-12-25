@@ -1,4 +1,4 @@
-import { useQuery } from "react-query";
+import { useQuery } from "react-query"
 
 export function useFetch(url) {
   return useQuery(
@@ -7,5 +7,5 @@ export function useFetch(url) {
     () => fetch(url).then((res) => res.json()),
     /* eslint-enable */
     { staleTime: Infinity }
-  );
+  )
 }
