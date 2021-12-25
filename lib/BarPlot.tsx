@@ -25,27 +25,6 @@ const baseKeyMapping = {
   "5_plus_units_units": "5+ units",
   "5_plus_units_bldgs": "5+ units",
   "5_plus_units_value": "5+ units",
-  projected_units: "Projected units",
-  projected_bldgs: "Projected units",
-  projected_value: "Projected units",
-}
-
-const orderMapping = {
-  "1_unit_units": 3,
-  "1_unit_bldgs": 3,
-  "1_unit_value": 3,
-  "2_units_units": 2,
-  "2_units_bldgs": 2,
-  "2_units_value": 2,
-  "3_to_4_units_units": 1,
-  "3_to_4_units_bldgs": 1,
-  "3_to_4_units_value": 1,
-  "5_plus_units_units": 0,
-  "5_plus_units_bldgs": 0,
-  "5_plus_units_value": 0,
-  projected_units: 4,
-  projected_bldgs: 4,
-  projected_value: 4,
 }
 
 export const keyMapping = {}
@@ -172,7 +151,6 @@ function makeSpec(
       color: {
         field: "key",
         type: "nominal",
-        // axis: { title: 'Unit count' },
         legend: { titleFontSize: 12, labelFontSize: 12, title: "Unit count" },
       },
       order: {
@@ -215,10 +193,8 @@ function makeSpec(
             { field: "3_to_4_units_units", title: "3-4 units", format: "," },
             { field: "5_plus_units_units", title: "5+ units", format: "," },
             { field: "total_units", title: "Total units", format: "," },
-            { field: "projected_units", title: "Projected units", format: "," },
           ],
         },
-        // tooltip: true
       },
     ],
     config: {
