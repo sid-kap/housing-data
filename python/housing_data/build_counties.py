@@ -1,21 +1,21 @@
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
+from housing_data import building_permits_survey as bps
 from housing_data import county_population
 from housing_data.build_data_utils import (
+    BPS_DIR,
     COUNTY_POPULATION_DIR,
     NUMERICAL_COLUMNS,
     PUBLIC_DIR,
     add_per_capita_columns,
     get_state_abbrs,
-    load_bps_all_years_plus_monthly,
     write_to_json_directory,
 )
 
 
 def load_counties(
-    data_repo_path: Optional[str],
+    use_data_repo: bool,
     places_df: pd.DataFrame = None,
     population_df: pd.DataFrame = None,
 ) -> pd.DataFrame:
@@ -24,11 +24,24 @@ def load_counties(
         Useful since county population data is used twice (here, and also in `load_places` for NYC boroughs,
         which show up in places also).
     """
+    dfs = []
+
     # The county data only goes back to 1990 :(
-    # To get 1980 to 1990, we have to sum up the cities + unincorporated areas in each county
-    counties_df = load_bps_all_years_plus_monthly(
-        data_repo_path, "county", start_year=1990
-    )
+    # TODO: maybe try to reconstruct the data by summing up the cities?
+    # Can verify to see if this is reasonably by comparing on the [1990, 2020] period
+    # Note: most cities do have a county code, which seems to stay consistent! So maybe I can just sum up over that.
+    for year in range(1990, 2021):
+        df = bps.load_data(
+            scale="county",
+            time_scale="annual",
+            year=year,
+            month=None,
+            region=None,
+            data_path=BPS_DIR if use_data_repo else None,
+        ).assign(year=str(year))
+        dfs.append(df)
+
+    counties_df = pd.concat(dfs)
 
     if places_df is not None:
         imputed_counties_df = impute_pre_1990_counties(counties_df, places_df)
@@ -51,7 +64,7 @@ def load_counties(
 
     if population_df is None:
         population_df = county_population.get_county_population_estimates(
-            Path(data_repo_path, COUNTY_POPULATION_DIR) if data_repo_path else None
+            COUNTY_POPULATION_DIR if use_data_repo else None
         )
 
     counties_df = counties_df.merge(

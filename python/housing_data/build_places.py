@@ -1,15 +1,15 @@
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
+from housing_data import building_permits_survey as bps
 from housing_data import place_population
 from housing_data.build_data_utils import (
+    BPS_DIR,
     NUMERICAL_COLUMNS,
     PLACE_POPULATION_DIR,
     PUBLIC_DIR,
     add_per_capita_columns,
     get_state_abbrs,
-    load_bps_all_years_plus_monthly,
     write_to_json_directory,
 )
 
@@ -169,7 +169,6 @@ def _make_nyc_rows(raw_places_df):
         )
         & (raw_places_df["state_code"] == 36)
     ]
-    # TODO might need to add "month" to the groupby?
     nyc_rows = nyc_df.groupby("year")[NUMERICAL_COLUMNS].sum().reset_index()
 
     nyc_rows["fips place_code"] = 51000
@@ -202,14 +201,22 @@ def add_alt_names(raw_places_df):
 
 
 def load_places(
-    data_repo_path: Optional[str], counties_population_df: pd.DataFrame = None
+    use_data_repo: bool, counties_population_df: pd.DataFrame = None
 ) -> pd.DataFrame:
     dfs = []
-    for region in ["west", "midwest", "south", "northeast"]:
-        data = load_bps_all_years_plus_monthly(data_repo_path, "place", region=region)
-        dfs.append(data)
-    raw_places_df = pd.concat(dfs)
+    for year in range(1980, 2021):
+        for region in ["west", "midwest", "south", "northeast"]:
+            data = bps.load_data(
+                scale="place",
+                time_scale="annual",
+                year=year,
+                month=None,
+                region=region,  # type: ignore
+                data_path=BPS_DIR if use_data_repo else None,
+            ).assign(year=str(year))
+            dfs.append(data)
 
+    raw_places_df = pd.concat(dfs)
     nyc_rows = _make_nyc_rows(raw_places_df)
     raw_places_df = pd.concat([raw_places_df, nyc_rows])
 
@@ -218,7 +225,7 @@ def load_places(
     # raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
     place_populations_df = place_population.get_place_population_estimates(
-        data_path=Path(data_repo_path, PLACE_POPULATION_DIR) if data_repo_path else None
+        data_path=PLACE_POPULATION_DIR if use_data_repo else None
     )
 
     if counties_population_df is not None:
