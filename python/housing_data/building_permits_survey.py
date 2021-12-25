@@ -31,6 +31,9 @@ ERROR_STRING = "Sorry, the page you requested has either been moved or is no lon
 
 CENSUS_DATA_PATH = "https://www2.census.gov/econ/bps"
 
+VALUE_TYPES = ["bldgs", "units", "value"]
+BUILDING_UNIT_SIZES = ["1_unit", "2_units", "3_to_4_units", "5_plus_units"]
+
 
 def _validate_load_data_inputs(
     scale: Scale,
@@ -299,16 +302,18 @@ TYPE_MAPPING = {
 }
 
 
+def add_totals_columns(df: pd.DataFrame) -> None:
+    for value_type in VALUE_TYPES:
+        df[f"total_{value_type}"] = sum(
+            [df[f"{size}_{value_type}"] for size in BUILDING_UNIT_SIZES]
+        )
+
+
 def state_cleanup(df):
     df["state_name"] = df["state_name"].str.title()
     df["state_name"] = df["state_name"].apply(fix_state)
     df["type"] = df["state_name"].map(TYPE_MAPPING).fillna("state")
-    df["total_units"] = (
-        df["1_unit_units"]
-        + df["2_units_units"]
-        + df["3_to_4_units_units"]
-        + df["5_plus_units_units"]
-    )
+    add_totals_columns(df)
     df["region_code"] = df["region_code"].astype(str)
     df["division_code"] = df["division_code"].astype(str)
 
@@ -426,12 +431,7 @@ def place_cleanup(df, year):
         df["place_name"].notnull() & ~df["place_name"].isin(PLACES_TO_REMOVE)
     ].copy()
 
-    df["total_units"] = (
-        df["1_unit_units"]
-        + df["2_units_units"]
-        + df["3_to_4_units_units"]
-        + df["5_plus_units_units"]
-    )
+    add_totals_columns(df)
 
     return df
 
@@ -460,12 +460,7 @@ def clean_place_names(place_names: pd.Series, year: int) -> pd.Series:
 def county_cleanup(df):
     df["county_name"] = df["county_name"].str.strip()
 
-    df["total_units"] = (
-        df["1_unit_units"]
-        + df["2_units_units"]
-        + df["3_to_4_units_units"]
-        + df["5_plus_units_units"]
-    )
+    add_totals_columns(df)
 
     df = df.rename(
         columns={

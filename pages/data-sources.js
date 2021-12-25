@@ -1,4 +1,4 @@
-import { Nav, GitHubFooter } from '../lib/common_elements.js'
+import { Nav, GitHubFooter } from '../lib/common_elements'
 import Head from 'next/head'
 
 export default function DataSources () {

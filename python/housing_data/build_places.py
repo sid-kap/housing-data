@@ -201,18 +201,6 @@ def add_alt_names(raw_places_df):
     ] = "Manhattan Bronx Brooklyn Queens Staten Island"
 
 
-def get_current_year_projected_permits(permits_df: pd.DataFrame) -> pd.DataFrame:
-    predicted_permits = permits_df[
-        permits_df['year'] == "2021"
-    ].copy()
-    predicted_permits['imputed'] = True
-    print(predicted_permits.columns)
-    for col in NUMERICAL_COLUMNS:
-        predicted_permits[col] = predicted_permits[col] * (12 - predicted_permits['month']) / predicted_permits['month']
-
-    return predicted_permits
-
-
 def load_places(
     data_repo_path: Optional[str], counties_population_df: pd.DataFrame = None
 ) -> pd.DataFrame:
@@ -224,9 +212,6 @@ def load_places(
 
     nyc_rows = _make_nyc_rows(raw_places_df)
     raw_places_df = pd.concat([raw_places_df, nyc_rows])
-
-    current_year_projected_permits = get_current_year_projected_permits(raw_places_df)
-    raw_places_df = pd.concat([raw_places_df, current_year_projected_permits])
 
     add_alt_names(raw_places_df)
 

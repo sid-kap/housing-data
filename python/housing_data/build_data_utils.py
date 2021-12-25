@@ -40,7 +40,12 @@ NUMERICAL_COLUMNS = [
     "5_plus_units_bldgs_reported",
     "5_plus_units_units_reported",
     "5_plus_units_value_reported",
+    "total_bldgs",
     "total_units",
+    "total_value",
+    "projected_bldgs",
+    "projected_units",
+    "projected_value",
 ]
 
 NUMERICAL_NON_REPORTED_COLUMNS = [
@@ -107,6 +112,7 @@ def load_bps_all_years_plus_monthly(
     scale: bps.Scale,
     region: Optional[bps.Region] = None,
     start_year: int = 1980,
+    extrapolate_rest_of_year: bool = True,
 ) -> pd.DataFrame:
     """
     Loads the annual data from 1980 to 2020, plus the year-to-date data for the current
@@ -137,6 +143,28 @@ def load_bps_all_years_plus_monthly(
         region=region,
         data_path=data_path,
     ).assign(year=str(LATEST_MONTH[0]), month=LATEST_MONTH[1])
+
+    if extrapolate_rest_of_year:
+        current_year_data = add_current_year_projections(current_year_data)
+
     dfs.append(current_year_data)
 
     return pd.concat(dfs)
+
+
+def add_current_year_projections(year_to_date_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Given a DataFrame with "monthly_year_to_date" data and a "month" column,
+    adds columns for projected_{bldgs,units,value} for the remainder of the year
+    (assuming a constant rate across all months).
+    """
+    for value_type in ["bldgs", "units", "value"]:
+        # number of remaining months in the year / number of observed months
+        projected_units_ratio = (12 - year_to_date_df["month"]) / year_to_date_df[
+            "month"
+        ]
+        year_to_date_df[f"projected_{value_type}"] = (
+            projected_units_ratio * year_to_date_df[f"total_{value_type}"]
+        ).astype(int)
+
+    return year_to_date_df

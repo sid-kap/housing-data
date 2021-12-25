@@ -1,11 +1,11 @@
 import { useRouter } from 'next/router'
-import BarPlot from './BarPlot.js'
+import BarPlot from './BarPlot'
 import { useMemo, useCallback } from 'react'
-import { useFetch } from './queries.js'
+import { useFetch } from './queries'
 import us from 'us'
-import WindowSelectSearch from 'lib/WindowSelectSearch.tsx'
-import { makeUnitsSelect, usePerCapitaInput } from '../lib/selects.js'
-import { PathMapping } from '../lib/utils.ts'
+import WindowSelectSearch from 'lib/WindowSelectSearch'
+import { makeUnitsSelect, usePerCapitaInput } from '../lib/selects'
+import { PathMapping } from '../lib/utils'
 
 const fuseOptions = {
   keys: ['name'],
@@ -13,8 +13,8 @@ const fuseOptions = {
   distance: 5
 }
 
-function getStateAbbreviation (stateCode) {
-  const twoDigitStringCode = String(stateCode).padStart(2, 0)
+function getStateAbbreviation (stateCode: number): string {
+  const twoDigitStringCode = String(stateCode).padStart(2, '0')
   const state = us.lookup(twoDigitStringCode)
   if (typeof state === 'undefined') {
     return ''
@@ -23,12 +23,25 @@ function getStateAbbreviation (stateCode) {
   }
 }
 
-function getJsonUrl (county, stateCode) {
+function getJsonUrl (county: string, stateCode: number): string {
   county = county.replace('#', '%23')
   return '/counties_data/' + stateCode + '/' + county + '.json'
 }
 
-export function makeCountyOptions (countiesList) {
+type RawOption = {
+  county_name: string,
+  state_code: number,
+}
+
+type Option = {
+    value: number,
+    abbr: string,
+    county_name: string,
+    name: string,
+    path: string,
+}
+
+export function makeCountyOptions (countiesList: RawOption[]): Option[] {
   const options = []
   for (let i = 0; i < countiesList.length; i++) {
     const county = countiesList[i]
@@ -45,7 +58,7 @@ export function makeCountyOptions (countiesList) {
   return options
 }
 
-export default function CountyPlots ({ countyName, stateAbbr, stateCode }) {
+export default function CountyPlots ({ countyName, stateAbbr, stateCode }: {countyName: string, stateAbbr: string, stateCode: number}): JSX.Element {
   const router = useRouter()
 
   const { status, data: countiesList } = useFetch('/counties_list.json')
@@ -53,9 +66,15 @@ export default function CountyPlots ({ countyName, stateAbbr, stateCode }) {
   const countyOptions = useMemo(
     () => makeCountyOptions(countiesList ?? []), [status]
   )
-  const pathMapping = useMemo(() => new PathMapping(countiesList || [], (row) => row.county_name + '/' + row.state_code), [countiesList])
+  const pathMapping = useMemo(
+    () => new PathMapping<Option>(
+      countyOptions || [],
+      (row) => row.county_name + '/' + row.state_code
+    ),
+    [countyOptions]
+  )
 
-  const optionVal = useMemo(
+  const optionVal: Option = useMemo(
     () => pathMapping.getEntryForPath(countyName + '/' + stateCode),
     [countyName, stateCode, pathMapping]
   )
@@ -78,6 +97,7 @@ export default function CountyPlots ({ countyName, stateAbbr, stateCode }) {
   const { denom, populationInput } = usePerCapitaInput()
   const perCapita = denom === 'per_capita'
 
+// fuseOptions={fuseOptions}
   return (
     <div className='mx-auto mb-10 align-center items-center flex flex-col justify-center'>
       <div className='lg:grid lg:grid-cols-3 flex flex-col'>
@@ -86,7 +106,6 @@ export default function CountyPlots ({ countyName, stateAbbr, stateCode }) {
             search
             onChange={onChange}
             options={countyOptions}
-            fuseOptions={fuseOptions}
             value={optionVal?.value}
           />
         </div>

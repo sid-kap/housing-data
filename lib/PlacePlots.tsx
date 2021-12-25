@@ -1,13 +1,13 @@
-import { useFetch } from 'lib/queries.js'
+import { useFetch } from 'lib/queries'
 import { useMemo, useCallback } from 'react'
 import WindowSelectSearch from 'lib/WindowSelectSearch'
-import BarPlot from 'lib/BarPlot.js'
+import BarPlot from 'lib/BarPlot'
 import us from 'us'
 import { useRouter } from 'next/router'
-import { makeUnitsSelect, usePerCapitaInput } from 'lib/selects.js'
+import { makeUnitsSelect, usePerCapitaInput } from 'lib/selects'
 import { PathMapping } from 'lib/utils'
 
-export function getJsonUrl (place, state) {
+export function getJsonUrl (place: string, state: string): string {
     if (place === null) {
     return null
   }
@@ -20,7 +20,7 @@ export function getJsonUrl (place, state) {
     }
 }
 
-function getStateFips (stateStr) {
+function getStateFips (stateStr: string): number {
     const state = us.lookup(stateStr)
     if (state) {
         return parseInt(state.fips)
@@ -39,7 +39,16 @@ function getStateAbbreviation (stateCode: number): string {
   }
 }
 
-export function makePlaceOptions (placesList) {
+type Option = {
+  value: number,
+  abbr: string,
+  place_name: string,
+  name: string,
+  alt_name: string,
+  path: string,
+}
+
+export function makePlaceOptions (placesList: {state_code: number, place_name: string, name: string, alt_name: string}[]): Option[] {
   const options = []
   for (let i = 0; i < placesList.length; i++) {
     const place = placesList[i]
@@ -61,7 +70,7 @@ export function makePlaceOptions (placesList) {
 
 const fuzzysortOptions = { keys: ['name', 'alt_name'], threshold: -10000 }
 
-export default function PlacePlots ({ place, state }) {
+export default function PlacePlots ({ place, state }: {place: string, state: string}): JSX.Element {
   const router = useRouter()
 
   const { status, data: placesList } = useFetch('/places_list.json')

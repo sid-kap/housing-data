@@ -1,12 +1,12 @@
 import { useRouter } from 'next/router'
-import BarPlot from 'lib/BarPlot.js'
+import BarPlot from 'lib/BarPlot'
 import { useMemo, useEffect, useCallback } from 'react'
-import { useFetch } from 'lib/queries.js'
+import { useFetch } from 'lib/queries'
 import WindowSelectSearch from 'lib/WindowSelectSearch'
-import { makeUnitsSelect, usePerCapitaInput } from 'lib/selects.js'
-import { PathMapping } from 'lib/utils.ts'
+import { makeUnitsSelect, usePerCapitaInput } from 'lib/selects'
+import { PathMapping } from 'lib/utils'
 
-function getJsonUrl (metro) {
+function getJsonUrl (metro: string): string {
   if (metro === null || (typeof metro === 'undefined')) {
     return null
   }
@@ -14,7 +14,30 @@ function getJsonUrl (metro) {
   return '/metros_data/' + metro + '.json'
 }
 
-export function makeOptions (metrosListResponse) {
+type RawOption = {
+  path: string,
+  name: string,
+  metro_name: string,
+  metro_type: string,
+  county_names: string[],
+}
+
+type Option = {
+  value: number,
+  path: string,
+  name: string,
+  metro_name: string,
+  metro_type: string,
+  county_names: string[],
+}
+
+type Group<T> = {
+  name: string,
+  type: string,
+  items: T[]
+}
+
+export function makeOptions (metrosListResponse: RawOption[]): [Group<Option>, Group<Option>] {
   const metroNames = metrosListResponse || []
 
   const cbsaOptions = []
@@ -38,7 +61,7 @@ export function makeOptions (metrosListResponse) {
     }
   }
 
-  const options = [
+  return [
     {
       name: 'CBSAs',
       type: 'group',
@@ -50,8 +73,6 @@ export function makeOptions (metrosListResponse) {
       items: csaOptions
     }
   ]
-
-  return options
 }
 
 function renderOption (domProps, option, snapshot, className) {
@@ -69,13 +90,13 @@ const fuseOptions = {
   distance: 5
 }
 
-export default function MetroPlots ({ metroPath, setTitle }) {
+export default function MetroPlots ({ metroPath, setTitle }: {metroPath: string, setTitle: (title: string) => void}): JSX.Element {
   const router = useRouter()
 
   const { data: metrosList } = useFetch('/metros_list.json')
 
   const metroOptions = useMemo(() => makeOptions(metrosList), [metrosList])
-  const pathMapping = useMemo(() => new PathMapping(metrosList || []), [metrosList])
+  const pathMapping = useMemo(() => new PathMapping<Option>(metrosList || []), [metrosList])
 
   const optionVal = useMemo(
     () => pathMapping.getEntryForPath(metroPath),
@@ -117,6 +138,7 @@ export default function MetroPlots ({ metroPath, setTitle }) {
   const { denom, populationInput } = usePerCapitaInput()
   const perCapita = denom === 'per_capita'
 
+  // fuseOptions={fuseOptions}
   return (
     <div className='mx-auto mb-10 align-center items-center flex flex-col justify-center'>
       <div className='lg:grid lg:grid-cols-3 flex flex-col'>
@@ -125,7 +147,6 @@ export default function MetroPlots ({ metroPath, setTitle }) {
             search
             onChange={onChange}
             options={metroOptions}
-            fuseOptions={fuseOptions}
             value={optionVal?.value}
             renderOption={renderOption}
           />
@@ -145,7 +166,7 @@ export default function MetroPlots ({ metroPath, setTitle }) {
   )
 }
 
-function formatCountiesList (counties) {
+function formatCountiesList (counties: string[]): string {
   // Special handling for long list of counties (if there are 3 or more)
   // TODO handle parishes?
   let ending

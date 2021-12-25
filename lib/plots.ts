@@ -7,7 +7,8 @@ export function * fieldsGenerator (
     '1_unit',
     '2_units',
     '3_to_4_units',
-    '5_plus_units'
+    '5_plus_units',
+    'projected'
   ]) {
     for (const type of types) {
       for (const suffix of suffixes) {

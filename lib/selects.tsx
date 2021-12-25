@@ -7,7 +7,7 @@ const unitsOptions = [
   { value: 'value', name: 'Property value' }
 ]
 
-export function makeUnitsSelect () {
+export function makeUnitsSelect (): {selectedUnits: string, unitsSelect: JSX.Element} {
   const [selectedUnits, setSelectedUnits] = useState('units')
   const unitsSelect = (
     <SelectSearch
@@ -21,7 +21,7 @@ export function makeUnitsSelect () {
   }
 }
 
-export function usePerCapitaInput () {
+export function usePerCapitaInput (): {denom: string, populationInput: JSX.Element} {
   const [denom, setDenom] = useState('total')
   const populationInput = (
     <div>
