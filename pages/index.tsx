@@ -428,7 +428,7 @@ export default function Home(): JSX.Element {
         queryFn: () => getData(item.path),
       }
     })
-  const datas: any = useQueries({ queries })
+  const datas: any = useQueries(queries)
 
   const data = useMemo(
     () => combineDatas(datas),
