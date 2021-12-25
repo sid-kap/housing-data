@@ -14,23 +14,23 @@ repos:
     rev: 19.3b0
     hooks:
       - id: black
-#  - repo: https://github.com/pre-commit/mirrors-prettier
-#    rev: v2.2.0
-#    hooks:
-#      - id: prettier
-  - repo: https://github.com/standard/standard
-    rev: b9abb8453168d8b9d95ff21de7d19af5ed881eaf
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.5.1
     hooks:
-      - id: standard
-  - repo: ~/clones/ts-standard
-    rev: faa1bb30c75ea7c3647f25d0383d976da7789a97
-    hooks:
-      - id: ts-standard
-# Based on https://rednafi.github.io/digressions/python/2020/04/06/python-precommit.html
+      - id: prettier
+  # - repo: https://github.com/standard/standard
+  #   rev: b9abb8453168d8b9d95ff21de7d19af5ed881eaf
+  #   hooks:
+  #     - id: standard
+  # - repo: ~/clones/ts-standard
+  #   rev: faa1bb30c75ea7c3647f25d0383d976da7789a97
+  #   hooks:
+  #     - id: ts-standard
+  # Based on https://rednafi.github.io/digressions/python/2020/04/06/python-precommit.html
   - repo: https://github.com/pycqa/flake8
     rev: 3.9.2
     hooks:
-    - id: flake8
-      args:
-        # making isort line length compatible with black
-        - "--max-line-length=120"
+      - id: flake8
+        args:
+          # making isort line length compatible with black
+          - "--max-line-length=120"
