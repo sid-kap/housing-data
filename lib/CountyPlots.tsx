@@ -109,7 +109,6 @@ export default function CountyPlots({
   const { denom, populationInput } = usePerCapitaInput()
   const perCapita = denom === "per_capita"
 
-  // fuseOptions={fuseOptions}
   return (
     <div className="mx-auto mb-10 align-center items-center flex flex-col justify-center">
       <div className="lg:grid lg:grid-cols-3 flex flex-col">

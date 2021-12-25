@@ -219,7 +219,6 @@ function spec(
         },
       },
       color: { field: "name", type: "nominal", legend: null },
-      // legend: false
     },
     data: { name: "table" }, // note: vega-lite data attribute is a plain object instead of an array
     usermeta: { embedOptions: { renderer: "svg" } },
@@ -239,8 +238,6 @@ function spec(
             field: yField,
           },
         },
-        // tooltip: true,
-        // point: true
       },
       {
         mark: "text",
@@ -251,7 +248,6 @@ function spec(
         },
       },
     ],
-    // legend: null,
     config: {
       customFormatTypes: true,
       text: {

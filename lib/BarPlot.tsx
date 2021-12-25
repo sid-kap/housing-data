@@ -95,10 +95,6 @@ function makeTransforms(
       calculate: JSON.stringify(keyMapping) + '[datum.key] || "Error"',
       as: "key_pretty_printed",
     },
-    {
-      calculate: JSON.stringify(orderMapping) + '[datum.key] || "Error"',
-      as: "bar_chart_order",
-    },
   ]
 
   if (perThousand) {
@@ -179,32 +175,10 @@ function makeSpec(
         // axis: { title: 'Unit count' },
         legend: { titleFontSize: 12, labelFontSize: 12, title: "Unit count" },
       },
-      // opacity: {
-      //   field: 'imputed',
-      //   scale: {
-      //     domain: [true, null],
-      //     range: [0.5, 1]
-      //   }
-      // },
       order: {
         field: "bar_chart_order",
       },
-      // fill: {
-      //   field: 'imputed',
-      //   scale: {
-      //     domain: [true, null],
-      //     range: ['url(#diagonal-stripe-2)', 'blue']
-      //   }
-      // }
     },
-    // scales: [
-    //   {
-    //     name: 'legend_labels',
-    //     type: 'nominal',
-    //     domain: ['1_unit_units' + suffix, '2_units_units' + suffix, '3_to_4_units_units' + suffix, '5_plus_units_units' + suffix, 'projected_units' + suffix],
-    //     range: ['1 unit', '2 units', '3-4 units', '5+ units', 'Projected']
-    //   }
-    // ],
     transform: transforms,
     data: { name: "table" }, // note: vega-lite data attribute is a plain object instead of an array
     usermeta: { embedOptions: { renderer: "svg" } },

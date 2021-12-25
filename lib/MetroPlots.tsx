@@ -91,12 +91,6 @@ function renderOption(
   // <span className='text-xs rounded bg-purple-200 p-1'>{option.metro_type.toUpperCase()}</span>
 }
 
-const fuseOptions = {
-  keys: ["name"],
-  threshold: 0.1,
-  distance: 5,
-}
-
 export default function MetroPlots({
   metroPath,
   setTitle,
@@ -153,7 +147,6 @@ export default function MetroPlots({
   const { denom, populationInput } = usePerCapitaInput()
   const perCapita = denom === "per_capita"
 
-  // fuseOptions={fuseOptions}
   return (
     <div className="mx-auto mb-10 align-center items-center flex flex-col justify-center">
       <div className="lg:grid lg:grid-cols-3 flex flex-col">

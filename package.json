@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "postinstall": "husky install"
+    "start": "next start"
   },
   "dependencies": {
     "@types/react": "^17.0.38",
