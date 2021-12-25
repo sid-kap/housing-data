@@ -73,7 +73,7 @@ export default function CountyPlots({
     () =>
       new PathMapping<Option>(
         countyOptions || [],
-        (row) => row.county_name + "/" + row.state_code.toString()
+        (row) => row.county_name + "/" + row.state_code
       ),
     [countyOptions]
   )
