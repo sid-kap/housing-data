@@ -131,7 +131,7 @@ def load_bps_all_years_plus_monthly(
             year=year,
             month=None,
             region=region,
-            data_path=str(data_path),
+            data_path=data_path,
         ).assign(year=str(year), month=None)
         dfs.append(data)
 

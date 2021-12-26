@@ -5,6 +5,7 @@ import { useFetch } from "lib/queries"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping } from "lib/utils"
+import { CurrentYearExtrapolationInfo } from "./common_elements"
 
 function getJsonUrl(metro: string): string {
   if (metro === null || typeof metro === "undefined") {
@@ -174,6 +175,7 @@ export default function MetroPlots({
       </div>
       {populationInput}
       {countyList}
+      <CurrentYearExtrapolationInfo />
     </div>
   )
 }

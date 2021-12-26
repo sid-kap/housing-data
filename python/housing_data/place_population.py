@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import StringIO
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from typing import List, Optional
 
 
-def _get_places_crosswalk_df(data_path: Optional[str] = None) -> pd.DataFrame:
+def _get_places_crosswalk_df(data_path: Optional[Path] = None) -> pd.DataFrame:
     df = pd.read_fwf(
         get_path(
             "https://www2.census.gov/geo/tiger/PREVGENZ/pl/us_places.txt", data_path
@@ -390,7 +391,7 @@ def _get_recent_decades_df(
     )
 
 
-def get_place_populations_2000s(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_place_populations_2000s(data_path: Optional[Path] = None) -> pd.DataFrame:
     # This one doesn't include consolidated cities, so no need to remove those rows
     return _get_recent_decades_df(
         get_path(
@@ -402,7 +403,7 @@ def get_place_populations_2000s(data_path: Optional[str] = None) -> pd.DataFrame
     )
 
 
-def get_place_populations_2010s(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_place_populations_2010s(data_path: Optional[Path] = None) -> pd.DataFrame:
     # This one has consolidated cities that need to be removed
     return _get_recent_decades_df(
         get_path(
@@ -466,7 +467,7 @@ def impute_place_populations_2021(df_2010s: pd.DataFrame) -> pd.DataFrame:
     return df_2010s[df_2010s["year"] == "2020"].assign(year="2021")
 
 
-def get_place_population_estimates(data_path: Optional[str] = None):
+def get_place_population_estimates(data_path: Optional[Path] = None):
     print("Loading 1980 populations...")
     df_1980 = get_place_populations_1980(data_path)
     print("Loading 1990s populations...")

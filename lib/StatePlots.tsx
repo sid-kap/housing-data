@@ -5,6 +5,7 @@ import { useMemo } from "react"
 import BarPlot from "../lib/BarPlot"
 import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects"
 import { PlainObject } from "react-vega/src/types"
+import { CurrentYearExtrapolationInfo } from "./common_elements"
 
 type RawOption = {
   type: string
@@ -95,15 +96,7 @@ export default function StatePlots({
         <BarPlot data={data} units={selectedUnits} perCapita={perCapita} />
       </div>
       {populationInput}
-      <div>
-        <div className="text-xs mt-3 text-left">
-          *2021 includes data from January–November.
-        </div>
-        <div className="text-xs text-left">
-          &nbsp;The remainder of the year is extrapolated from the monthly rate
-          from January to November 2021.
-        </div>
-      </div>
+      <CurrentYearExtrapolationInfo />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import us from "us"
 import { useRouter } from "next/router"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping } from "lib/utils"
+import { CurrentYearExtrapolationInfo } from "./common_elements"
 
 export function getJsonUrl(place: string, state: string): string {
   if (place === null) {
@@ -161,6 +162,7 @@ export default function PlacePlots({
         />
       </div>
       {populationInput}
+      <CurrentYearExtrapolationInfo />
     </div>
   )
 }
