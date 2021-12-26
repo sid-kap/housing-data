@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Dict
 
 import pandas as pd
 from housing_data.build_data_utils import (
@@ -9,11 +10,8 @@ from housing_data.build_data_utils import (
 )
 
 
-def load_metros(counties_df: pd.DataFrame) -> None:
-    counties_df = counties_df.drop(
-        columns=[col for col in counties_df.columns if "_per_capita" in col]
-    )
-
+def load_crosswalk_df() -> pd.DataFrame:
+    # TODO: cache this file to housing-data-data to speed up builds by a few seconds
     crosswalk_df = pd.read_csv(
         "http://data.nber.org/cbsa-csa-fips-county-crosswalk/cbsa2fipsxw.csv"
     )
@@ -35,18 +33,59 @@ def load_metros(counties_df: pd.DataFrame) -> None:
         ]
     )
 
-    merged_df = crosswalk_df.merge(
-        counties_df, on=["fips_state", "fips_county"], how="left"
+    return crosswalk_df
+
+
+def combine_metro_rows(
+    df: pd.DataFrame, metro_type: str, crosswalk_df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    :param metro_type: 'cbsa' or 'csa'
+    """
+    assert metro_type in ["cbsa", "csa"]
+
+    metro_col = f"{metro_type}_name"
+
+    if metro_type == "cbsa":
+        other_metro_col = "csa_name"
+    elif metro_type == "csa":
+        other_metro_col = "cbsa_name"
+    else:
+        raise ValueError(f"Unknown metro_type: {metro_type}")
+
+    combined_df = (
+        df.drop(columns=[other_metro_col])
+        .groupby([metro_col, "year"])
+        .agg(**get_aggregate_functions())
+        .reset_index()
+        .rename(columns={metro_col: "metro_name"})
+        .assign(metro_type=metro_type)
     )
 
-    columns_to_drop = [
-        "fips_state",
-        "fips_county",
-        "region_code",
-        "division_code",
-        "survey_date",
+    # Only keep a metros in 2021 if all of its counties were observed.
+    # Most counties are actually not observed (yet) in 2021, because lots of cities are only surveyed
+    # yearly, not monthly.
+    num_counties_in_each_metro = (
+        crosswalk_df.groupby(metro_col)
+        .size()
+        .reset_index(name="num_counties")
+        .rename(columns={metro_col: "metro_name"})
+    )
+    combined_df = combined_df.merge(
+        num_counties_in_each_metro, on="metro_name", how="left"
+    )
+
+    combined_df = combined_df[
+        (combined_df["year"] != "2021")
+        | (combined_df["num_observed_counties"] == combined_df["num_counties"])
     ]
 
+    combined_df = combined_df.drop(columns=["num_observed_counties", "num_counties"])
+
+    return combined_df
+
+
+def get_aggregate_functions() -> Dict[str, pd.NamedAgg]:
     aggregate_functions = {
         col: pd.NamedAgg(column=col, aggfunc="sum") for col in NUMERICAL_COLUMNS
     }
@@ -55,27 +94,40 @@ def load_metros(counties_df: pd.DataFrame) -> None:
     )
     aggregate_functions["population"] = pd.NamedAgg(column="population", aggfunc="sum")
 
-    cbsas_df = (
-        merged_df.drop(columns=["csa_name"] + columns_to_drop)
-        .groupby(["cbsa_name", "year"])
-        .agg(**aggregate_functions)
-        .reset_index()
-        .rename(columns={"cbsa_name": "metro_name"})
-        .assign(metro_type="cbsa")
+    # So that we can check if all the counties in a metro were observed in that year
+    aggregate_functions["num_observed_counties"] = pd.NamedAgg(
+        column="county_name", aggfunc="count"
     )
 
-    csas_df = (
-        merged_df.drop(columns=["cbsa_name"] + columns_to_drop)
-        .groupby(["csa_name", "year"])
-        .agg(**aggregate_functions)
-        .reset_index()
-        .rename(columns={"csa_name": "metro_name"})
-        .assign(metro_type="csa")
+    return aggregate_functions
+
+
+def load_metros(counties_df: pd.DataFrame) -> None:
+    counties_df = counties_df.drop(
+        columns=[col for col in counties_df.columns if "_per_capita" in col]
     )
+
+    crosswalk_df = load_crosswalk_df()
+
+    merged_df = crosswalk_df.merge(
+        counties_df, on=["fips_state", "fips_county"], how="left"
+    ).drop(
+        columns=[
+            "fips_state",
+            "fips_county",
+            "region_code",
+            "division_code",
+            "survey_date",
+        ]
+    )
+
+    cbsas_df = combine_metro_rows(merged_df, "cbsa", crosswalk_df)
+    csas_df = combine_metro_rows(merged_df, "csa", crosswalk_df)
 
     metros_df = pd.concat([cbsas_df, csas_df])
 
     add_per_capita_columns(metros_df)
+
     metros_df["path"] = metros_df["metro_name"].str.replace("/", "-")
     metros_df["name"] = metros_df["metro_name"]
 

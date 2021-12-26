@@ -25,12 +25,12 @@ const baseKeyMapping = {
   "5_plus_units_units": "5+ units",
   "5_plus_units_bldgs": "5+ units",
   "5_plus_units_value": "5+ units",
-  projected_units: "Projected units",
-  projected_bldgs: "Projected units",
-  projected_value: "Projected units",
+  projected_units: "Projected units, 2021*",
+  projected_bldgs: "Projected units, 2021*",
+  projected_value: "Projected units, 2021*",
 }
 
-const orderMapping = {
+const baseOrderMapping = {
   "1_unit_units": 4,
   "1_unit_bldgs": 4,
   "1_unit_value": 4,
@@ -55,6 +55,13 @@ for (const [key, value] of Object.entries(baseKeyMapping)) {
   keyMapping[key + "_per_capita_per_1000"] = value
 }
 
+export const orderMapping = {}
+for (const [key, value] of Object.entries(baseOrderMapping)) {
+  orderMapping[key] = value
+  orderMapping[key + "_per_capita"] = value
+  orderMapping[key + "_per_capita_per_1000"] = value
+}
+
 const fields = Array.from(fieldsGenerator())
 
 export default function BarPlot({
@@ -67,14 +74,36 @@ export default function BarPlot({
   perCapita: boolean
 }): JSX.Element {
   return (
-    <ContainerDimensions>
-      {({ width, height }) => (
-        <VegaLite
-          spec={makeSpec(units, perCapita, width, height)}
-          data={data}
-        />
-      )}
-    </ContainerDimensions>
+    <>
+      <svg
+        height="0"
+        width="0"
+        version="1.1"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <pattern
+            id="diagonalHatch"
+            patternUnits="userSpaceOnUse"
+            width="4"
+            height="4"
+          >
+            <path
+              d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
+              style={{ stroke: "black", "stroke-width": 1 }}
+            />
+          </pattern>
+        </defs>
+      </svg>
+      <ContainerDimensions>
+        {({ width, height }) => (
+          <VegaLite
+            spec={makeSpec(units, perCapita, width, height)}
+            data={data}
+          />
+        )}
+      </ContainerDimensions>
+    </>
   )
 }
 
@@ -207,7 +236,7 @@ function makeSpec(
                 "2 units",
                 "3-4 units",
                 "5+ units",
-                "Projected units",
+                "Projected units, 2021*",
               ],
               // Taken from Tableau 10 (https://www.tableau.com/about/blog/2016/7/colors-upgrade-tableau-10-56782)
               range: [
@@ -215,11 +244,11 @@ function makeSpec(
                 "#f28e2b",
                 "#e15759",
                 "#76b7b2",
-                "url(#diagonal-stripe-2)",
+                "url(#diagonalHatch)",
               ],
             },
             axis: {
-              title: "Unit count",
+              title: "Building type",
             },
           },
           tooltip: [
@@ -236,7 +265,11 @@ function makeSpec(
             { field: "3_to_4_units_units", title: "3-4 units", format: "," },
             { field: "5_plus_units_units", title: "5+ units", format: "," },
             { field: "total_units", title: "Total units", format: "," },
-            { field: "projected_units", title: "Projected units", format: "," },
+            {
+              field: "projected_units",
+              title: "Projected units, 2021",
+              format: ",",
+            },
           ],
         },
       },
