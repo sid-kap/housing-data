@@ -8,5 +8,5 @@ cd python || exit
 export PATH=$PATH:$HOME/.local/bin
 poetry install --no-dev
 
-git clone https://github.com/sid-kap/housing-data-data ../housing-data-data -b add-monthly-year-to-date
+git clone https://github.com/sid-kap/housing-data-data ../housing-data-data
 poetry run build_data --data-repo-path ../housing-data-data
