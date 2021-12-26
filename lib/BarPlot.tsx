@@ -31,21 +31,21 @@ const baseKeyMapping = {
 }
 
 const orderMapping = {
-  "1_unit_units": 3,
-  "1_unit_bldgs": 3,
-  "1_unit_value": 3,
-  "2_units_units": 2,
-  "2_units_bldgs": 2,
-  "2_units_value": 2,
-  "3_to_4_units_units": 1,
-  "3_to_4_units_bldgs": 1,
-  "3_to_4_units_value": 1,
-  "5_plus_units_units": 0,
-  "5_plus_units_bldgs": 0,
-  "5_plus_units_value": 0,
-  projected_units: 4,
-  projected_bldgs: 4,
-  projected_value: 4,
+  "1_unit_units": 4,
+  "1_unit_bldgs": 4,
+  "1_unit_value": 4,
+  "2_units_units": 3,
+  "2_units_bldgs": 3,
+  "2_units_value": 3,
+  "3_to_4_units_units": 2,
+  "3_to_4_units_bldgs": 2,
+  "3_to_4_units_value": 2,
+  "5_plus_units_units": 1,
+  "5_plus_units_bldgs": 1,
+  "5_plus_units_value": 1,
+  projected_units: 5,
+  projected_bldgs: 5,
+  projected_value: 5,
 }
 
 export const keyMapping = {}
@@ -180,6 +180,7 @@ function makeSpec(
       },
       order: {
         field: "bar_chart_order",
+        sort: "ascending",
       },
     },
     transform: transforms,
@@ -198,10 +199,27 @@ function makeSpec(
           y: {
             field: "value",
           },
-          color: {
+          fill: {
             field: "key_pretty_printed",
             scale: {
-              scheme: "tableau10",
+              domain: [
+                "1 unit",
+                "2 units",
+                "3-4 units",
+                "5+ units",
+                "Projected units",
+              ],
+              // Taken from Tableau 10 (https://www.tableau.com/about/blog/2016/7/colors-upgrade-tableau-10-56782)
+              range: [
+                "#4e79a7",
+                "#f28e2b",
+                "#e15759",
+                "#76b7b2",
+                "url(#diagonal-stripe-2)",
+              ],
+            },
+            axis: {
+              title: "Unit count",
             },
           },
           tooltip: [
