@@ -84,7 +84,7 @@ def get_unincorporated_places_populations_1980() -> pd.DataFrame:
     return remainder_df
 
 
-def get_place_populations_1980(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_place_populations_1980(data_path: Optional[Path] = None) -> pd.DataFrame:
     # Assuming this is run from `python/`
     # For the header row, use the nice descriptive names that IPUMS provides rather than the code names
     df = pd.read_csv("../raw_data/nhgis0015_ds104_1980_place_070.csv", header=1)
