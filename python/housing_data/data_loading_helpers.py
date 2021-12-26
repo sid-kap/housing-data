@@ -39,7 +39,7 @@ def get_url_text(
         return requests.get(web_url).text
 
 
-def get_path(url: str, data_path: Optional[str]) -> str:
+def get_path(url: str, data_path: Optional[Path]) -> str:
     if data_path is not None:
         return str(Path(data_path, Path(url).name))
     else:

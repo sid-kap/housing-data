@@ -96,10 +96,10 @@ export default function StatePlots({
       </div>
       {populationInput}
       <div>
-        <div class="text-xs mt-3 text-left">
+        <div className="text-xs mt-3 text-left">
           *2021 includes data from January–November.
         </div>
-        <div class="text-xs text-left">
+        <div className="text-xs text-left">
           &nbsp;The remainder of the year is extrapolated from the monthly rate
           from January to November 2021.
         </div>

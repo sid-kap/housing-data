@@ -90,7 +90,8 @@ export default function BarPlot({
           >
             <path
               d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
-              style={{ stroke: "black", "stroke-width": 1 }}
+              stroke="black"
+              strokeWidth="1"
             />
           </pattern>
         </defs>
@@ -229,6 +230,7 @@ function makeSpec(
             field: "value",
           },
           fill: {
+            title: "Building type",
             field: "key_pretty_printed",
             scale: {
               domain: [
@@ -246,9 +248,6 @@ function makeSpec(
                 "#76b7b2",
                 "url(#diagonalHatch)",
               ],
-            },
-            axis: {
-              title: "Building type",
             },
           },
           tooltip: [
