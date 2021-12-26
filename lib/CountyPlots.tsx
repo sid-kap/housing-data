@@ -7,12 +7,6 @@ import WindowSelectSearch from "lib/WindowSelectSearch"
 import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects"
 import { PathMapping } from "../lib/utils"
 
-const fuseOptions = {
-  keys: ["name"],
-  threshold: 0.1,
-  distance: 5,
-}
-
 function getStateAbbreviation(stateCode: number): string {
   const twoDigitStringCode = String(stateCode).padStart(2, "0")
   const state = us.lookup(twoDigitStringCode)
@@ -25,7 +19,7 @@ function getStateAbbreviation(stateCode: number): string {
 
 function getJsonUrl(county: string, stateCode: number): string {
   county = county.replace("#", "%23")
-  return "/counties_data/" + stateCode + "/" + county + ".json"
+  return "/counties_data/" + stateCode.toString() + "/" + county + ".json"
 }
 
 type RawOption = {
@@ -115,7 +109,6 @@ export default function CountyPlots({
   const { denom, populationInput } = usePerCapitaInput()
   const perCapita = denom === "per_capita"
 
-  // fuseOptions={fuseOptions}
   return (
     <div className="mx-auto mb-10 align-center items-center flex flex-col justify-center">
       <div className="lg:grid lg:grid-cols-3 flex flex-col">
