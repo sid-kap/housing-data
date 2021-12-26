@@ -55,10 +55,10 @@ NUMERICAL_NON_REPORTED_COLUMNS = [
 PUBLIC_DIR = Path("../public")
 
 # Paths relative to the housing-data-data repo
-BPS_DIR = str(Path("data", "bps"))
-STATE_POPULATION_DIR = str(Path("data", "population", "state"))
-COUNTY_POPULATION_DIR = str(Path("data", "population", "county"))
-PLACE_POPULATION_DIR = str(Path("data", "population", "place"))
+BPS_DIR = Path("data", "bps")
+STATE_POPULATION_DIR = Path("data", "population", "state")
+COUNTY_POPULATION_DIR = Path("data", "population", "county")
+PLACE_POPULATION_DIR = Path("data", "population", "place")
 
 # Last year and month for which monthly BPS data is available (and is cloned to housing-data-data).
 LATEST_MONTH = (2021, 11)
