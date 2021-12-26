@@ -10,9 +10,9 @@
   "dependencies": {
     "date-fns": "^2.23.0",
     "fuzzysort": "^1.1.4",
-    "immutable": "^4.0.0-rc.14",
+    "immutable": "^4.0.0",
     "moment": "^2.29.1",
-    "next": "10.0.4",
+    "next": "12.0.7",
     "react": "^17.0.1",
     "react-container-dimensions": "^1.4.1",
     "react-dom": "17.0.1",
@@ -22,16 +22,17 @@
     "react-window": "^1.8.6",
     "sass": "^1.29.0",
     "us": "^2.0.0",
-    "vega": "^5.17.0",
-    "vega-lite": "^4.17.0"
+    "vega": "^5.21.0",
+    "vega-lite": "sid-kap/vega-lite#ab4760fb6125340228b3ce917a5d1ce3214b91ca"
   },
   "devDependencies": {
+    "@types/react": "^17.0.38",
     "@types/node": "^15.12.1",
     "autoprefixer": "^10.0.2",
     "postcss": "^8.1.10",
     "standard": "^16.0.3",
     "tailwindcss": "^2.0.1",
-    "typescript": "^4.3.2"
+    "typescript": "^4.5.4"
   },
   "prettier": {
     "semi": false

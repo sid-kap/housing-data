@@ -1,11 +1,14 @@
-import { Page } from "../../lib/common_elements.js"
+import { Page } from "../../lib/common_elements"
 import us from "us"
-import CountyPlots from "../../lib/CountyPlots.js"
+import CountyPlots from "../../lib/CountyPlots"
 import { useRouter } from "next/router"
 
-export default function County() {
+export default function County(): JSX.Element {
   const router = useRouter()
-  const [stateAbbr, countyName] = router.query.county ?? [null, null]
+  const [stateAbbr, countyName] = (router.query.county as [string, string]) ?? [
+    null,
+    null,
+  ]
   const stateCode = stateAbbr ? getStateFips(stateAbbr) : null
 
   return (
@@ -22,6 +25,6 @@ export default function County() {
   )
 }
 
-function getStateFips(stateStr) {
+function getStateFips(stateStr: string): number {
   return parseInt(us.lookup(stateStr).fips)
 }

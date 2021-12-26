@@ -1,11 +1,8 @@
-export class PathMapping {
-  placesList: object[]
+export class PathMapping<T> {
+  placesList: T[]
   mapping: Map<string, number>
   // Class that makes it easy to get from page path to the relevant row in the place list.
-  constructor(
-    placesList: object[],
-    pathFn: (object) => string = (e) => e.path
-  ) {
+  constructor(placesList: T[], pathFn: (object) => string = (e) => e.path) {
     this.placesList = placesList
     this.mapping = new Map()
 
@@ -15,7 +12,7 @@ export class PathMapping {
     }
   }
 
-  getEntryForPath(path) {
+  getEntryForPath(path: string): T {
     const index = this.mapping[path]
     return index ? this.placesList[index] : undefined
   }

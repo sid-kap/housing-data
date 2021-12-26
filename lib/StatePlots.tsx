@@ -1,11 +1,23 @@
 import { useRouter } from "next/router"
-import { useFetch } from "../lib/queries.js"
+import { useFetch } from "../lib/queries"
 import SelectSearch from "react-select-search/dist/cjs"
 import { useMemo } from "react"
-import BarPlot from "../lib/BarPlot.js"
-import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects.js"
+import BarPlot from "../lib/BarPlot"
+import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects"
+import { PlainObject } from "react-vega/src/types"
 
-export function makeStateOptions(statesList) {
+type RawOption = {
+  type: string
+  state_name: string
+}
+
+type Option = {
+  value: string
+  name: string
+  path: string
+}
+
+export function makeStateOptions(statesList: RawOption[]): Option[] {
   let stateNames = statesList
     .filter((row) => row.type === "state")
     .map((row) => row.state_name)
@@ -19,13 +31,17 @@ export function makeStateOptions(statesList) {
   }))
 }
 
-function prepareData(stateData, stateName) {
+function prepareData(stateData: RawOption[], stateName: string): PlainObject {
   const filteredData = stateData.filter((row) => row.state_name === stateName)
 
   return { table: filteredData }
 }
 
-function makeStateSelect(stateOptions, stateName, router) {
+function makeStateSelect(
+  stateOptions: Option[],
+  stateName: string,
+  router
+): JSX.Element {
   return (
     <SelectSearch
       search
@@ -39,7 +55,11 @@ function makeStateSelect(stateOptions, stateName, router) {
   )
 }
 
-export default function StatePlots({ stateName }) {
+export default function StatePlots({
+  stateName,
+}: {
+  stateName: string
+}): JSX.Element {
   const router = useRouter()
 
   const { status, data: stateData } = useFetch("/state_annual.json")

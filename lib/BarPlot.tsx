@@ -1,6 +1,10 @@
-import { fieldsGenerator } from "../lib/plots.js"
+import { fieldsGenerator } from "../lib/plots"
 import ContainerDimensions from "react-container-dimensions"
 import { VegaLite } from "react-vega"
+import { TopLevelSpec } from "vega-lite"
+import { Transform } from "vega-lite/src/transform"
+import { StringFieldDef } from "vega-lite/src/channeldef"
+import { PlainObject } from "react-vega/src/types"
 
 const unitsLabels = {
   units: "Units permitted",
@@ -10,16 +14,16 @@ const unitsLabels = {
 
 const baseKeyMapping = {
   "1_unit_units": "1 unit",
-  "2_units_units": "2 units",
-  "3_to_4_units_units": "3-4 units",
-  "5_plus_units_units": "5+ units",
   "1_unit_bldgs": "1 unit",
-  "2_units_bldgs": "2 units",
-  "3_to_4_units_bldgs": "3-4 units",
-  "5_plus_units_bldgs": "5+ units",
   "1_unit_value": "1 unit",
+  "2_units_units": "2 units",
+  "2_units_bldgs": "2 units",
   "2_units_value": "2 units",
+  "3_to_4_units_units": "3-4 units",
+  "3_to_4_units_bldgs": "3-4 units",
   "3_to_4_units_value": "3-4 units",
+  "5_plus_units_units": "5+ units",
+  "5_plus_units_bldgs": "5+ units",
   "5_plus_units_value": "5+ units",
 }
 
@@ -32,7 +36,15 @@ for (const [key, value] of Object.entries(baseKeyMapping)) {
 
 const fields = Array.from(fieldsGenerator())
 
-export default function BarPlot({ data, units, perCapita }) {
+export default function BarPlot({
+  data,
+  units,
+  perCapita,
+}: {
+  data: PlainObject
+  units: string
+  perCapita: boolean
+}): JSX.Element {
   return (
     <ContainerDimensions>
       {({ width, height }) => (
@@ -45,30 +57,12 @@ export default function BarPlot({ data, units, perCapita }) {
   )
 }
 
-function makeSpec(units, perCapita, width, height) {
-  const perThousand = perCapita && units === "units"
-  const perCapitaSuffix = perCapita ? "_per_capita" : ""
-  const perThousandSuffix = perThousand ? "_per_1000" : ""
-  const suffix = perCapitaSuffix + perThousandSuffix
-
-  const filterFields = Array.from(
-    fieldsGenerator([units], [""], [suffix], perCapita)
-  )
-
-  const plotWidth = Math.min(width * 0.92, 936)
-  const continuousBandSize = (plotWidth * 10) / 936
-
-  const yLabel = unitsLabels[units]
-  const yTitleSuffix = perCapita
-    ? perThousand
-      ? " per 1000 residents"
-      : " per capita"
-    : ""
-  const yTitle = yLabel + yTitleSuffix
-
-  const yFormat = units === "value" ? (perCapita ? "$.2f" : "$s") : null
-
-  let transforms = [
+function makeTransforms(
+  units: string,
+  filterFields: string[],
+  perThousand: boolean
+): Transform[] {
+  let transforms: Transform[] = [
     { fold: fields },
     {
       filter: {
@@ -86,7 +80,7 @@ function makeSpec(units, perCapita, width, height) {
     const baseFields = Array.from(
       fieldsGenerator([units], [""], ["_per_capita"])
     )
-    const perThousandTransforms = baseFields.map((field) => {
+    const perThousandTransforms: Transform[] = baseFields.map((field) => {
       return {
         calculate: "1000 * datum['" + field + "']",
         as: field + "_per_1000",
@@ -95,6 +89,37 @@ function makeSpec(units, perCapita, width, height) {
 
     transforms = perThousandTransforms.concat(transforms)
   }
+
+  return transforms
+}
+
+function makeSpec(
+  units: string,
+  perCapita: boolean,
+  width: number,
+  height: number
+): TopLevelSpec {
+  const perThousand = perCapita && units === "units"
+  const perCapitaSuffix = perCapita ? "_per_capita" : ""
+  const perThousandSuffix = perThousand ? "_per_1000" : ""
+  const suffix = perCapitaSuffix + perThousandSuffix
+
+  const filterFields = Array.from(fieldsGenerator([units], [""], [suffix]))
+
+  const plotWidth = Math.min(width * 0.92, 936)
+  const continuousBandSize = (plotWidth * 10) / 936
+
+  const yLabel = unitsLabels[units]
+  const yTitleSuffix = perCapita
+    ? perThousand
+      ? " per 1000 residents"
+      : " per capita"
+    : ""
+  const yTitle = yLabel + yTitleSuffix
+
+  const yFormat = units === "value" ? (perCapita ? "$.2f" : "$s") : null
+
+  const transforms = makeTransforms(units, filterFields, perThousand)
 
   return {
     width: plotWidth,
@@ -126,23 +151,9 @@ function makeSpec(units, perCapita, width, height) {
       color: {
         field: "key",
         type: "nominal",
-        axis: { title: "Unit count" },
-        legend: { titleFontSize: 12, labelFontSize: 12 },
+        legend: { titleFontSize: 12, labelFontSize: 12, title: "Unit count" },
       },
     },
-    scales: [
-      {
-        name: "legend_labels",
-        type: "nominal",
-        domain: [
-          "1_unit_units" + suffix,
-          "2_units_units" + suffix,
-          "3_to_4_units_units" + suffix,
-          "5_plus_units_units" + suffix,
-        ],
-        range: ["1 unit", "2 units", "3-4 units", "5+ units"],
-      },
-    ],
     transform: transforms,
     data: { name: "table" }, // note: vega-lite data attribute is a plain object instead of an array
     usermeta: { embedOptions: { renderer: "svg" } },
@@ -166,13 +177,14 @@ function makeSpec(units, perCapita, width, height) {
             },
           },
           tooltip: [
+            // Typescript doesn't like that this StringFieldDef includes scale
             {
               field: "year",
               type: "temporal",
               scale: { type: "utc" },
               timeUnit: "utcyear",
               title: "Year",
-            },
+            } as StringFieldDef<string>,
             { field: "1_unit_units", title: "1 unit", format: "," },
             { field: "2_units_units", title: "2 units", format: "," },
             { field: "3_to_4_units_units", title: "3-4 units", format: "," },
@@ -180,7 +192,6 @@ function makeSpec(units, perCapita, width, height) {
             { field: "total_units", title: "Total units", format: "," },
           ],
         },
-        tooltip: true,
       },
     ],
     config: {

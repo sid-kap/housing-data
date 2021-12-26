@@ -1,21 +1,22 @@
 import MultiSelect from "lib/MultiSelect"
 import { useState, useMemo, useCallback } from "react"
-import { useFetch } from "lib/queries.js"
+import { useFetch } from "lib/queries"
 import { VegaLite } from "react-vega"
-import { Page } from "lib/common_elements.js"
+import { Page } from "lib/common_elements"
 import ContainerDimensions from "react-container-dimensions"
 import { makePlaceOptions } from "lib/PlacePlots"
 import { makeCountyOptions } from "lib/CountyPlots"
 import { makeOptions as makeMetroOptions } from "lib/MetroPlots"
 import { makeStateOptions } from "lib/StatePlots"
 import { OrderedMap } from "immutable"
-import { useQueries } from "react-query"
+import { useQueries, UseQueryOptions, QueryKey } from "react-query"
 import { expressionFunction } from "vega"
+import { TopLevelSpec } from "vega-lite"
 
 /**
  * Returns a pair (year ranges, first year not in a range)
  */
-function getYearRanges(grouping) {
+function getYearRanges(grouping: string): [Array<[number, number]>, number] {
   if (grouping === "none") {
     return [[], 1980]
   } else if (grouping === "five_years") {
@@ -49,7 +50,9 @@ function getYearRanges(grouping) {
   }
 }
 
-function makeYearBuckets(grouping) {
+function makeYearBuckets(
+  grouping: string
+): Array<{ year: Date; binned_year: Date }> {
   const [yearRanges, firstNonRangeYear] = getYearRanges(grouping)
 
   const yearBuckets = []
@@ -102,10 +105,10 @@ function getYearTickValues(grouping) {
   }
 }
 
-function makeYearToRangeStringMapping(grouping) {
+function makeYearToRangeStringMapping(grouping: string): Map<number, string> {
   const yearRanges = getYearRanges(grouping)[0]
 
-  const mapping = {}
+  const mapping = new Map()
 
   for (const [minYear, maxYear] of yearRanges) {
     const middleYear = (minYear + maxYear) / 2
@@ -136,7 +139,13 @@ expressionFunction("yearRangeOldFormat", function (datum, params) {
   return yearRangeOldMapping[year] || year.toString()
 })
 
-function spec(width, height, perCapita, interpolate, grouping) {
+function spec(
+  width: number,
+  height: number,
+  perCapita: boolean,
+  interpolate: boolean,
+  grouping: string
+): TopLevelSpec {
   const plotWidth = Math.min(width * 0.92, 936)
 
   const yField = perCapita ? "total_units_per_capita_per_1000" : "total_units"
@@ -210,7 +219,6 @@ function spec(width, height, perCapita, interpolate, grouping) {
         },
       },
       color: { field: "name", type: "nominal", legend: null },
-      legend: false,
     },
     data: { name: "table" }, // note: vega-lite data attribute is a plain object instead of an array
     usermeta: { embedOptions: { renderer: "svg" } },
@@ -230,8 +238,6 @@ function spec(width, height, perCapita, interpolate, grouping) {
             field: yField,
           },
         },
-        tooltip: true,
-        point: true,
       },
       {
         mark: "text",
@@ -242,7 +248,6 @@ function spec(width, height, perCapita, interpolate, grouping) {
         },
       },
     ],
-    legend: null,
     config: {
       customFormatTypes: true,
       text: {
@@ -266,16 +271,16 @@ function addPrefixes(options, prefix) {
 }
 
 function makeOptions(statesData, metrosList, countiesList, placesList) {
-  const [cbsaOptions, csaOptions] = makeMetroOptions(metrosList)
+  const [cbsaOptions, csaOptions]: [any, any] = makeMetroOptions(metrosList)
   if (!(typeof cbsaOptions === "object" && cbsaOptions.name === "CBSAs")) {
     throw new Error("first element makeMetroOptions is not CBSAs")
   }
   if (!(typeof csaOptions === "object" && csaOptions.name === "CSAs")) {
     throw new Error("second element makeMetroOptions is not CSAs")
   }
-  const stateOptions = makeStateOptions(statesData)
-  const countyOptions = makeCountyOptions(countiesList)
-  const placeOptions = makePlaceOptions(placesList)
+  const stateOptions: any[] = makeStateOptions(statesData)
+  const countyOptions: any[] = makeCountyOptions(countiesList)
+  const placeOptions: any[] = makePlaceOptions(placesList)
 
   // TODO maybe fix this jank
   for (const item of stateOptions) {
@@ -367,8 +372,8 @@ function selectedItemClassFn(item) {
   return "bg-blue-700"
 }
 
-function getData(path) {
-  return window.fetch(path).then((res) => res.json())
+function getData(path: string): object {
+  return window.fetch(path).then(async (res) => await res.json())
 }
 
 function combineDatas(datas) {
@@ -383,13 +388,20 @@ function combineDatas(datas) {
   return dataCopied
 }
 
-export default function Home() {
+type Option = {
+  value: number
+  path: string
+}
+
+export default function Home(): JSX.Element {
   const { data: statesResponse } = useFetch("/state_annual.json")
   const { data: metrosListResponse } = useFetch("/metros_list.json")
   const { data: countiesListResponse } = useFetch("/counties_list.json")
   const { data: placesListResponse } = useFetch("/places_list.json")
 
-  const [selectedLocations, setSelectedLocations] = useState(OrderedMap())
+  const [selectedLocations, setSelectedLocations] = useState(
+    OrderedMap<string, Option>()
+  )
 
   const options = useMemo(
     () =>
@@ -407,17 +419,16 @@ export default function Home() {
     ]
   )
 
-  const datas = useQueries(
-    selectedLocations
-      .valueSeq()
-      .toArray()
-      .map((item) => {
-        return {
-          queryKey: item.value,
-          queryFn: () => getData(item.path),
-        }
-      })
-  )
+  const queries = selectedLocations
+    .valueSeq()
+    .toArray()
+    .map((item) => {
+      return {
+        queryKey: [item.value],
+        queryFn: () => getData(item.path),
+      }
+    })
+  const datas: any = useQueries(queries)
 
   const data = useMemo(
     () => combineDatas(datas),
@@ -425,8 +436,8 @@ export default function Home() {
   )
 
   const [denom, setDenom] = useState("total")
-  const setTotal = useCallback(() => setDenom("total"))
-  const setPerCapita = useCallback(() => setDenom("per_capita"))
+  const setTotal = useCallback(() => setDenom("total"), [])
+  const setPerCapita = useCallback(() => setDenom("per_capita"), [])
 
   const radioButtonLabelCss = "ml-1 mr-3"
 
