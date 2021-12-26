@@ -5,6 +5,7 @@ import { useFetch } from "lib/queries"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping } from "lib/utils"
+import { CurrentYearExtrapolationInfo } from "./common_elements"
 
 function getJsonUrl(metro: string): string {
   if (metro === null || typeof metro === "undefined") {
@@ -174,6 +175,7 @@ export default function MetroPlots({
       </div>
       {populationInput}
       {countyList}
+      <CurrentYearExtrapolationInfo />
     </div>
   )
 }
@@ -181,23 +183,29 @@ export default function MetroPlots({
 function formatCountiesList(counties: string[]): string {
   // Special handling for long list of counties (if there are 3 or more)
   // TODO handle parishes?
+  const sortedCounties = counties.concat().sort()
+
   let ending
   let threeOrMoreNames
-  if (counties.every((str) => str.endsWith(" County"))) {
-    threeOrMoreNames = counties.map((str) => str.substring(0, str.length - 7))
+  if (sortedCounties.every((str) => str.endsWith(" County"))) {
+    threeOrMoreNames = sortedCounties.map((str) =>
+      str.substring(0, str.length - 7)
+    )
     ending = " Counties"
-  } else if (counties.every((str) => str.endsWith(" Parish"))) {
-    threeOrMoreNames = counties.map((str) => str.substring(0, str.length - 7))
+  } else if (sortedCounties.every((str) => str.endsWith(" Parish"))) {
+    threeOrMoreNames = sortedCounties.map((str) =>
+      str.substring(0, str.length - 7)
+    )
     ending = " Parishes"
   } else {
-    threeOrMoreNames = counties
+    threeOrMoreNames = sortedCounties
     ending = ""
   }
 
-  if (counties.length === 1) {
+  if (sortedCounties.length === 1) {
     return counties[0]
-  } else if (counties.length === 2) {
-    return counties[0] + " and " + counties[1]
+  } else if (sortedCounties.length === 2) {
+    return sortedCounties[0] + " and " + sortedCounties[1]
   } else {
     return (
       threeOrMoreNames.slice(0, threeOrMoreNames.length - 1).join(", ") +

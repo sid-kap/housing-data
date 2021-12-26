@@ -323,36 +323,6 @@ function makeOptions(statesData, metrosList, countiesList, placesList) {
   ]
 }
 
-const optionNames = [
-  "one",
-  "two",
-  "three",
-  "four",
-  "five",
-  "six",
-  "seven",
-  "eight",
-  "nine",
-  "ten",
-  "eleven",
-  "twelve",
-  "thirteen",
-  "fourteen",
-  "fifteen",
-  "sixteen",
-  "seventeen",
-  "eighteen",
-  "nineteen",
-  "twenty",
-]
-const multiselectOptions = []
-for (let i = 0; i < optionNames.length; i++) {
-  multiselectOptions.push({
-    name: optionNames[i],
-    value: i.toString(),
-  })
-}
-
 function selectedItemClassFn(item) {
   if (item.type === "place") {
     return "bg-green-400"
@@ -377,7 +347,11 @@ function getData(path: string): object {
 }
 
 function combineDatas(datas) {
-  const data = datas.flatMap((d) => d.data ?? [])
+  // TODO figure out how to display 2021 data in the comparison view!
+  // I think it will be a little involved
+  const data = datas
+    .flatMap((d) => d.data ?? [])
+    .filter((row) => row.year != "2021")
 
   const dataCopied = []
   for (const row of data) {
@@ -385,6 +359,7 @@ function combineDatas(datas) {
     newRow.year = Date.parse(newRow.year)
     dataCopied.push(newRow)
   }
+
   return dataCopied
 }
 

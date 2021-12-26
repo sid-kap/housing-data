@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import StringIO
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from typing import List, Optional
 
 
-def _get_places_crosswalk_df(data_path: Optional[str] = None) -> pd.DataFrame:
+def _get_places_crosswalk_df(data_path: Optional[Path] = None) -> pd.DataFrame:
     df = pd.read_fwf(
         get_path(
             "https://www2.census.gov/geo/tiger/PREVGENZ/pl/us_places.txt", data_path
@@ -83,7 +84,7 @@ def get_unincorporated_places_populations_1980() -> pd.DataFrame:
     return remainder_df
 
 
-def get_place_populations_1980(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_place_populations_1980(data_path: Optional[Path] = None) -> pd.DataFrame:
     # Assuming this is run from `python/`
     # For the header row, use the nice descriptive names that IPUMS provides rather than the code names
     df = pd.read_csv("../raw_data/nhgis0015_ds104_1980_place_070.csv", header=1)
@@ -246,10 +247,10 @@ def _fix_place_names(place_names):
     ]
 
     for s1, s2 in replace_strings + replace_pt_strings:
-        place_names = place_names.str.replace(s1, s2)
+        place_names = place_names.str.replace(s1, s2, regex=True)
 
-    place_names = place_names.str.replace("^Balance of ", "")
-    place_names = place_names.str.replace(r" \(balance\)$", "")
+    place_names = place_names.str.replace("^Balance of ", "", regex=True)
+    place_names = place_names.str.replace(r" \(balance\)$", "", regex=True)
 
     return place_names
 
@@ -381,7 +382,7 @@ def _get_recent_decades_df(
 
     df = remove_dupe_cities(df)
 
-    df["place_name"] = df["place_name"].str.replace("^Balance of ", "")
+    df["place_name"] = df["place_name"].str.replace("^Balance of ", "", regex=True)
 
     return df.melt(
         id_vars=["place_name", "place_or_county_code", "state_code"],
@@ -390,7 +391,7 @@ def _get_recent_decades_df(
     )
 
 
-def get_place_populations_2000s(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_place_populations_2000s(data_path: Optional[Path] = None) -> pd.DataFrame:
     # This one doesn't include consolidated cities, so no need to remove those rows
     return _get_recent_decades_df(
         get_path(
@@ -402,7 +403,7 @@ def get_place_populations_2000s(data_path: Optional[str] = None) -> pd.DataFrame
     )
 
 
-def get_place_populations_2010s(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_place_populations_2010s(data_path: Optional[Path] = None) -> pd.DataFrame:
     # This one has consolidated cities that need to be removed
     return _get_recent_decades_df(
         get_path(
@@ -414,30 +415,13 @@ def get_place_populations_2010s(data_path: Optional[str] = None) -> pd.DataFrame
     )
 
 
-def get_place_population_estimates(data_path: Optional[str] = None):
-    print("Loading 1980 populations...")
-    df_1980 = get_place_populations_1980(data_path)
-    print("Loading 1990s populations...")
-    df_1990s = get_place_populations_1990s()
-    print("Loading 2000s populations...")
-    df_2000s = get_place_populations_2000s(data_path)
-    print("Loading 2010s populations...")
-    df_2010s = get_place_populations_2010s(data_path)
-
-    # Remove the dupes by only taking [1990, 2000) from the 90s dataset,
-    # [2000, 2010) from the 2000s dataset, etc. since these decade ones have both the start and end year.
-    #
-    # TODO: do something smarter to smooth out the discontinuities/slope changes at 2000 and 2010.
-    # Maybe some kind of scaling thing, where we set
-    #   pop_year = old_series_estimates_year * new_series_2000 / old_series_2000
-    # (i.e. scale the 1990s populations as a fraction of the 2000 estimate, to line up with the
-    # new series's 2000 value.)
-    # This would help with the jumps we see from 1999 to 2000, and from 2009 to 2010 (you can see this in Google too)
-    df_1990s = df_1990s[df_1990s["year"] != "2000"]
-    df_2000s = df_2000s[df_2000s["year"] != "2010"]
-
-    print("Interpolating 1990s populations...")
-    # Linear interp the 1980s data
+def interpolate_1980s_populations(
+    df_1980: pd.DataFrame, df_1990s: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Since we don't have yearly intercensal estimates for the 1980s, linear interp the city populations
+    for 1981-1989.
+    """
     start_df = df_1980[["state_code", "place_or_county_code", "population"]].rename(
         columns={"population": "1980"}
     )
@@ -473,6 +457,43 @@ def get_place_population_estimates(data_path: Optional[str] = None):
         how="left",
     )
 
-    combined_df = pd.concat([interp_df, df_1990s, df_2000s, df_2010s])
+    return interp_df
+
+
+def impute_place_populations_2021(df_2010s: pd.DataFrame) -> pd.DataFrame:
+    """
+    Impute 2021 with the 2020 population; that's the best I think we can do...
+    """
+    return df_2010s[df_2010s["year"] == "2020"].assign(year="2021")
+
+
+def get_place_population_estimates(data_path: Optional[Path] = None):
+    print("Loading 1980 populations...")
+    df_1980 = get_place_populations_1980(data_path)
+    print("Loading 1990s populations...")
+    df_1990s = get_place_populations_1990s()
+    print("Loading 2000s populations...")
+    df_2000s = get_place_populations_2000s(data_path)
+    print("Loading 2010s populations...")
+    df_2010s = get_place_populations_2010s(data_path)
+
+    # Remove the dupes by only taking [1990, 2000) from the 90s dataset,
+    # [2000, 2010) from the 2000s dataset, etc. since these decade ones have both the start and end year.
+    #
+    # TODO: do something smarter to smooth out the discontinuities/slope changes at 2000 and 2010.
+    # Maybe some kind of scaling thing, where we set
+    #   pop_year = old_series_estimates_year * new_series_2000 / old_series_2000
+    # (i.e. scale the 1990s populations as a fraction of the 2000 estimate, to line up with the
+    # new series's 2000 value.)
+    # This would help with the jumps we see from 1999 to 2000, and from 2009 to 2010 (you can see this in Google too)
+    df_1990s = df_1990s[df_1990s["year"] != "2000"]
+    df_2000s = df_2000s[df_2000s["year"] != "2010"]
+
+    print("Interpolating 1980s populations...")
+    interp_df = interpolate_1980s_populations(df_1980, df_1990s)
+
+    df_2021 = impute_place_populations_2021(df_2010s)
+
+    combined_df = pd.concat([interp_df, df_1990s, df_2000s, df_2010s, df_2021])
 
     return combined_df

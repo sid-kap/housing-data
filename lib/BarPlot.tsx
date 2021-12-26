@@ -25,6 +25,27 @@ const baseKeyMapping = {
   "5_plus_units_units": "5+ units",
   "5_plus_units_bldgs": "5+ units",
   "5_plus_units_value": "5+ units",
+  projected_units: "Projected units, 2021*",
+  projected_bldgs: "Projected units, 2021*",
+  projected_value: "Projected units, 2021*",
+}
+
+const baseOrderMapping = {
+  "1_unit_units": 4,
+  "1_unit_bldgs": 4,
+  "1_unit_value": 4,
+  "2_units_units": 3,
+  "2_units_bldgs": 3,
+  "2_units_value": 3,
+  "3_to_4_units_units": 2,
+  "3_to_4_units_bldgs": 2,
+  "3_to_4_units_value": 2,
+  "5_plus_units_units": 1,
+  "5_plus_units_bldgs": 1,
+  "5_plus_units_value": 1,
+  projected_units: 5,
+  projected_bldgs: 5,
+  projected_value: 5,
 }
 
 export const keyMapping = {}
@@ -32,6 +53,13 @@ for (const [key, value] of Object.entries(baseKeyMapping)) {
   keyMapping[key] = value
   keyMapping[key + "_per_capita"] = value
   keyMapping[key + "_per_capita_per_1000"] = value
+}
+
+export const orderMapping = {}
+for (const [key, value] of Object.entries(baseOrderMapping)) {
+  orderMapping[key] = value
+  orderMapping[key + "_per_capita"] = value
+  orderMapping[key + "_per_capita_per_1000"] = value
 }
 
 const fields = Array.from(fieldsGenerator())
@@ -46,20 +74,43 @@ export default function BarPlot({
   perCapita: boolean
 }): JSX.Element {
   return (
-    <ContainerDimensions>
-      {({ width, height }) => (
-        <VegaLite
-          spec={makeSpec(units, perCapita, width, height)}
-          data={data}
-        />
-      )}
-    </ContainerDimensions>
+    <>
+      <svg
+        height="0"
+        width="0"
+        version="1.1"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <pattern
+            id="diagonalHatch"
+            patternUnits="userSpaceOnUse"
+            width="4"
+            height="4"
+          >
+            <path
+              d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
+              stroke="black"
+              strokeWidth="1"
+            />
+          </pattern>
+        </defs>
+      </svg>
+      <ContainerDimensions>
+        {({ width, height }) => (
+          <VegaLite
+            spec={makeSpec(units, perCapita, width, height)}
+            data={data}
+          />
+        )}
+      </ContainerDimensions>
+    </>
   )
 }
 
 function makeTransforms(
   units: string,
-  filterFields: string[],
+  filterFields: Array<string>,
   perThousand: boolean
 ): Transform[] {
   let transforms: Transform[] = [
@@ -73,6 +124,10 @@ function makeTransforms(
     {
       calculate: JSON.stringify(keyMapping) + '[datum.key] || "Error"',
       as: "key_pretty_printed",
+    },
+    {
+      calculate: JSON.stringify(orderMapping) + '[datum.key] || "Error"',
+      as: "bar_chart_order",
     },
   ]
 
@@ -153,6 +208,10 @@ function makeSpec(
         type: "nominal",
         legend: { titleFontSize: 12, labelFontSize: 12, title: "Unit count" },
       },
+      order: {
+        field: "bar_chart_order",
+        sort: "ascending",
+      },
     },
     transform: transforms,
     data: { name: "table" }, // note: vega-lite data attribute is a plain object instead of an array
@@ -170,10 +229,25 @@ function makeSpec(
           y: {
             field: "value",
           },
-          color: {
+          fill: {
+            title: "Building type",
             field: "key_pretty_printed",
             scale: {
-              scheme: "tableau10",
+              domain: [
+                "1 unit",
+                "2 units",
+                "3-4 units",
+                "5+ units",
+                "Projected units, 2021*",
+              ],
+              // Taken from Tableau 10 (https://www.tableau.com/about/blog/2016/7/colors-upgrade-tableau-10-56782)
+              range: [
+                "#4e79a7",
+                "#f28e2b",
+                "#e15759",
+                "#76b7b2",
+                "url(#diagonalHatch)",
+              ],
             },
           },
           tooltip: [
@@ -190,6 +264,11 @@ function makeSpec(
             { field: "3_to_4_units_units", title: "3-4 units", format: "," },
             { field: "5_plus_units_units", title: "5+ units", format: "," },
             { field: "total_units", title: "Total units", format: "," },
+            {
+              field: "projected_units",
+              title: "Projected units, 2021",
+              format: ",",
+            },
           ],
         },
       },

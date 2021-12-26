@@ -2,7 +2,21 @@ import Link from "next/link"
 import Head from "next/head"
 import { useState, useCallback } from "react"
 
-export function GitHubFooter(props) {
+export function CurrentYearExtrapolationInfo(props): JSX.Element {
+  return (
+    <div>
+      <div className="text-xs mt-3 text-left">
+        *2021 includes data from January–November.
+      </div>
+      <div className="text-xs text-left">
+        &nbsp;The remainder of the year is extrapolated from the monthly rate
+        from January to November 2021.
+      </div>
+    </div>
+  )
+}
+
+export function GitHubFooter(props): JSX.Element {
   const linkClasses = "text-blue-500 hover:text-blue-300"
 
   return (

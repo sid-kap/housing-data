@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import StringIO
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
     from typing import Optional
 
 
-def get_county_populations_2010s(data_path: Optional[str] = None):
+def get_county_populations_2010s(data_path: Optional[Path] = None):
     df = pd.read_csv(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/counties/totals/co-est2020-alldata.csv",
@@ -32,7 +33,7 @@ def get_county_populations_2010s(data_path: Optional[str] = None):
     return df
 
 
-def get_county_populations_2000s(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_county_populations_2000s(data_path: Optional[Path] = None) -> pd.DataFrame:
     urls = [
         (
             state.fips,
@@ -101,7 +102,7 @@ def get_county_populations_2000s(data_path: Optional[str] = None) -> pd.DataFram
     return df
 
 
-def get_county_fips_crosswalk(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_county_fips_crosswalk(data_path: Optional[Path] = None) -> pd.DataFrame:
     df = pd.read_excel(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/geographies/2019/all-geocodes-v2019.xlsx",
@@ -121,7 +122,7 @@ def get_county_fips_crosswalk(data_path: Optional[str] = None) -> pd.DataFrame:
     return df
 
 
-def get_county_populations_1990s(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_county_populations_1990s(data_path: Optional[Path] = None) -> pd.DataFrame:
     table_text = get_url_text(
         "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/counties/totals/99c8_00.txt",
         data_path,
@@ -174,7 +175,7 @@ def get_county_populations_1990s(data_path: Optional[str] = None) -> pd.DataFram
     return df
 
 
-def get_county_populations_1980s(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_county_populations_1980s(data_path: Optional[Path] = None) -> pd.DataFrame:
     dfs = []
     for year in range(1980, 1990):
         df = pd.read_excel(
@@ -214,7 +215,14 @@ def get_county_populations_1980s(data_path: Optional[str] = None) -> pd.DataFram
     return combined_df
 
 
-def get_county_population_estimates(data_path: Optional[str] = None):
+def impute_county_populations_2021(df_2010s: pd.DataFrame) -> pd.DataFrame:
+    """
+    Impute 2021 with the 2020 population; that's the best I think we can do...
+    """
+    return df_2010s[df_2010s["year"] == "2020"].assign(year="2021")
+
+
+def get_county_population_estimates(data_path: Optional[Path] = None):
     print("Loading 1980 populations...")
     df_1980s = get_county_populations_1980s(data_path)
     print("Loading 1990s populations...")
@@ -224,7 +232,9 @@ def get_county_population_estimates(data_path: Optional[str] = None):
     print("Loading 2010s populations...")
     df_2010s = get_county_populations_2010s(data_path)
 
-    df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s])
+    df_2021 = impute_county_populations_2021(df_2010s)
+
+    df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s, df_2021])
 
     # Check for dupes
     assert (df.groupby(["county_code", "state_code", "year"]).size() == 1).all()

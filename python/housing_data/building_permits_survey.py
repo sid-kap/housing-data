@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import StringIO
+from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import quote
 
@@ -30,6 +31,9 @@ Scale = Literal["county", "metro", "place", "state"]
 ERROR_STRING = "Sorry, the page you requested has either been moved or is no longer available on this server."
 
 CENSUS_DATA_PATH = "https://www2.census.gov/econ/bps"
+
+VALUE_TYPES = ["bldgs", "units", "value"]
+BUILDING_UNIT_SIZES = ["1_unit", "2_units", "3_to_4_units", "5_plus_units"]
 
 
 def _validate_load_data_inputs(
@@ -142,18 +146,13 @@ def _fix_column_names_old_county_level(
     return columns
 
 
-def load_data(
+def get_data_path(
     scale: Scale,
     time_scale: TimeScale,
     year: int,
     month: Optional[int] = None,
     region: Optional[Region] = None,
-    data_path: Optional[str] = None,
-) -> pd.DataFrame:
-    """
-    :param region: Only required if scale is 'place'
-    :param month: Only required if time_scale is 'monthly_current' or 'monthly_year_to_date'
-    """
+) -> str:
     _validate_load_data_inputs(scale, time_scale, year, month, region)
 
     if month is not None:
@@ -201,17 +200,21 @@ def load_data(
     else:
         path = f"{scale_path}/{filename_part_1}{filename_part_2}.txt"
 
-    if data_path is None:
-        path = quote(path)
-    text = get_url_text((CENSUS_DATA_PATH, path), data_path)
+    return path
 
+
+def read_bps_formatted_csv(
+    csv_contents: str, scale: Scale, year: int, region: Optional[Region] = None
+) -> pd.DataFrame:
+    """
+    Given the contents of a CSV file from the BPS dataset, parses it as a DataFrame.
+    Takes into account several quirks in the way they format their files.
+    """
     result = (
-        text
+        csv_contents
         # OMG so dumb that they didn't wrap with quotations
         .replace("Bristol, VA", '"Bristol, VA"').replace("Bristol, TN", '"Bristol, TN"')
     )
-    if ERROR_STRING in result:
-        raise ValueError(f"Path {path} is not valid")
 
     csv_handle = StringIO(result)
 
@@ -223,14 +226,40 @@ def load_data(
     assert line.strip() == ""
 
     df = pd.read_csv(csv_handle, header=None, index_col=False)
-    fix_row_lengths = not (year == 1984 and region == "west")
 
     if scale == "county" and year >= 1990 and year <= 1998:
         df.columns = _fix_column_names_old_county_level(header_row_1, header_row_2)
     else:
+        fix_row_lengths = not (year == 1984 and region == "west")
         df.columns = _fix_column_names(
             header_row_1, header_row_2, fix_row_lengths=fix_row_lengths
         )
+
+    return df
+
+
+def load_data(
+    scale: Scale,
+    time_scale: TimeScale,
+    year: int,
+    month: Optional[int] = None,
+    region: Optional[Region] = None,
+    data_path: Optional[Path] = None,
+) -> pd.DataFrame:
+    """
+    :param region: Only required if scale is 'place'
+    :param month: Only required if time_scale is 'monthly_current' or 'monthly_year_to_date'
+    """
+    path = get_data_path(scale, time_scale, year, month, region)
+    if data_path is None:
+        path = quote(path)
+
+    text = get_url_text((CENSUS_DATA_PATH, path), data_path)
+
+    if ERROR_STRING in text:
+        raise ValueError(f"Path {path} is not valid")
+
+    df = read_bps_formatted_csv(text, scale, year, region)
 
     if scale == "state":
         state_cleanup(df)
@@ -274,16 +303,18 @@ TYPE_MAPPING = {
 }
 
 
+def add_totals_columns(df: pd.DataFrame) -> None:
+    for value_type in VALUE_TYPES:
+        df[f"total_{value_type}"] = sum(
+            [df[f"{size}_{value_type}"] for size in BUILDING_UNIT_SIZES]
+        )
+
+
 def state_cleanup(df):
     df["state_name"] = df["state_name"].str.title()
     df["state_name"] = df["state_name"].apply(fix_state)
     df["type"] = df["state_name"].map(TYPE_MAPPING).fillna("state")
-    df["total_units"] = (
-        df["1_unit_units"]
-        + df["2_units_units"]
-        + df["3_to_4_units_units"]
-        + df["5_plus_units_units"]
-    )
+    add_totals_columns(df)
     df["region_code"] = df["region_code"].astype(str)
     df["division_code"] = df["division_code"].astype(str)
 
@@ -401,12 +432,7 @@ def place_cleanup(df, year):
         df["place_name"].notnull() & ~df["place_name"].isin(PLACES_TO_REMOVE)
     ].copy()
 
-    df["total_units"] = (
-        df["1_unit_units"]
-        + df["2_units_units"]
-        + df["3_to_4_units_units"]
-        + df["5_plus_units_units"]
-    )
+    add_totals_columns(df)
 
     return df
 
@@ -426,8 +452,8 @@ def clean_place_names(place_names: pd.Series, year: int) -> pd.Series:
 
     place_types = ["township", "town", "city", "village", "borough"]
     for place_type in place_types:
-        place_names = place_names.str.replace(f" {place_type.title()}$", "")
-        place_names = place_names.str.replace(f" {place_type}$", "")
+        place_names = place_names.str.replace(f" {place_type.title()}$", "", regex=True)
+        place_names = place_names.str.replace(f" {place_type}$", "", regex=True)
 
     return place_names
 
@@ -435,12 +461,7 @@ def clean_place_names(place_names: pd.Series, year: int) -> pd.Series:
 def county_cleanup(df):
     df["county_name"] = df["county_name"].str.strip()
 
-    df["total_units"] = (
-        df["1_unit_units"]
-        + df["2_units_units"]
-        + df["3_to_4_units_units"]
-        + df["5_plus_units_units"]
-    )
+    add_totals_columns(df)
 
     df = df.rename(
         columns={
