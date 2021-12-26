@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 import requests
-from housing_data.build_data_utils import NUMERICAL_COLUMNS
 from housing_data.data_loading_helpers import get_path
 
 if TYPE_CHECKING:
