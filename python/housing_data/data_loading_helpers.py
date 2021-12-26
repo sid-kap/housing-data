@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 def get_url_text(
     url: Union[str, Tuple[str, str]],
-    data_path: Optional[str],
+    data_path: Optional[Path],
     encoding: Optional[str] = None,
 ) -> str:
     """

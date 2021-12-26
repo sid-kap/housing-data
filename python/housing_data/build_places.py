@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import pandas as pd
 from housing_data import place_population
@@ -12,6 +12,7 @@ from housing_data.build_data_utils import (
     load_bps_all_years_plus_monthly,
     write_to_json_directory,
 )
+from housing_data.building_permits_survey import Region
 
 
 def make_bps_fips_mapping(
@@ -205,7 +206,8 @@ def load_places(
     data_repo_path: Optional[str], counties_population_df: pd.DataFrame = None
 ) -> pd.DataFrame:
     dfs = []
-    for region in ["west", "midwest", "south", "northeast"]:
+    regions: List[Region] = ["west", "midwest", "south", "northeast"]
+    for region in regions:
         data = load_bps_all_years_plus_monthly(data_repo_path, "place", region=region)
         dfs.append(data)
     raw_places_df = pd.concat(dfs)

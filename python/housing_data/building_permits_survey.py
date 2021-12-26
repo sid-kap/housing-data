@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import StringIO
+from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import quote
 
@@ -243,7 +244,7 @@ def load_data(
     year: int,
     month: Optional[int] = None,
     region: Optional[Region] = None,
-    data_path: Optional[str] = None,
+    data_path: Optional[Path] = None,
 ) -> pd.DataFrame:
     """
     :param region: Only required if scale is 'place'
