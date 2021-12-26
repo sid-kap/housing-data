@@ -9,14 +9,14 @@ import { makeCountyOptions } from "lib/CountyPlots"
 import { makeOptions as makeMetroOptions } from "lib/MetroPlots"
 import { makeStateOptions } from "lib/StatePlots"
 import { OrderedMap } from "immutable"
-import { useQueries } from "react-query"
+import { useQueries, UseQueryOptions, QueryKey } from "react-query"
 import { expressionFunction } from "vega"
 import { TopLevelSpec } from "vega-lite"
 
 /**
  * Returns a pair (year ranges, first year not in a range)
  */
-function getYearRanges(grouping: string): [[number, number][], number] {
+function getYearRanges(grouping: string): [Array<[number, number]>, number] {
   if (grouping === "none") {
     return [[], 1980]
   } else if (grouping === "five_years") {
@@ -52,7 +52,7 @@ function getYearRanges(grouping: string): [[number, number][], number] {
 
 function makeYearBuckets(
   grouping: string
-): { year: Date; binned_year: Date }[] {
+): Array<{ year: Date; binned_year: Date }> {
   const [yearRanges, firstNonRangeYear] = getYearRanges(grouping)
 
   const yearBuckets = []
@@ -219,7 +219,6 @@ function spec(
         },
       },
       color: { field: "name", type: "nominal", legend: null },
-      // legend: false
     },
     data: { name: "table" }, // note: vega-lite data attribute is a plain object instead of an array
     usermeta: { embedOptions: { renderer: "svg" } },
@@ -239,8 +238,6 @@ function spec(
             field: yField,
           },
         },
-        // tooltip: true,
-        // point: true
       },
       {
         mark: "text",
@@ -251,7 +248,6 @@ function spec(
         },
       },
     ],
-    // legend: null,
     config: {
       customFormatTypes: true,
       text: {
@@ -377,10 +373,10 @@ function selectedItemClassFn(item) {
 }
 
 function getData(path: string): object {
-  return window.fetch(path).then((res) => res.json())
+  return window.fetch(path).then(async (res) => await res.json())
 }
 
-function combineDatas(datas: { data: any[] }[]): object[] {
+function combineDatas(datas) {
   const data = datas.flatMap((d) => d.data ?? [])
 
   const dataCopied = []
@@ -423,17 +419,16 @@ export default function Home(): JSX.Element {
     ]
   )
 
-  const datas: any[] = useQueries(
-    selectedLocations
-      .valueSeq()
-      .toArray()
-      .map((item) => {
-        return {
-          queryKey: item.value.toString(),
-          queryFn: () => getData(item.path),
-        }
-      })
-  )
+  const queries = selectedLocations
+    .valueSeq()
+    .toArray()
+    .map((item) => {
+      return {
+        queryKey: [item.value],
+        queryFn: () => getData(item.path),
+      }
+    })
+  const datas: any = useQueries(queries)
 
   const data = useMemo(
     () => combineDatas(datas),

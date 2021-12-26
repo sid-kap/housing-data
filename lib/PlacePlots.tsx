@@ -49,12 +49,12 @@ type Option = {
 }
 
 export function makePlaceOptions(
-  placesList: {
+  placesList: Array<{
     state_code: number
     place_name: string
     name: string
     alt_name: string
-  }[]
+  }>
 ): Option[] {
   const options = []
   for (let i = 0; i < placesList.length; i++) {
