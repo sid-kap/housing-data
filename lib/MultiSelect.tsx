@@ -1,7 +1,7 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { FixedSizeList } from "react-window";
-import { OrderedMap } from "immutable";
-import fuzzysort from "fuzzysort";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react"
+import { FixedSizeList } from "react-window"
+import { OrderedMap } from "immutable"
+import fuzzysort from "fuzzysort"
 
 export default function MultiSelect({
   options,
@@ -9,98 +9,98 @@ export default function MultiSelect({
   onChange,
   itemClassFn,
 }) {
-  const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [isTyping, setIsTyping] = useState<boolean>(false)
 
-  const [selectedItems, setSelectedItems] = useState(OrderedMap());
-  useEffect(() => onChange(selectedItems), [selectedItems]);
+  const [selectedItems, setSelectedItems] = useState(OrderedMap())
+  useEffect(() => onChange(selectedItems), [selectedItems])
 
-  const inputRef = useRef();
-  const listRef = useRef();
-  const [input, setInput] = useState<string>("");
+  const inputRef = useRef()
+  const listRef = useRef()
+  const [input, setInput] = useState<string>("")
 
   /* console.log(selectedItems.toArray()) */
 
   // TODO: Figure out how to add the group titles. For now, this is fine.
   const allOptions = useMemo(() => {
     // OrderedMap to preserve the order of the options from the JSON files
-    return options.concat(groupOptions.flatMap((ops) => ops.items));
-  }, [options]);
+    return options.concat(groupOptions.flatMap((ops) => ops.items))
+  }, [options])
 
   const allOptionsMap = useMemo(() => {
-    return OrderedMap(allOptions.map((item) => [item.value, item]));
-  }, [allOptions]);
+    return OrderedMap(allOptions.map((item) => [item.value, item]))
+  }, [allOptions])
 
   const filteredOptions = useMemo(() => {
-    let filtered = allOptions.filter((item) => !selectedItems.has(item.value));
+    let filtered = allOptions.filter((item) => !selectedItems.has(item.value))
     if (input.length > 0) {
       filtered = fuzzysort
         .go(input, filtered, { keys: ["name"], threshold: -10000 })
-        .map((result) => result.obj);
+        .map((result) => result.obj)
     }
-    return filtered;
-  }, [input, allOptions, selectedItems]);
+    return filtered
+  }, [input, allOptions, selectedItems])
 
-  const [highlightIndex, setHighlightIndex] = useState(null);
+  const [highlightIndex, setHighlightIndex] = useState(null)
 
   const ensureItemInView = useCallback(
     (index) => {
       // There should be a better way to get around this TypeScript error...
-      (listRef.current as any).scrollToItem(index);
+      ;(listRef.current as any).scrollToItem(index)
     },
     [listRef]
-  );
+  )
 
   const onKeyDown = useCallback(
     (e) => {
       if (e.key === "ArrowUp") {
-        e.preventDefault();
+        e.preventDefault()
 
         setHighlightIndex((idx) => {
           if (idx == null) {
-            return 0;
+            return 0
           } else if (idx > 0) {
-            ensureItemInView(idx - 1);
-            return idx - 1;
+            ensureItemInView(idx - 1)
+            return idx - 1
           } else {
-            return idx;
+            return idx
           }
-        });
+        })
       } else if (e.key === "ArrowDown") {
-        e.preventDefault();
+        e.preventDefault()
 
         setHighlightIndex((idx) => {
           if (idx == null) {
-            return 0;
+            return 0
           } else if (idx < filteredOptions.length - 1) {
-            ensureItemInView(idx + 1);
-            return idx + 1;
+            ensureItemInView(idx + 1)
+            return idx + 1
           } else {
-            return idx;
+            return idx
           }
-        });
+        })
       } else if (e.key === "Escape") {
-        (inputRef.current as any).blur();
+        ;(inputRef.current as any).blur()
       } else if (e.key === "Enter") {
-        e.preventDefault();
+        e.preventDefault()
         // Clear the input when someone presses enter
-        setInput("");
+        setInput("")
         setHighlightIndex((idx) => {
           // sort of a hack, but I think performance-wise it's better to not redefine
           // the callback everytime highlightIndex changes
-          const item = filteredOptions[idx];
-          toggleValue(item);
-          return 0;
-        });
+          const item = filteredOptions[idx]
+          toggleValue(item)
+          return 0
+        })
       }
     },
     [filteredOptions, inputRef]
-  );
+  )
 
   const onClickX = useCallback((e) => {
     setSelectedItems((items) =>
       items.remove(e.target.attributes["data-value"].value)
-    );
-  }, []);
+    )
+  }, [])
 
   // on the surrounding <div>, padding only on left side (pl-2) because on the right, we'll let the clickable X have the padding
   // p-2 on the <a> because we want the gap on the left and right (and top) of the X to be clickable
@@ -125,42 +125,42 @@ export default function MultiSelect({
               ×
             </a>
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 
   const toggleValue = useCallback(
     (item) => {
       // TODO figure out what's going on with the typechecker here
       setSelectedItems((items) => {
         if (items.includes(item.value)) {
-          return items.remove(item.value);
+          return items.remove(item.value)
         } else {
-          return items.set(item.value, item);
+          return items.set(item.value, item)
         }
-      });
+      })
       if (inputRef.current) {
-        const current: HTMLInputElement = inputRef.current;
-        current.focus();
+        const current: HTMLInputElement = inputRef.current
+        current.focus()
       }
     },
     [inputRef, setSelectedItems]
-  );
+  )
 
   const onClick = useCallback(
     (e) => {
-      setInput("");
-      const value = e.target.attributes["data-value"].value;
-      toggleValue(allOptionsMap.get(value));
+      setInput("")
+      const value = e.target.attributes["data-value"].value
+      toggleValue(allOptionsMap.get(value))
     },
     [toggleValue, allOptionsMap]
-  );
+  )
 
   const renderItem = useCallback(
     function (row) {
-      const { index, style } = row;
-      const element = filteredOptions[index];
+      const { index, style } = row
+      const element = filteredOptions[index]
       return (
         <button
           data-value={element.value}
@@ -176,10 +176,10 @@ export default function MultiSelect({
         >
           {element.name}
         </button>
-      );
+      )
     },
     [filteredOptions, onClick, highlightIndex]
-  );
+  )
 
   const filteredList = (
     <div className="absolute z-10 w-96">
@@ -193,12 +193,12 @@ export default function MultiSelect({
         {renderItem}
       </FixedSizeList>
     </div>
-  );
+  )
 
   const onInputChange = useCallback((e) => {
-    setInput(e.target.value);
-    setHighlightIndex(0);
-  }, []);
+    setInput(e.target.value)
+    setHighlightIndex(0)
+  }, [])
 
   return (
     <div className="flex flex-col items-center">
@@ -219,13 +219,13 @@ export default function MultiSelect({
                 "select-list"
               )
             ) {
-              setIsTyping(false);
-              setInput("");
+              setIsTyping(false)
+              setInput("")
             }
           }}
         />
         {isTyping && filteredList}
       </div>
     </div>
-  );
+  )
 }

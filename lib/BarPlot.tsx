@@ -1,16 +1,16 @@
-import { fieldsGenerator } from "../lib/plots";
-import ContainerDimensions from "react-container-dimensions";
-import { VegaLite } from "react-vega";
-import { TopLevelSpec } from "vega-lite";
-import { Transform } from "vega-lite/src/transform";
-import { StringFieldDef } from "vega-lite/src/channeldef";
-import { PlainObject } from "react-vega/src/types";
+import { fieldsGenerator } from "../lib/plots"
+import ContainerDimensions from "react-container-dimensions"
+import { VegaLite } from "react-vega"
+import { TopLevelSpec } from "vega-lite"
+import { Transform } from "vega-lite/src/transform"
+import { StringFieldDef } from "vega-lite/src/channeldef"
+import { PlainObject } from "react-vega/src/types"
 
 const unitsLabels = {
   units: "Units permitted",
   bldgs: "Housing buildings permitted",
   value: "Property value of permitted buildings",
-};
+}
 
 const baseKeyMapping = {
   "1_unit_units": "1 unit",
@@ -28,7 +28,7 @@ const baseKeyMapping = {
   projected_units: "Projected units",
   projected_bldgs: "Projected units",
   projected_value: "Projected units",
-};
+}
 
 const orderMapping = {
   "1_unit_units": 3,
@@ -46,25 +46,25 @@ const orderMapping = {
   projected_units: 4,
   projected_bldgs: 4,
   projected_value: 4,
-};
-
-export const keyMapping = {};
-for (const [key, value] of Object.entries(baseKeyMapping)) {
-  keyMapping[key] = value;
-  keyMapping[key + "_per_capita"] = value;
-  keyMapping[key + "_per_capita_per_1000"] = value;
 }
 
-const fields = Array.from(fieldsGenerator());
+export const keyMapping = {}
+for (const [key, value] of Object.entries(baseKeyMapping)) {
+  keyMapping[key] = value
+  keyMapping[key + "_per_capita"] = value
+  keyMapping[key + "_per_capita_per_1000"] = value
+}
+
+const fields = Array.from(fieldsGenerator())
 
 export default function BarPlot({
   data,
   units,
   perCapita,
 }: {
-  data: PlainObject;
-  units: string;
-  perCapita: boolean;
+  data: PlainObject
+  units: string
+  perCapita: boolean
 }): JSX.Element {
   return (
     <ContainerDimensions>
@@ -75,7 +75,7 @@ export default function BarPlot({
         />
       )}
     </ContainerDimensions>
-  );
+  )
 }
 
 function makeTransforms(
@@ -99,23 +99,23 @@ function makeTransforms(
       calculate: JSON.stringify(orderMapping) + '[datum.key] || "Error"',
       as: "bar_chart_order",
     },
-  ];
+  ]
 
   if (perThousand) {
     const baseFields = Array.from(
       fieldsGenerator([units], [""], ["_per_capita"])
-    );
+    )
     const perThousandTransforms: Transform[] = baseFields.map((field) => {
       return {
         calculate: "1000 * datum['" + field + "']",
         as: field + "_per_1000",
-      };
-    });
+      }
+    })
 
-    transforms = perThousandTransforms.concat(transforms);
+    transforms = perThousandTransforms.concat(transforms)
   }
 
-  return transforms;
+  return transforms
 }
 
 function makeSpec(
@@ -124,27 +124,27 @@ function makeSpec(
   width: number,
   height: number
 ): TopLevelSpec {
-  const perThousand = perCapita && units === "units";
-  const perCapitaSuffix = perCapita ? "_per_capita" : "";
-  const perThousandSuffix = perThousand ? "_per_1000" : "";
-  const suffix = perCapitaSuffix + perThousandSuffix;
+  const perThousand = perCapita && units === "units"
+  const perCapitaSuffix = perCapita ? "_per_capita" : ""
+  const perThousandSuffix = perThousand ? "_per_1000" : ""
+  const suffix = perCapitaSuffix + perThousandSuffix
 
-  const filterFields = Array.from(fieldsGenerator([units], [""], [suffix]));
+  const filterFields = Array.from(fieldsGenerator([units], [""], [suffix]))
 
-  const plotWidth = Math.min(width * 0.92, 936);
-  const continuousBandSize = (plotWidth * 10) / 936;
+  const plotWidth = Math.min(width * 0.92, 936)
+  const continuousBandSize = (plotWidth * 10) / 936
 
-  const yLabel = unitsLabels[units];
+  const yLabel = unitsLabels[units]
   const yTitleSuffix = perCapita
     ? perThousand
       ? " per 1000 residents"
       : " per capita"
-    : "";
-  const yTitle = yLabel + yTitleSuffix;
+    : ""
+  const yTitle = yLabel + yTitleSuffix
 
-  const yFormat = units === "value" ? (perCapita ? "$.2f" : "$s") : null;
+  const yFormat = units === "value" ? (perCapita ? "$.2f" : "$s") : null
 
-  const transforms = makeTransforms(units, filterFields, perThousand);
+  const transforms = makeTransforms(units, filterFields, perThousand)
 
   return {
     width: plotWidth,
@@ -252,5 +252,5 @@ function makeSpec(
         continuousBandSize: continuousBandSize,
       },
     },
-  };
+  }
 }

@@ -13,7 +13,7 @@ export function* fieldsGenerator(
     for (const type of types) {
       for (const suffix of suffixes) {
         for (const perCapitaSuffix of perCapitaSuffixes) {
-          yield numUnits + "_" + type + suffix + perCapitaSuffix;
+          yield numUnits + "_" + type + suffix + perCapitaSuffix
         }
       }
     }

@@ -1,49 +1,49 @@
-import { useRouter } from "next/router";
-import BarPlot from "lib/BarPlot";
-import { useMemo, useEffect, useCallback } from "react";
-import { useFetch } from "lib/queries";
-import WindowSelectSearch from "lib/WindowSelectSearch";
-import { makeUnitsSelect, usePerCapitaInput } from "lib/selects";
-import { PathMapping } from "lib/utils";
+import { useRouter } from "next/router"
+import BarPlot from "lib/BarPlot"
+import { useMemo, useEffect, useCallback } from "react"
+import { useFetch } from "lib/queries"
+import WindowSelectSearch from "lib/WindowSelectSearch"
+import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
+import { PathMapping } from "lib/utils"
 
 function getJsonUrl(metro: string): string {
   if (metro === null || typeof metro === "undefined") {
-    return null;
+    return null
   }
-  metro = metro.replace("#", "%23");
-  return "/metros_data/" + metro + ".json";
+  metro = metro.replace("#", "%23")
+  return "/metros_data/" + metro + ".json"
 }
 
 type RawOption = {
-  path: string;
-  name: string;
-  metro_name: string;
-  metro_type: string;
-  county_names: string[];
-};
+  path: string
+  name: string
+  metro_name: string
+  metro_type: string
+  county_names: string[]
+}
 
 type Option = {
-  value: number;
-  path: string;
-  name: string;
-  metro_name: string;
-  metro_type: string;
-  county_names: string[];
-};
+  value: number
+  path: string
+  name: string
+  metro_name: string
+  metro_type: string
+  county_names: string[]
+}
 
 type Group<T> = {
-  name: string;
-  type: string;
-  items: T[];
-};
+  name: string
+  type: string
+  items: T[]
+}
 
 export function makeOptions(
   metrosListResponse: RawOption[]
 ): [Group<Option>, Group<Option>] {
-  const metroNames = metrosListResponse || [];
+  const metroNames = metrosListResponse || []
 
-  const cbsaOptions = [];
-  const csaOptions = [];
+  const cbsaOptions = []
+  const csaOptions = []
 
   for (const metro of metroNames) {
     const option = {
@@ -52,14 +52,14 @@ export function makeOptions(
       path: getJsonUrl(metro.path),
       metro_type: metro.metro_type,
       county_names: metro.county_names,
-    };
+    }
 
     if (metro.metro_type === "cbsa") {
-      cbsaOptions.push(option);
+      cbsaOptions.push(option)
     } else if (metro.metro_type === "csa") {
-      csaOptions.push(option);
+      csaOptions.push(option)
     } else {
-      throw new Error("Unknown metro_type: " + metro.metro_type);
+      throw new Error("Unknown metro_type: " + metro.metro_type)
     }
   }
 
@@ -74,7 +74,7 @@ export function makeOptions(
       type: "group",
       items: csaOptions,
     },
-  ];
+  ]
 }
 
 function renderOption(domProps, option, snapshot, className) {
@@ -82,7 +82,7 @@ function renderOption(domProps, option, snapshot, className) {
     <button className={className} {...domProps}>
       {option.name}
     </button>
-  );
+  )
   // <span className='text-xs rounded bg-purple-200 p-1'>{option.metro_type.toUpperCase()}</span>
 }
 
@@ -90,45 +90,45 @@ const fuseOptions = {
   keys: ["name"],
   threshold: 0.1,
   distance: 5,
-};
+}
 
 export default function MetroPlots({
   metroPath,
   setTitle,
 }: {
-  metroPath: string;
-  setTitle: (title: string) => void;
+  metroPath: string
+  setTitle: (title: string) => void
 }): JSX.Element {
-  const router = useRouter();
+  const router = useRouter()
 
-  const { data: metrosList } = useFetch("/metros_list.json");
+  const { data: metrosList } = useFetch("/metros_list.json")
 
-  const metroOptions = useMemo(() => makeOptions(metrosList), [metrosList]);
+  const metroOptions = useMemo(() => makeOptions(metrosList), [metrosList])
   const pathMapping = useMemo(
     () => new PathMapping<Option>(metrosList || []),
     [metrosList]
-  );
+  )
 
   const optionVal = useMemo(
     () => pathMapping.getEntryForPath(metroPath),
     [metroPath, pathMapping]
-  );
+  )
 
   useEffect(
     () => setTitle(optionVal?.metro_name ?? "Housing Data"),
     [optionVal]
-  );
+  )
 
-  const { data } = useFetch(getJsonUrl(metroPath));
+  const { data } = useFetch(getJsonUrl(metroPath))
 
   const onChange = useCallback(
     (newMetro) => {
       if (newMetro !== metroPath) {
-        router.push("/metros/" + newMetro.replace("#", "%23"));
+        router.push("/metros/" + newMetro.replace("#", "%23"))
       }
     },
     [metroPath]
-  );
+  )
 
   /* eslint-disable */
   const countyList = useMemo(() => {
@@ -139,14 +139,14 @@ export default function MetroPlots({
       </div>
     ) : (
       <></>
-    );
-  }, [optionVal]);
+    )
+  }, [optionVal])
   /* eslint-enable */
 
-  const { selectedUnits, unitsSelect } = makeUnitsSelect();
+  const { selectedUnits, unitsSelect } = makeUnitsSelect()
 
-  const { denom, populationInput } = usePerCapitaInput();
-  const perCapita = denom === "per_capita";
+  const { denom, populationInput } = usePerCapitaInput()
+  const perCapita = denom === "per_capita"
 
   // fuseOptions={fuseOptions}
   return (
@@ -177,35 +177,35 @@ export default function MetroPlots({
       {populationInput}
       {countyList}
     </div>
-  );
+  )
 }
 
 function formatCountiesList(counties: string[]): string {
   // Special handling for long list of counties (if there are 3 or more)
   // TODO handle parishes?
-  let ending;
-  let threeOrMoreNames;
+  let ending
+  let threeOrMoreNames
   if (counties.every((str) => str.endsWith(" County"))) {
-    threeOrMoreNames = counties.map((str) => str.substring(0, str.length - 7));
-    ending = " Counties";
+    threeOrMoreNames = counties.map((str) => str.substring(0, str.length - 7))
+    ending = " Counties"
   } else if (counties.every((str) => str.endsWith(" Parish"))) {
-    threeOrMoreNames = counties.map((str) => str.substring(0, str.length - 7));
-    ending = " Parishes";
+    threeOrMoreNames = counties.map((str) => str.substring(0, str.length - 7))
+    ending = " Parishes"
   } else {
-    threeOrMoreNames = counties;
-    ending = "";
+    threeOrMoreNames = counties
+    ending = ""
   }
 
   if (counties.length === 1) {
-    return counties[0];
+    return counties[0]
   } else if (counties.length === 2) {
-    return counties[0] + " and " + counties[1];
+    return counties[0] + " and " + counties[1]
   } else {
     return (
       threeOrMoreNames.slice(0, threeOrMoreNames.length - 1).join(", ") +
       ", and " +
       threeOrMoreNames[threeOrMoreNames.length - 1] +
       ending
-    );
+    )
   }
 }
