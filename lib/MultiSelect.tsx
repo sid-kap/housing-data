@@ -171,6 +171,7 @@ export default function MultiSelect({
           }
           style={style}
           onClick={onClick}
+          onMouseDown={(e) => e.preventDefault()}
           key={index}
           role="menuitem"
         >
