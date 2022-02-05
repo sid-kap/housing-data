@@ -229,6 +229,7 @@ function spec(
           interpolate: interpolate ? "monotone" : "linear",
           clip: true,
           point: true,
+          tooltip: true,
         },
         encoding: {
           x: {
@@ -245,6 +246,17 @@ function spec(
           x: { aggregate: "max", field: "binned_year" },
           y: { aggregate: { argmax: "binned_year" }, field: yField },
           text: { aggregate: { argmax: "binned_year" }, field: "name" },
+          tooltip: [
+            /* {
+             *     field: "binned_year", */
+            /* format: "%Y",
+             * formatType: {
+             *   five_years: "yearRangeAllFormat",
+             *   five_years_old: "yearRangeOldFormat",
+             *   none: null,
+             * }[grouping], */
+            /* } */
+          ],
         },
       },
     ],
