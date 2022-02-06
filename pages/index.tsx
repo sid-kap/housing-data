@@ -150,8 +150,8 @@ function spec(
 
   const yField = perCapita ? "total_units_per_capita_per_1000" : "total_units"
   const yTitle = perCapita
-    ? "Units permitted per 1000 residents"
-    : "Units permitted"
+    ? "Units permitted per 1000 residents per year"
+    : "Units permitted per year"
 
   return {
     width: plotWidth,
@@ -461,17 +461,7 @@ export default function Home(): JSX.Element {
         onChange={() => setGrouping("five_years")}
       />
       <label htmlFor="five_years" className={radioButtonLabelCss}>
-        5-year groups
-      </label>
-
-      <input
-        type="radio"
-        checked={grouping === "five_years_old"}
-        id="five_years_old"
-        onChange={() => setGrouping("five_years_old")}
-      />
-      <label htmlFor="five_years_old" className={radioButtonLabelCss}>
-        5-year groups for old decades only
+        5-year averages
       </label>
 
       <input
@@ -481,7 +471,7 @@ export default function Home(): JSX.Element {
         onChange={() => setGrouping("none")}
       />
       <label htmlFor="none" className={radioButtonLabelCss}>
-        No grouping
+        No averaging
       </label>
     </div>
   )
