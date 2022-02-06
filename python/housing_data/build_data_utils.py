@@ -61,7 +61,7 @@ COUNTY_POPULATION_DIR = Path("data", "population", "county")
 PLACE_POPULATION_DIR = Path("data", "population", "place")
 
 # Last year and month for which monthly BPS data is available (and is cloned to housing-data-data).
-LATEST_MONTH = (2021, 11)
+LATEST_MONTH = (2021, 12)
 
 
 def write_to_json_directory(df, path, group_cols=None):

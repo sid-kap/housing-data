@@ -3,6 +3,9 @@ import Head from "next/head"
 import { useState, useCallback } from "react"
 
 export function CurrentYearExtrapolationInfo(props): JSX.Element {
+  return <></>
+
+  // Can go back to this logic when we have Jan 2022 data.
   return (
     <div>
       <div className="text-xs mt-3 text-left">

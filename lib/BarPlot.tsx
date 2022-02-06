@@ -238,7 +238,8 @@ function makeSpec(
                 "2 units",
                 "3-4 units",
                 "5+ units",
-                "Projected units, 2021*",
+                // Commenting out for now, since we have data for all of 2021. Will uncomment when we get Jan 2022.
+                // "Projected units, 2021*",
               ],
               // Taken from Tableau 10 (https://www.tableau.com/about/blog/2016/7/colors-upgrade-tableau-10-56782)
               range: [
@@ -246,7 +247,7 @@ function makeSpec(
                 "#f28e2b",
                 "#e15759",
                 "#76b7b2",
-                "url(#diagonalHatch)",
+                // "url(#diagonalHatch)",
               ],
             },
           },
@@ -264,11 +265,12 @@ function makeSpec(
             { field: "3_to_4_units_units", title: "3-4 units", format: "," },
             { field: "5_plus_units_units", title: "5+ units", format: "," },
             { field: "total_units", title: "Total units", format: "," },
-            {
-              field: "projected_units",
-              title: "Projected units, 2021",
-              format: ",",
-            },
+            // Will uncomment when we have Jan 2022 data.
+            // {
+            //   field: "projected_units",
+            //   title: "Projected units, 2021",
+            //   format: ",",
+            // },
           ],
         },
       },
