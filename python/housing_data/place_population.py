@@ -144,7 +144,7 @@ def get_place_populations_1980(data_path: Optional[Path] = None) -> pd.DataFrame
         & ~((df["place_or_county_code"] == "69336") & (df["state_code"] == 42))
     ]
 
-    # Fix Miami-Dada county name and code
+    # Fix Miami-Dade County name and code
     dade_county = (df["place_or_county_code"] == "25_county") & (df["state_code"] == 12)
     df.loc[dade_county, "place_name"] = "Miami-Dade County"
     df.loc[dade_county, "place_or_county_code"] = "86_county"
