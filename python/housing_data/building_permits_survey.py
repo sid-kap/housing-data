@@ -310,7 +310,7 @@ def add_totals_columns(df: pd.DataFrame) -> None:
         )
 
 
-def state_cleanup(df):
+def state_cleanup(df: pd.DataFrame) -> None:
     df["state_name"] = df["state_name"].str.title()
     df["state_name"] = df["state_name"].apply(fix_state)
     df["type"] = df["state_name"].map(TYPE_MAPPING).fillna("state")
@@ -389,7 +389,7 @@ def parse_number_column(col: pd.Series) -> pd.Series:
     return col.astype(float).astype("Int64")
 
 
-def place_cleanup(df, year):
+def place_cleanup(df: pd.DataFrame, year: int) -> pd.DataFrame:
     """
     Any cleanup that can be done on an individual file basis goes here.
     Stuff that can only be done after combining all the dfs together is done in build_data.load_places
@@ -434,6 +434,19 @@ def place_cleanup(df, year):
 
     add_totals_columns(df)
 
+    # Miami-Dade County was called Dade County until 1997.
+    # We need to fix the old rows to use the new name and new FIPS code (change 25 to 86).
+    #
+    # Also, for some reason, 1999 to 2001 data has the old county name, but the new FIPS code.
+    # (So we need to check for both 25 and 86.)
+    dade_county_rows = (
+        df["county_code"].isin([25, 86])
+        & (df["state_code"] == 12)
+        & (df["place_name"] == "Dade County")
+    )
+    df.loc[dade_county_rows, "place_name"] = "Miami-Dade County"
+    df.loc[dade_county_rows, "county_code"] = 86
+
     return df
 
 
@@ -458,8 +471,14 @@ def clean_place_names(place_names: pd.Series, year: int) -> pd.Series:
     return place_names
 
 
-def county_cleanup(df):
+def county_cleanup(df: pd.DataFrame) -> pd.DataFrame:
     df["county_name"] = df["county_name"].str.strip()
+
+    # Miami-Dade County was called Dade County until 1997.
+    # We need to fix the old rows to use the new name and FIPS code.
+    dade_county_rows = (df["fips_county"] == 25) & (df["fips_state"] == 12)
+    df.loc[dade_county_rows, "county_name"] = "Miami-Dade County"
+    df.loc[dade_county_rows, "fips_county"] = 86
 
     add_totals_columns(df)
 
