@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import StringIO
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -78,7 +79,7 @@ def _line_to_cols(row):
     return [s.strip() for s in row.split()]
 
 
-def get_state_populations_1980s(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_state_populations_1980s(data_path: Optional[Path] = None) -> pd.DataFrame:
     states_80s_text = get_url_text(
         "https://www2.census.gov/programs-surveys/popest/tables/1980-1990/state/asrh/st8090ts.txt",
         data_path,
@@ -117,7 +118,7 @@ def get_state_populations_1980s(data_path: Optional[str] = None) -> pd.DataFrame
 
 
 def _get_counties_population_table_1990s(
-    year: int, data_path: Optional[str] = None
+    year: int, data_path: Optional[Path] = None
 ) -> pd.DataFrame:
     assert 1990 <= year <= 1999
 
@@ -151,7 +152,7 @@ def _get_counties_population_table_1990s(
     return df
 
 
-def get_state_populations_1990s(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_state_populations_1990s(data_path: Optional[Path] = None) -> pd.DataFrame:
     df = pd.concat(
         [
             _get_counties_population_table_1990s(year, data_path)
@@ -175,7 +176,7 @@ def get_state_populations_1990s(data_path: Optional[str] = None) -> pd.DataFrame
     )
 
 
-def get_state_populations_2000s(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_state_populations_2000s(data_path: Optional[Path] = None) -> pd.DataFrame:
     df = pd.read_excel(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/tables/2000-2010/intercensal/state/st-est00int-01.xls",
@@ -206,7 +207,7 @@ def get_state_populations_2000s(data_path: Optional[str] = None) -> pd.DataFrame
 
 
 def get_state_populations_2010_through_2019(
-    data_path: Optional[str] = None,
+    data_path: Optional[Path] = None,
 ) -> pd.DataFrame:
     """
     This function is not used anymore
@@ -234,7 +235,7 @@ def get_state_populations_2010_through_2019(
     return df.melt(id_vars="state", var_name="year", value_name="population")
 
 
-def get_state_populations_2010s(data_path: Optional[str] = None) -> pd.DataFrame:
+def get_state_populations_2010s(data_path: Optional[Path] = None) -> pd.DataFrame:
     """
     This one goes through 2020
     """
@@ -253,7 +254,14 @@ def get_state_populations_2010s(data_path: Optional[str] = None) -> pd.DataFrame
     )
 
 
-def get_state_population_estimates(data_path: Optional[str] = None):
+def impute_state_populations_2021(df_2010s: pd.DataFrame) -> pd.DataFrame:
+    """
+    Impute 2021 with the 2020 population; that's the best I think we can do...
+    """
+    return df_2010s[df_2010s["year"] == "2020"].assign(year="2021")
+
+
+def get_state_population_estimates(data_path: Optional[Path] = None):
     print("Loading 1980s data...")
     df_1980s = get_state_populations_1980s(data_path)
 
@@ -266,7 +274,9 @@ def get_state_population_estimates(data_path: Optional[str] = None):
     print("Loading 2010s data...")
     df_2010s = get_state_populations_2010s(data_path)
 
-    states_df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s])
+    df_2021 = impute_state_populations_2021(df_2010s)
+
+    states_df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s, df_2021])
 
     states = us.states.mapping("name", "fips").keys()
     states_df = states_df[states_df["state"].isin(states)]
