@@ -353,10 +353,7 @@ function getData(path: string): object {
 }
 
 function combineDatas(datas) {
-  // TODO figure out how to display 2021 data in the comparison view!
-  // I think it will be a little involved
   const data = datas.flatMap((d) => d.data ?? [])
-  // .filter((row) => row.year != "2021")
 
   const dataCopied = []
   for (const row of data) {
