@@ -33,7 +33,6 @@ function getYearRanges(grouping: string): [Array<[number, number]>, number] {
         [2015, 2019],
       ],
       2020,
-      2021,
     ]
   } else if (grouping === "five_years_old") {
     return [
@@ -193,7 +192,6 @@ function spec(
         axis: {
           title: "Year",
           grid: false,
-          labelAngle: 0,
           format: "%Y",
           formatType: {
             five_years: "yearRangeAllFormat",
