@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@react-hook/media-query": "^1.1.1",
     "date-fns": "^2.23.0",
     "fuzzysort": "^1.1.4",
     "immutable": "^4.0.0",
@@ -26,8 +27,8 @@
     "vega-lite": "sid-kap/vega-lite#ab4760fb6125340228b3ce917a5d1ce3214b91ca"
   },
   "devDependencies": {
-    "@types/react": "^17.0.38",
     "@types/node": "^15.12.1",
+    "@types/react": "^17.0.38",
     "autoprefixer": "^10.0.2",
     "postcss": "^8.1.10",
     "standard": "^16.0.3",

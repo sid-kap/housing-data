@@ -12,6 +12,7 @@ import { OrderedMap } from "immutable"
 import { useQueries, UseQueryOptions, QueryKey } from "react-query"
 import { expressionFunction } from "vega"
 import { TopLevelSpec } from "vega-lite"
+import { useMediaQuery } from "@react-hook/media-query"
 
 /**
  * Returns a pair (year ranges, first year not in a range)
@@ -65,7 +66,7 @@ function makeYearBuckets(
       })
     }
   }
-  for (let year = firstNonRangeYear; year <= 2020; year++) {
+  for (let year = firstNonRangeYear; year <= 2021; year++) {
     yearBuckets.push({
       year: Date.parse(`${year}`),
       binned_year: Date.parse(`${year}`),
@@ -91,7 +92,7 @@ function getYearTickValues(grouping) {
     return midYearDatesThrough2010.concat([
       Date.parse("2012-01-01"),
       Date.parse("2017-01-01"),
-      Date.parse("2020"),
+      Date.parse("2020-01-01"),
     ])
   } else if (grouping === "five_years_old") {
     return midYearDatesThrough2010.concat([
@@ -144,7 +145,8 @@ function spec(
   height: number,
   perCapita: boolean,
   interpolate: boolean,
-  grouping: string
+  grouping: string,
+  isWide: boolean
 ): TopLevelSpec {
   const plotWidth = Math.min(width * 0.92, 936)
 
@@ -190,7 +192,6 @@ function spec(
         axis: {
           title: "Year",
           grid: false,
-          labelAngle: 0,
           format: "%Y",
           formatType: {
             five_years: "yearRangeAllFormat",
@@ -198,6 +199,8 @@ function spec(
             none: null,
           }[grouping],
           values: getYearTickValues(grouping),
+          labelOverlap: isWide ? "greedy" : false,
+          labelAngle: isWide ? 0 : 45,
         },
       },
       y: {
@@ -229,6 +232,7 @@ function spec(
           interpolate: interpolate ? "monotone" : "linear",
           clip: true,
           point: true,
+          tooltip: true,
         },
         encoding: {
           x: {
@@ -347,11 +351,7 @@ function getData(path: string): object {
 }
 
 function combineDatas(datas) {
-  // TODO figure out how to display 2021 data in the comparison view!
-  // I think it will be a little involved
-  const data = datas
-    .flatMap((d) => d.data ?? [])
-    .filter((row) => row.year != "2021")
+  const data = datas.flatMap((d) => d.data ?? [])
 
   const dataCopied = []
   for (const row of data) {
@@ -476,6 +476,8 @@ export default function Home(): JSX.Element {
     </div>
   )
 
+  const isMediumOrWider = useMediaQuery("only screen and (min-width: 768px)")
+
   return (
     <Page title="Housing Data" navIndex={0}>
       <div className="flex flex-col justify-center items-center mx-auto mb-10">
@@ -499,7 +501,8 @@ export default function Home(): JSX.Element {
                   height,
                   denom === "per_capita",
                   false,
-                  grouping
+                  grouping,
+                  isMediumOrWider
                 )}
                 data={{ table: data }}
               />
