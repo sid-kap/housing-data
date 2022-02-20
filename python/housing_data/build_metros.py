@@ -6,6 +6,7 @@ from housing_data.build_data_utils import (
     NUMERICAL_COLUMNS,
     PUBLIC_DIR,
     add_per_capita_columns,
+    write_list_to_json,
     write_to_json_directory,
 )
 
@@ -133,11 +134,12 @@ def load_metros(counties_df: pd.DataFrame) -> None:
 
     metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
 
-    (
-        metros_df[["metro_name", "metro_type", "path", "county_names"]]
-        .drop_duplicates(subset=["metro_name", "metro_type", "path"])
-        .sort_values("metro_name")
-        .to_json(PUBLIC_DIR / "metros_list.json", orient="records")
+    write_list_to_json(
+        metros_df,
+        PUBLIC_DIR / "metros_list.json",
+        ["metro_name", "metro_type", "path", "county_names"],
+        add_latest_population_column=True,
+        unhashable_columns=["county_names"],  # can't merge on a list-valued column
     )
 
     write_to_json_directory(

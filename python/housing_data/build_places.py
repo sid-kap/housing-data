@@ -10,6 +10,7 @@ from housing_data.build_data_utils import (
     add_per_capita_columns,
     get_state_abbrs,
     load_bps_all_years_plus_monthly,
+    write_list_to_json,
     write_to_json_directory,
 )
 from housing_data.building_permits_survey import Region
@@ -252,16 +253,11 @@ def load_places(
 
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
-    latest_populations = places_df[places_df["year"] == "2020"][
-        ["place_name", "state_code", "population"]
-    ].drop_duplicates()
-
-    (
-        places_df[["place_name", "state_code", "alt_name", "name"]]
-        .drop_duplicates()
-        .merge(latest_populations, on=["place_name", "state_code"])
-        .sort_values("place_name")
-        .to_json(PUBLIC_DIR / "places_list.json", orient="records")
+    write_list_to_json(
+        places_df,
+        PUBLIC_DIR / "places_list.json",
+        ["place_name", "state_code", "alt_name", "name"],
+        add_latest_population_column=True,
     )
 
     write_to_json_directory(
