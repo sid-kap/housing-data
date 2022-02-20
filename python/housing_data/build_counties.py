@@ -72,8 +72,6 @@ def load_counties(
 
     counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")
 
-    print(counties_df.columns)
-
     write_list_to_json(
         counties_df.drop(columns=["state_code"]).rename(
             columns={"fips_state": "state_code"}
