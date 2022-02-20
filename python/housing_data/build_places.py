@@ -252,9 +252,14 @@ def load_places(
 
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
+    latest_populations = places_df[places_df["year"] == "2020"][
+        ["place_name", "state_code", "population"]
+    ].drop_duplicates()
+
     (
         places_df[["place_name", "state_code", "alt_name", "name"]]
         .drop_duplicates()
+        .merge(latest_populations, on=["place_name", "state_code"])
         .sort_values("place_name")
         .to_json(PUBLIC_DIR / "places_list.json", orient="records")
     )
