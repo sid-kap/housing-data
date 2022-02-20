@@ -77,7 +77,6 @@ export function makePlaceOptions(
   return options
 }
 
-var logged = 0
 function scoreFn(a) {
   var max = -9007199254740991
   for (var i = a.length - 1; i >= 0; --i) {
