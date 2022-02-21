@@ -145,9 +145,8 @@ def load_metros(counties_df: pd.DataFrame) -> None:
 
     metros_df["path"] = metros_df["metro_name"].str.replace("/", "-")
 
-    # This field is only used in comparison plots. In that case, we would like to use the
-    # full metro name with the "MSA" or "CSA" suffix.
-    # In other pages, I don't think this field is used.
+    # This field is only used in comparison plots in the plotting code.
+    # For the plot labels, would like to use the full metro name with the "MSA" or "CSA" suffix.
     metros_df["name"] = metros_df["metro_name_with_suffix"]
 
     metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
