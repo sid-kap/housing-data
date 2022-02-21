@@ -496,7 +496,7 @@ export default function Home(): JSX.Element {
             groupOptions={options}
             onChange={setSelectedLocations}
             itemClassFn={selectedItemClassFn}
-            fuzzysortOptions={scoreFnWithPopulation}
+            fuzzysortOptions={fuzzysortOptions}
           />
         </div>
 
