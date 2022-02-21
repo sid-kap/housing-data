@@ -13,6 +13,7 @@ import { useQueries, UseQueryOptions, QueryKey } from "react-query"
 import { expressionFunction } from "vega"
 import { TopLevelSpec } from "vega-lite"
 import { useMediaQuery } from "@react-hook/media-query"
+import { scoreFnWithPopulation } from "lib/utils"
 
 /**
  * Returns a pair (year ranges, first year not in a range)
@@ -368,6 +369,12 @@ type Option = {
   path: string
 }
 
+const fuzzysortOptions = {
+  keys: ["name"],
+  threshold: -10000,
+  scoreFn: scoreFnWithPopulation,
+}
+
 export default function Home(): JSX.Element {
   const { data: statesResponse } = useFetch("/state_annual.json")
   const { data: metrosListResponse } = useFetch("/metros_list.json")
@@ -489,6 +496,7 @@ export default function Home(): JSX.Element {
             groupOptions={options}
             onChange={setSelectedLocations}
             itemClassFn={selectedItemClassFn}
+            fuzzysortOptions={scoreFnWithPopulation}
           />
         </div>
 

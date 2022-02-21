@@ -1,18 +1,36 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { FixedSizeList } from "react-window"
 import { OrderedMap } from "immutable"
-import { scoreFnWithPopulation } from "lib/utils"
 import fuzzysort from "fuzzysort"
 
-export default function MultiSelect({
+interface Option {
+  name: string
+  value: string
+}
+
+type OptionGroup<T> = {
+  groupName: string
+  items: Array<T>
+}
+
+export default function MultiSelect<T extends Option>({
   options,
   groupOptions,
   onChange,
   itemClassFn,
-}) {
+  fuzzysortOptions = null,
+}: {
+  options: Array<T>
+  groupOptions: Array<OptionGroup<T>>
+  onChange: (selectedItems: OrderedMap<string, T>) => void
+  itemClassFn: (T) => string
+  fuzzysortOptions: any
+}): JSX.Element {
   const [isTyping, setIsTyping] = useState<boolean>(false)
 
-  const [selectedItems, setSelectedItems] = useState(OrderedMap())
+  const [selectedItems, setSelectedItems] = useState<OrderedMap<string, T>>(
+    OrderedMap()
+  )
   useEffect(() => onChange(selectedItems), [selectedItems])
 
   const inputRef = useRef()
@@ -33,14 +51,9 @@ export default function MultiSelect({
     let filtered = allOptions.filter((item) => !selectedItems.has(item.value))
     if (input.length > 0) {
       filtered = fuzzysort
-        .go(input, filtered, {
-          keys: ["name"],
-          threshold: -10000,
-          scoreFn: scoreFnWithPopulation,
-        })
+        .go(input, filtered, fuzzysortOptions)
         .map((result) => result.obj)
     }
-    console.log(filtered)
     return filtered
   }, [input, allOptions, selectedItems])
 
