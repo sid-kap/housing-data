@@ -65,7 +65,7 @@ LATEST_MONTH = (2021, 12)
 
 
 def write_to_json_directory(
-    df: pd.DataFrame, path: Path, group_cols: List[str] = None
+    df: pd.DataFrame, path: Path, group_cols: List[str]
 ) -> None:
     assert len(group_cols) in [1, 2]
 
