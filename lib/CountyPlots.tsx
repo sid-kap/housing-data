@@ -26,6 +26,7 @@ function getJsonUrl(county: string, stateCode: number): string {
 type RawOption = {
   county_name: string
   state_code: number
+  population: number
 }
 
 type Option = {
@@ -47,6 +48,7 @@ export function makeCountyOptions(countiesList: RawOption[]): Option[] {
       county_name: county.county_name,
       name: county.county_name + ", " + abbr,
       path: getJsonUrl(county.county_name, county.state_code),
+      population: county.population,
     })
   }
 

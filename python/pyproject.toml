@@ -17,6 +17,8 @@ tqdm = "^4.54.0"
 us = "^2.0.2"
 xlrd = "^1.2.0"
 openpyxl = "^3.0.9"
+fiona = {git = "https://github.com/Toblerity/Fiona.git"}
+geopandas = "^0.10.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

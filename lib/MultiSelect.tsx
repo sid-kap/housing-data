@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { FixedSizeList } from "react-window"
 import { OrderedMap } from "immutable"
+import { scoreFnWithPopulation } from "lib/utils"
 import fuzzysort from "fuzzysort"
 
 export default function MultiSelect({
@@ -18,8 +19,6 @@ export default function MultiSelect({
   const listRef = useRef()
   const [input, setInput] = useState<string>("")
 
-  /* console.log(selectedItems.toArray()) */
-
   // TODO: Figure out how to add the group titles. For now, this is fine.
   const allOptions = useMemo(() => {
     // OrderedMap to preserve the order of the options from the JSON files
@@ -34,9 +33,14 @@ export default function MultiSelect({
     let filtered = allOptions.filter((item) => !selectedItems.has(item.value))
     if (input.length > 0) {
       filtered = fuzzysort
-        .go(input, filtered, { keys: ["name"], threshold: -10000 })
+        .go(input, filtered, {
+          keys: ["name"],
+          threshold: -10000,
+          scoreFn: scoreFnWithPopulation,
+        })
         .map((result) => result.obj)
     }
+    console.log(filtered)
     return filtered
   }, [input, allOptions, selectedItems])
 

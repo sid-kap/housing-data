@@ -5,7 +5,7 @@ import BarPlot from "lib/BarPlot"
 import us from "us"
 import { useRouter } from "next/router"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
-import { PathMapping } from "lib/utils"
+import { PathMapping, scoreFnWithPopulation } from "lib/utils"
 import { CurrentYearExtrapolationInfo } from "./common_elements"
 
 export function getJsonUrl(place: string, state: string): string {
@@ -47,6 +47,7 @@ type Option = {
   name: string
   alt_name: string
   path: string
+  population: number
 }
 
 export function makePlaceOptions(
@@ -55,6 +56,7 @@ export function makePlaceOptions(
     place_name: string
     name: string
     alt_name: string
+    population: number
   }>
 ): Option[] {
   const options = []
@@ -77,22 +79,10 @@ export function makePlaceOptions(
   return options
 }
 
-function scoreFn(a) {
-  var max = -9007199254740991
-  for (var i = a.length - 1; i >= 0; --i) {
-    var result = a[i]
-    if (result === null) continue
-    var score = result.score
-    if (score > max) max = score
-  }
-  if (max === -9007199254740991) return null
-  return max + Math.log(a.obj.population)
-}
-
 const fuzzysortOptions = {
   keys: ["name", "alt_name"],
   threshold: -10000,
-  scoreFn,
+  scoreFn: scoreFnWithPopulation,
 }
 
 export default function PlacePlots({
