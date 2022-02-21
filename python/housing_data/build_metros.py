@@ -17,6 +17,14 @@ def load_crosswalk_df() -> pd.DataFrame:
         "http://data.nber.org/cbsa-csa-fips-county-crosswalk/cbsa2fipsxw.csv"
     )
 
+    # Drop the μSAs, no one cares about them.
+    # Most of them are just one county anyway, so showing the combined metro stats doesn't
+    # (in most cases) provide any value beyond what's in the county view.
+    crosswalk_df = crosswalk_df[
+        crosswalk_df["metropolitanmicropolitanstatis"]
+        == "Metropolitan Statistical Area"
+    ]
+
     # Could also get county name from 'countycountyequivalent' in crosswalk_df... I'm indifferent, just using the
     # one from counties_df for now.
     crosswalk_df = (
@@ -49,8 +57,10 @@ def combine_metro_rows(
 
     if metro_type == "cbsa":
         other_metro_col = "csa_name"
+        metro_name_suffix = "MSA"
     elif metro_type == "csa":
         other_metro_col = "cbsa_name"
+        metro_name_suffix = "CSA"
     else:
         raise ValueError(f"Unknown metro_type: {metro_type}")
 
@@ -61,6 +71,10 @@ def combine_metro_rows(
         .reset_index()
         .rename(columns={metro_col: "metro_name"})
         .assign(metro_type=metro_type)
+    )
+
+    combined_df["metro_name_with_suffix"] = combined_df["metro_name"].str.replace(
+        ",", " " + metro_name_suffix + ","
     )
 
     # Only keep a metros in 2021 if all of its counties were observed.
@@ -130,14 +144,18 @@ def load_metros(counties_df: pd.DataFrame) -> None:
     add_per_capita_columns(metros_df)
 
     metros_df["path"] = metros_df["metro_name"].str.replace("/", "-")
-    metros_df["name"] = metros_df["metro_name"]
+
+    # This field is only used in comparison plots. In that case, we would like to use the
+    # full metro name with the "MSA" or "CSA" suffix.
+    # In other pages, I don't think this field is used.
+    metros_df["name"] = metros_df["metro_name_with_suffix"]
 
     metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
 
     write_list_to_json(
         metros_df,
         PUBLIC_DIR / "metros_list.json",
-        ["metro_name", "metro_type", "path", "county_names"],
+        ["metro_name", "metro_name_with_suffix", "metro_type", "path", "county_names"],
         add_latest_population_column=True,
         unhashable_columns=["county_names"],  # can't merge on a list-valued column
     )

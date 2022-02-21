@@ -29,6 +29,7 @@ type Option = {
   path: string
   name: string
   metro_name: string
+  metro_name_with_suffix: string
   metro_type: string
   county_names: string[]
 }
@@ -51,6 +52,7 @@ export function makeOptions(
     const option = {
       value: metro.path,
       name: metro.metro_name,
+      name_with_suffix: metro.metro_name_with_suffix,
       path: getJsonUrl(metro.path),
       metro_type: metro.metro_type,
       county_names: metro.county_names,
@@ -68,7 +70,9 @@ export function makeOptions(
 
   return [
     {
-      name: "CBSAs",
+      // I've removed all the μSAs, so the CBSAs list will only include the MSAs.
+      // TODO: Replace "CBSA" with "MSA" throughout the code base.
+      name: "MSAs",
       type: "group",
       items: cbsaOptions,
     },

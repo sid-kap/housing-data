@@ -264,21 +264,23 @@ function spec(
   }
 }
 
-function addPrefixes(options, prefix) {
+function addPrefixes(options, prefix, use_metro_name_suffix = false) {
   const newOptions = []
   for (const option of options) {
     // IDK if we want name or value... let's just go with name for now.
-    newOptions.push(
-      Object.assign(option, { value: prefix + "/" + option.name })
-    )
+    const changes = { value: prefix + "/" + option.name }
+    if (use_metro_name_suffix) {
+      changes.name = option.name_with_suffix
+    }
+    newOptions.push(Object.assign(option, changes))
   }
   return newOptions
 }
 
 function makeOptions(statesData, metrosList, countiesList, placesList) {
-  const [cbsaOptions, csaOptions]: [any, any] = makeMetroOptions(metrosList)
-  if (!(typeof cbsaOptions === "object" && cbsaOptions.name === "CBSAs")) {
-    throw new Error("first element makeMetroOptions is not CBSAs")
+  const [msaOptions, csaOptions]: [any, any] = makeMetroOptions(metrosList)
+  if (!(typeof msaOptions === "object" && msaOptions.name === "MSAs")) {
+    throw new Error("first element makeMetroOptions is not MSAs")
   }
   if (!(typeof csaOptions === "object" && csaOptions.name === "CSAs")) {
     throw new Error("second element makeMetroOptions is not CSAs")
@@ -297,8 +299,8 @@ function makeOptions(statesData, metrosList, countiesList, placesList) {
   for (const item of placeOptions) {
     item.type = "place"
   }
-  for (const item of cbsaOptions.items) {
-    item.type = "cbsa"
+  for (const item of msaOptions.items) {
+    item.type = "msa"
   }
   for (const item of csaOptions.items) {
     item.type = "csa"
@@ -313,13 +315,17 @@ function makeOptions(statesData, metrosList, countiesList, placesList) {
       groupName: "Counties",
       items: addPrefixes(countyOptions, "Counties"),
     },
+    // I've filtered out the μSAs, so we can use MSA and CBSA interchangeably.
+    // Most people know what an MSA is but not a CBSA, so we should use that name.
+    // TODO: replace "CBSA" with "MSA" throughout the code base and the published
+    // data files.
     {
-      groupName: "CBSAs",
-      items: addPrefixes(cbsaOptions.items, "CBSAs"),
+      groupName: "MSAs",
+      items: addPrefixes(msaOptions.items, "MSAs", true),
     },
     {
       groupName: "CSAs",
-      items: addPrefixes(csaOptions.items, "CSAs"),
+      items: addPrefixes(csaOptions.items, "CSAs", true),
     },
     {
       groupName: "States",
@@ -335,7 +341,7 @@ function selectedItemClassFn(item) {
   if (item.type === "county") {
     return "bg-yellow-400"
   }
-  if (item.type === "cbsa") {
+  if (item.type === "msa") {
     return "bg-pink-500"
   }
   if (item.type === "csa") {
