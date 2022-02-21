@@ -3,22 +3,39 @@ import { FixedSizeList } from "react-window"
 import { OrderedMap } from "immutable"
 import fuzzysort from "fuzzysort"
 
-export default function MultiSelect({
+interface Option {
+  name: string
+  value: string
+}
+
+type OptionGroup<T> = {
+  groupName: string
+  items: Array<T>
+}
+
+export default function MultiSelect<T extends Option>({
   options,
   groupOptions,
   onChange,
   itemClassFn,
-}) {
+  fuzzysortOptions = null,
+}: {
+  options: Array<T>
+  groupOptions: Array<OptionGroup<T>>
+  onChange: (selectedItems: OrderedMap<string, T>) => void
+  itemClassFn: (T) => string
+  fuzzysortOptions: any
+}): JSX.Element {
   const [isTyping, setIsTyping] = useState<boolean>(false)
 
-  const [selectedItems, setSelectedItems] = useState(OrderedMap())
+  const [selectedItems, setSelectedItems] = useState<OrderedMap<string, T>>(
+    OrderedMap()
+  )
   useEffect(() => onChange(selectedItems), [selectedItems])
 
   const inputRef = useRef()
   const listRef = useRef()
   const [input, setInput] = useState<string>("")
-
-  /* console.log(selectedItems.toArray()) */
 
   // TODO: Figure out how to add the group titles. For now, this is fine.
   const allOptions = useMemo(() => {
@@ -34,7 +51,7 @@ export default function MultiSelect({
     let filtered = allOptions.filter((item) => !selectedItems.has(item.value))
     if (input.length > 0) {
       filtered = fuzzysort
-        .go(input, filtered, { keys: ["name"], threshold: -10000 })
+        .go(input, filtered, fuzzysortOptions)
         .map((result) => result.obj)
     }
     return filtered

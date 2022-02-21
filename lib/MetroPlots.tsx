@@ -4,7 +4,7 @@ import { useMemo, useEffect, useCallback } from "react"
 import { useFetch } from "lib/queries"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
-import { PathMapping } from "lib/utils"
+import { PathMapping, scoreFnWithPopulation } from "lib/utils"
 import { CurrentYearExtrapolationInfo } from "./common_elements"
 
 function getJsonUrl(metro: string): string {
@@ -21,6 +21,7 @@ type RawOption = {
   metro_name: string
   metro_type: string
   county_names: string[]
+  population: number
 }
 
 type Option = {
@@ -53,6 +54,7 @@ export function makeOptions(
       path: getJsonUrl(metro.path),
       metro_type: metro.metro_type,
       county_names: metro.county_names,
+      population: metro.population,
     }
 
     if (metro.metro_type === "cbsa") {
@@ -90,6 +92,12 @@ function renderOption(
     </button>
   )
   // <span className='text-xs rounded bg-purple-200 p-1'>{option.metro_type.toUpperCase()}</span>
+}
+
+const fuzzysortOptions = {
+  keys: ["name"],
+  threshold: -10000,
+  scoreFn: scoreFnWithPopulation,
 }
 
 export default function MetroPlots({
@@ -158,6 +166,7 @@ export default function MetroPlots({
             options={metroOptions}
             value={optionVal?.value}
             renderOption={renderOption}
+            fuzzysortOptions={fuzzysortOptions}
           />
         </div>
         <div className="mt-4 mb-1 col-span-1 text-center">

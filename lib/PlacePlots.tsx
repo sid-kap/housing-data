@@ -5,7 +5,7 @@ import BarPlot from "lib/BarPlot"
 import us from "us"
 import { useRouter } from "next/router"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
-import { PathMapping } from "lib/utils"
+import { PathMapping, scoreFnWithPopulation } from "lib/utils"
 import { CurrentYearExtrapolationInfo } from "./common_elements"
 
 export function getJsonUrl(place: string, state: string): string {
@@ -47,6 +47,7 @@ type Option = {
   name: string
   alt_name: string
   path: string
+  population: number
 }
 
 export function makePlaceOptions(
@@ -55,6 +56,7 @@ export function makePlaceOptions(
     place_name: string
     name: string
     alt_name: string
+    population: number
   }>
 ): Option[] {
   const options = []
@@ -69,6 +71,7 @@ export function makePlaceOptions(
         name: place.name,
         alt_name: place.alt_name,
         path: getJsonUrl(place.place_name, abbr),
+        population: place.population,
       })
     }
   }
@@ -76,7 +79,11 @@ export function makePlaceOptions(
   return options
 }
 
-const fuzzysortOptions = { keys: ["name", "alt_name"], threshold: -10000 }
+const fuzzysortOptions = {
+  keys: ["name", "alt_name"],
+  threshold: -10000,
+  scoreFn: scoreFnWithPopulation,
+}
 
 export default function PlacePlots({
   place,

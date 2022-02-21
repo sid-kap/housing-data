@@ -7,6 +7,7 @@ from housing_data.build_data_utils import (
     STATE_POPULATION_DIR,
     add_per_capita_columns,
     load_bps_all_years_plus_monthly,
+    write_list_to_json,
     write_to_json_directory,
 )
 
@@ -36,11 +37,11 @@ def load_states(data_repo_path: Optional[str]):
     states_df.to_json(PUBLIC_DIR / "state_annual.json", orient="records")
 
     # New format for data
-    (
-        states_df[["state_name", "name"]]
-        .drop_duplicates()
-        .sort_values("state_name")
-        .to_json(PUBLIC_DIR / "states_list.json", orient="records")
+    write_list_to_json(
+        states_df,
+        PUBLIC_DIR / "states_list.json",
+        ["state_name", "name"],
+        add_latest_population_column=True,
     )
 
     write_to_json_directory(states_df, Path(PUBLIC_DIR, "states_data"), ["state_name"])

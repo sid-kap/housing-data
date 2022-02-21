@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -64,7 +64,9 @@ PLACE_POPULATION_DIR = Path("data", "population", "place")
 LATEST_MONTH = (2021, 12)
 
 
-def write_to_json_directory(df, path, group_cols=None):
+def write_to_json_directory(
+    df: pd.DataFrame, path: Path, group_cols: List[str]
+) -> None:
     assert len(group_cols) in [1, 2]
 
     path.mkdir(exist_ok=True)
@@ -91,7 +93,30 @@ def write_to_json_directory(df, path, group_cols=None):
         )
 
 
-def add_per_capita_columns(df):
+def write_list_to_json(
+    df: pd.DataFrame,
+    output_path: Path,
+    columns: List[str],
+    add_latest_population_column: bool = False,
+    unhashable_columns: Optional[List[str]] = None,
+) -> None:
+    """
+    :param unhashable_columns: Columns to not include in calls to drop_duplicates, merge, etc. because
+        they would cause "[type] is not hashable" errors.
+    """
+    hashable_columns = list(set(columns) - set(unhashable_columns or []))
+    subset_df = df[columns].drop_duplicates(subset=hashable_columns)
+
+    if add_latest_population_column:
+        latest_populations = df[df["year"] == "2020"][
+            hashable_columns + ["population"]
+        ].drop_duplicates()
+        subset_df = subset_df.merge(latest_populations, on=hashable_columns)
+
+    subset_df.sort_values(hashable_columns).to_json(output_path, orient="records")
+
+
+def add_per_capita_columns(df: pd.DataFrame) -> None:
     # There are three cities (Sitka, Weeki Wachee, and Carlton Landing) that had population 0 in some years
     population = df["population"].where(df["population"] != 0, pd.NA)
 
