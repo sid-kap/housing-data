@@ -19,6 +19,7 @@ type RawOption = {
   path: string
   name: string
   metro_name: string
+  metro_name_with_suffix: string
   metro_type: string
   county_names: string[]
   population: number

@@ -268,7 +268,9 @@ function addPrefixes(options, prefix, use_metro_name_suffix = false) {
   const newOptions = []
   for (const option of options) {
     // IDK if we want name or value... let's just go with name for now.
-    const changes = { value: prefix + "/" + option.name }
+    const changes: { value: string; name?: string } = {
+      value: prefix + "/" + option.name,
+    }
     if (use_metro_name_suffix) {
       changes.name = option.name_with_suffix
     }
