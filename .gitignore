@@ -1,4 +1,11 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+public/*.parquet
+public/*.json
+*.ipynb
+public/counties_data/
+public/metros_data/
+public/places_data/
+public/states_data/
 
 # dependencies
 /node_modules
