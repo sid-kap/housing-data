@@ -3,14 +3,14 @@
  * https://github.com/tbleckert/react-select-search/blob/master/src/useSelect.js
  * but with fuzzysort instead of fuse.
  */
-import { useEffect, useMemo, useState, useRef, useCallback } from "react"
+import fuzzysort from "fuzzysort"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import highlightReducer from "react-select-search/dist/cjs/highlightReducer"
-import getDisplayValue from "react-select-search/dist/cjs/lib/getDisplayValue"
 import flattenOptions from "react-select-search/dist/cjs/lib/flattenOptions"
-import groupOptions from "react-select-search/dist/cjs/lib/groupOptions"
+import getDisplayValue from "react-select-search/dist/cjs/lib/getDisplayValue"
 import getNewValue from "react-select-search/dist/cjs/lib/getNewValue"
 import getOption from "react-select-search/dist/cjs/lib/getOption"
-import fuzzysort from "fuzzysort"
+import groupOptions from "react-select-search/dist/cjs/lib/groupOptions"
 
 type SelectState = {
   flat: any[]

@@ -1,6 +1,6 @@
-import Link from "next/link"
 import Head from "next/head"
-import { useState, useCallback } from "react"
+import Link from "next/link"
+import { useCallback, useState } from "react"
 
 export function CurrentYearExtrapolationInfo(props): JSX.Element {
   return <></>

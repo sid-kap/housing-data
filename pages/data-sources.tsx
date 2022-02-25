@@ -1,5 +1,6 @@
-import { Nav, GitHubFooter } from "../lib/common_elements"
 import Head from "next/head"
+
+import { GitHubFooter, Nav } from "../lib/common_elements"
 
 export default function DataSources(): JSX.Element {
   const faq = "text-lg font-semibold mt-4 mb-1"
