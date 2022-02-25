@@ -1,6 +1,7 @@
 import { useRouter } from "next/router"
-import StatePlots from "../../lib/StatePlots"
-import { Page } from "../../lib/common_elements"
+
+import StatePlots from "lib/StatePlots"
+import { Page } from "lib/common_elements"
 
 export default function State(): JSX.Element {
   const router = useRouter()

@@ -1,5 +1,7 @@
-import { useRouter } from "next/router"
 import { useCallback, useMemo } from "react"
+
+import { useRouter } from "next/router"
+
 import us from "us"
 
 import BarPlot from "lib/BarPlot"

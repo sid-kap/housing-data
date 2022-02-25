@@ -1,6 +1,7 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+
 import fuzzysort from "fuzzysort"
 import { OrderedMap } from "immutable"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { FixedSizeList } from "react-window"
 
 interface Option {

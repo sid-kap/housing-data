@@ -39,9 +39,9 @@
   "prettier": {
     "semi": false,
     "importOrder": [
-      "^@core/(.*)$",
-      "^@server/(.*)$",
-      "^@ui/(.*)$",
+      "^react$",
+      "^next/(.*)$",
+      "<THIRD_PARTY_MODULES>",
       "^lib/(.*)$",
       "^[./]"
     ],

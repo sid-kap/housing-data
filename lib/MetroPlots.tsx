@@ -1,5 +1,6 @@
-import { useRouter } from "next/router"
 import { useCallback, useEffect, useMemo } from "react"
+
+import { useRouter } from "next/router"
 
 import BarPlot from "lib/BarPlot"
 import WindowSelectSearch from "lib/WindowSelectSearch"

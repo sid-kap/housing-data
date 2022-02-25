@@ -1,7 +1,9 @@
-import { Page } from "../../lib/common_elements"
-import us from "us"
-import CountyPlots from "../../lib/CountyPlots"
 import { useRouter } from "next/router"
+
+import us from "us"
+
+import CountyPlots from "lib/CountyPlots"
+import { Page } from "lib/common_elements"
 
 export default function County(): JSX.Element {
   const router = useRouter()

@@ -1,6 +1,7 @@
+import { useCallback, useMemo, useState } from "react"
+
 import { useMediaQuery } from "@react-hook/media-query"
 import { OrderedMap } from "immutable"
-import { useCallback, useMemo, useState } from "react"
 import ContainerDimensions from "react-container-dimensions"
 import { QueryKey, UseQueryOptions, useQueries } from "react-query"
 import { VegaLite } from "react-vega"

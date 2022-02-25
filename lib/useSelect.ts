@@ -3,8 +3,9 @@
  * https://github.com/tbleckert/react-select-search/blob/master/src/useSelect.js
  * but with fuzzysort instead of fuse.
  */
-import fuzzysort from "fuzzysort"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+
+import fuzzysort from "fuzzysort"
 import highlightReducer from "react-select-search/dist/cjs/highlightReducer"
 import flattenOptions from "react-select-search/dist/cjs/lib/flattenOptions"
 import getDisplayValue from "react-select-search/dist/cjs/lib/getDisplayValue"
