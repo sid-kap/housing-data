@@ -6,7 +6,6 @@
  * hook so just building my own search from the hook wasn't easy. Or in any case, it would have
  * amounted to reimplementing a lot of things in this class.
  */
-import useSelect from "lib/useSelect"
 import React, {
   FunctionComponent,
   forwardRef,
@@ -19,6 +18,8 @@ import Option from "react-select-search/dist/cjs/Components/Option"
 import isSelected from "react-select-search/dist/cjs/lib/isSelected"
 // Not in the original file
 import { FixedSizeList } from "react-window"
+
+import useSelect from "lib/useSelect"
 
 type WindowSelectSearchProps = {
   value?: any

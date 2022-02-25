@@ -1,5 +1,12 @@
 import { useMediaQuery } from "@react-hook/media-query"
 import { OrderedMap } from "immutable"
+import { useCallback, useMemo, useState } from "react"
+import ContainerDimensions from "react-container-dimensions"
+import { QueryKey, UseQueryOptions, useQueries } from "react-query"
+import { VegaLite } from "react-vega"
+import { expressionFunction } from "vega"
+import { TopLevelSpec } from "vega-lite"
+
 import { makeCountyOptions } from "lib/CountyPlots"
 import { makeOptions as makeMetroOptions } from "lib/MetroPlots"
 import MultiSelect from "lib/MultiSelect"
@@ -8,12 +15,6 @@ import { makeStateOptions } from "lib/StatePlots"
 import { Page } from "lib/common_elements"
 import { useFetch } from "lib/queries"
 import { scoreFnWithPopulation } from "lib/utils"
-import { useCallback, useMemo, useState } from "react"
-import ContainerDimensions from "react-container-dimensions"
-import { QueryKey, UseQueryOptions, useQueries } from "react-query"
-import { VegaLite } from "react-vega"
-import { expressionFunction } from "vega"
-import { TopLevelSpec } from "vega-lite"
 
 /**
  * Returns a pair (year ranges, first year not in a range)

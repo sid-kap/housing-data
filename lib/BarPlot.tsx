@@ -1,10 +1,11 @@
-import { fieldsGenerator } from "lib/plots"
 import ContainerDimensions from "react-container-dimensions"
 import { VegaLite } from "react-vega"
 import { PlainObject } from "react-vega/src/types"
 import { TopLevelSpec } from "vega-lite"
 import { StringFieldDef } from "vega-lite/src/channeldef"
 import { Transform } from "vega-lite/src/transform"
+
+import { fieldsGenerator } from "lib/plots"
 
 const unitsLabels = {
   units: "Units permitted",

@@ -1,12 +1,13 @@
+import { useRouter } from "next/router"
+import { useCallback, useMemo } from "react"
+import us from "us"
+
 import BarPlot from "lib/BarPlot"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { CurrentYearExtrapolationInfo } from "lib/common_elements"
 import { useFetch } from "lib/queries"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping } from "lib/utils"
-import { useRouter } from "next/router"
-import { useCallback, useMemo } from "react"
-import us from "us"
 
 function getStateAbbreviation(stateCode: number): string {
   const twoDigitStringCode = String(stateCode).padStart(2, "0")

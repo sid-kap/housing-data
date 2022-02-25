@@ -1,10 +1,11 @@
+import { useRouter } from "next/router"
+import { useCallback, useEffect, useMemo } from "react"
+
 import BarPlot from "lib/BarPlot"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { useFetch } from "lib/queries"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
-import { useRouter } from "next/router"
-import { useCallback, useEffect, useMemo } from "react"
 
 import { CurrentYearExtrapolationInfo } from "./common_elements"
 
