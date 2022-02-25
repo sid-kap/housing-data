@@ -1,12 +1,11 @@
+import BarPlot from "lib/BarPlot"
+import { CurrentYearExtrapolationInfo } from "lib/common_elements"
+import { useFetch } from "lib/queries"
+import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { useRouter } from "next/router"
 import { useMemo } from "react"
 import SelectSearch from "react-select-search/dist/cjs"
 import { PlainObject } from "react-vega/src/types"
-
-import BarPlot from "../lib/BarPlot"
-import { useFetch } from "../lib/queries"
-import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects"
-import { CurrentYearExtrapolationInfo } from "./common_elements"
 
 type RawOption = {
   type: string
