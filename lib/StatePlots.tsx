@@ -1,11 +1,11 @@
 import { useRouter } from "next/router"
-import { useFetch } from "../lib/queries"
+import { useFetch } from "lib/queries"
 import SelectSearch from "react-select-search/dist/cjs"
 import { useMemo } from "react"
-import BarPlot from "../lib/BarPlot"
-import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects"
+import BarPlot from "lib/BarPlot"
+import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PlainObject } from "react-vega/src/types"
-import { CurrentYearExtrapolationInfo } from "./common_elements"
+import { CurrentYearExtrapolationInfo } from "lib/projections"
 
 type RawOption = {
   type: string
