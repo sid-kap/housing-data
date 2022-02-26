@@ -1,8 +1,9 @@
 import { useState } from "react"
-import { Page } from "../../lib/common_elements"
+
 import { useRouter } from "next/router"
 
-import MetroPlots from "../../lib/MetroPlots"
+import MetroPlots from "lib/MetroPlots"
+import { Page } from "lib/common_elements"
 
 export default function Metro(): JSX.Element {
   const router = useRouter()

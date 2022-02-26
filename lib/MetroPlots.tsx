@@ -1,11 +1,13 @@
+import { useCallback, useEffect, useMemo } from "react"
+
 import { useRouter } from "next/router"
+
 import BarPlot from "lib/BarPlot"
-import { useMemo, useEffect, useCallback } from "react"
-import { useFetch } from "lib/queries"
 import WindowSelectSearch from "lib/WindowSelectSearch"
+import { CurrentYearExtrapolationInfo } from "lib/projections"
+import { useFetch } from "lib/queries"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
-import { CurrentYearExtrapolationInfo } from "lib/projections"
 
 function getJsonUrl(metro: string): string {
   if (metro === null || typeof metro === "undefined") {

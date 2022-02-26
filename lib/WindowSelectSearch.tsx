@@ -7,19 +7,20 @@
  * amounted to reimplementing a lot of things in this class.
  */
 import React, {
+  FunctionComponent,
   forwardRef,
   memo,
-  useRef,
-  useEffect,
   useCallback,
-  FunctionComponent,
+  useEffect,
+  useRef,
 } from "react"
-import useSelect from "lib/useSelect"
+
 import Option from "react-select-search/dist/cjs/Components/Option"
 import isSelected from "react-select-search/dist/cjs/lib/isSelected"
-
 // Not in the original file
 import { FixedSizeList } from "react-window"
+
+import useSelect from "lib/useSelect"
 
 type WindowSelectSearchProps = {
   value?: any

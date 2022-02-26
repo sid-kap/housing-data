@@ -1,12 +1,15 @@
+import { useCallback, useMemo } from "react"
+
 import { useRouter } from "next/router"
-import BarPlot from "./BarPlot"
-import { useMemo, useCallback } from "react"
-import { useFetch } from "./queries"
+
 import us from "us"
+
+import BarPlot from "lib/BarPlot"
 import WindowSelectSearch from "lib/WindowSelectSearch"
-import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects"
-import { PathMapping } from "../lib/utils"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
+import { useFetch } from "lib/queries"
+import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
+import { PathMapping } from "lib/utils"
 
 function getStateAbbreviation(stateCode: number): string {
   const twoDigitStringCode = String(stateCode).padStart(2, "0")

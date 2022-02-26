@@ -27,6 +27,7 @@
     "vega-lite": "sid-kap/vega-lite#ab4760fb6125340228b3ce917a5d1ce3214b91ca"
   },
   "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^3.2.0",
     "@types/node": "^15.12.1",
     "@types/react": "^17.0.38",
     "autoprefixer": "^10.0.2",
@@ -36,6 +37,15 @@
     "typescript": "^4.5.4"
   },
   "prettier": {
-    "semi": false
+    "semi": false,
+    "importOrder": [
+      "^react$",
+      "^next/(.*)$",
+      "<THIRD_PARTY_MODULES>",
+      "^lib/(.*)$",
+      "^[./]"
+    ],
+    "importOrderSeparation": true,
+    "importOrderSortSpecifiers": true
   }
 }

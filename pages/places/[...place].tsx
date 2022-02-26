@@ -1,6 +1,7 @@
 import { useRouter } from "next/router"
-import PlacePlots from "../../lib/PlacePlots"
-import { Page } from "../../lib/common_elements"
+
+import PlacePlots from "lib/PlacePlots"
+import { Page } from "lib/common_elements"
 
 export default function Place() {
   const router = useRouter()

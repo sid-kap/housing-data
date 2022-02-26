@@ -1,6 +1,7 @@
-import Link from "next/link"
+import { useCallback, useState } from "react"
+
 import Head from "next/head"
-import { useState, useCallback } from "react"
+import Link from "next/link"
 
 export function GitHubFooter(props): JSX.Element {
   const linkClasses = "text-blue-500 hover:text-blue-300"
