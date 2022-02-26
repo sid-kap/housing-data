@@ -1,4 +1,4 @@
-import { fieldsGenerator } from "lib/plots"
+import { fieldsGenerator } from "../lib/plots"
 import ContainerDimensions from "react-container-dimensions"
 import { VegaLite } from "react-vega"
 import { TopLevelSpec } from "vega-lite"

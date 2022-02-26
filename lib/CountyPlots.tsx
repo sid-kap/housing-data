@@ -1,11 +1,11 @@
 import { useRouter } from "next/router"
-import BarPlot from "lib/BarPlot"
+import BarPlot from "./BarPlot"
 import { useMemo, useCallback } from "react"
-import { useFetch } from "lib/queries"
+import { useFetch } from "./queries"
 import us from "us"
 import WindowSelectSearch from "lib/WindowSelectSearch"
-import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
-import { PathMapping } from "lib/utils"
+import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects"
+import { PathMapping } from "../lib/utils"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 
 function getStateAbbreviation(stateCode: number): string {
