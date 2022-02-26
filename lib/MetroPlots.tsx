@@ -4,11 +4,10 @@ import { useRouter } from "next/router"
 
 import BarPlot from "lib/BarPlot"
 import WindowSelectSearch from "lib/WindowSelectSearch"
+import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
-
-import { CurrentYearExtrapolationInfo } from "./common_elements"
 
 function getJsonUrl(metro: string): string {
   if (metro === null || typeof metro === "undefined") {

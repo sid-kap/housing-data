@@ -6,7 +6,7 @@ import us from "us"
 
 import BarPlot from "lib/BarPlot"
 import WindowSelectSearch from "lib/WindowSelectSearch"
-import { CurrentYearExtrapolationInfo } from "lib/common_elements"
+import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping } from "lib/utils"

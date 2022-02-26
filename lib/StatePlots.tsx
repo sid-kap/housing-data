@@ -6,7 +6,7 @@ import SelectSearch from "react-select-search/dist/cjs"
 import { PlainObject } from "react-vega/src/types"
 
 import BarPlot from "lib/BarPlot"
-import { CurrentYearExtrapolationInfo } from "lib/common_elements"
+import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 

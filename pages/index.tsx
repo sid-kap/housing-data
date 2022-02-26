@@ -362,7 +362,9 @@ function getData(path: string): object {
 }
 
 function combineDatas(datas) {
-  const data = datas.flatMap((d) => d.data ?? [])
+  const data = datas
+    .flatMap((d) => d.data ?? [])
+    .filter((d) => d.year != "2022")
 
   const dataCopied = []
   for (const row of data) {
