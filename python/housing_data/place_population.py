@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 import requests
+from housing_data.build_data_utils import impute_2020s_population
 from housing_data.data_loading_helpers import get_path
 
 if TYPE_CHECKING:
@@ -465,13 +466,6 @@ def interpolate_1980s_populations(
     return interp_df
 
 
-def impute_place_populations_2021(df_2010s: pd.DataFrame) -> pd.DataFrame:
-    """
-    Impute 2021 with the 2020 population; that's the best I think we can do...
-    """
-    return df_2010s[df_2010s["year"] == "2020"].assign(year="2021")
-
-
 def get_place_population_estimates(data_path: Optional[Path] = None):
     print("Loading 1980 populations...")
     df_1980 = get_place_populations_1980(data_path)
@@ -497,8 +491,8 @@ def get_place_population_estimates(data_path: Optional[Path] = None):
     print("Interpolating 1980s populations...")
     interp_df = interpolate_1980s_populations(df_1980, df_1990s)
 
-    df_2021 = impute_place_populations_2021(df_2010s)
+    df_2020s = impute_2020s_population(df_2010s)
 
-    combined_df = pd.concat([interp_df, df_1990s, df_2000s, df_2010s, df_2021])
+    combined_df = pd.concat([interp_df, df_1990s, df_2000s, df_2010s, df_2020s])
 
     return combined_df

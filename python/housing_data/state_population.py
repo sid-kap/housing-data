@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 import us
+from housing_data.build_data_utils import impute_2020s_population
 from housing_data.data_loading_helpers import get_path, get_url_text
 
 if TYPE_CHECKING:
@@ -254,13 +255,6 @@ def get_state_populations_2010s(data_path: Optional[Path] = None) -> pd.DataFram
     )
 
 
-def impute_state_populations_2021(df_2010s: pd.DataFrame) -> pd.DataFrame:
-    """
-    Impute 2021 with the 2020 population; that's the best I think we can do...
-    """
-    return df_2010s[df_2010s["year"] == "2020"].assign(year="2021")
-
-
 def get_state_population_estimates(data_path: Optional[Path] = None):
     print("Loading 1980s data...")
     df_1980s = get_state_populations_1980s(data_path)
@@ -274,9 +268,9 @@ def get_state_population_estimates(data_path: Optional[Path] = None):
     print("Loading 2010s data...")
     df_2010s = get_state_populations_2010s(data_path)
 
-    df_2021 = impute_state_populations_2021(df_2010s)
+    df_2020s = impute_2020s_population(df_2010s)
 
-    states_df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s, df_2021])
+    states_df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s, df_2020s])
 
     states = us.states.mapping("name", "fips").keys()
     states_df = states_df[states_df["state"].isin(states)]

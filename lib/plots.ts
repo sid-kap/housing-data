@@ -1,8 +1,8 @@
 export function* fieldsGenerator(
-  types = ["bldgs", "units", "value"],
-  suffixes = ["_reported", ""],
-  perCapitaSuffixes = ["", "_per_capita", "_per_capita_per_1000"]
-) {
+  types: string[] = ["bldgs", "units", "value"],
+  suffixes: string[] = ["_reported", ""],
+  perCapitaSuffixes: string[] = ["", "_per_capita", "_per_capita_per_1000"]
+): IterableIterator<string> {
   for (const numUnits of [
     "1_unit",
     "2_units",

@@ -5,6 +5,7 @@ import { TopLevelSpec } from "vega-lite"
 import { Transform } from "vega-lite/src/transform"
 import { StringFieldDef } from "vega-lite/src/channeldef"
 import { PlainObject } from "react-vega/src/types"
+import { projectedUnitsLabel } from "lib/projections"
 
 const unitsLabels = {
   units: "Units permitted",
@@ -25,9 +26,9 @@ const baseKeyMapping = {
   "5_plus_units_units": "5+ units",
   "5_plus_units_bldgs": "5+ units",
   "5_plus_units_value": "5+ units",
-  projected_units: "Projected units, 2021*",
-  projected_bldgs: "Projected units, 2021*",
-  projected_value: "Projected units, 2021*",
+  projected_units: projectedUnitsLabel,
+  projected_bldgs: projectedUnitsLabel,
+  projected_value: projectedUnitsLabel,
 }
 
 const baseOrderMapping = {
@@ -85,13 +86,13 @@ export default function BarPlot({
           <pattern
             id="diagonalHatch"
             patternUnits="userSpaceOnUse"
-            width="4"
-            height="4"
+            width="6"
+            height="6"
           >
             <path
-              d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
-              stroke="black"
-              strokeWidth="1"
+              d="M-1,1 l2,-2 M0,6 l6,-6 M5,7 l2,-2"
+              stroke="rgb(64, 64, 64)"
+              strokeWidth="1.5"
             />
           </pattern>
         </defs>
@@ -187,7 +188,12 @@ function makeSpec(
       x: {
         field: "year",
         type: "temporal",
-        axis: { title: "Year", titleFontSize: 13, labelFontSize: 14 },
+        axis: {
+          title: "Year",
+          titleFontSize: 13,
+          labelFontSize: 14,
+          grid: false,
+        },
       },
       y: {
         field: "value",
@@ -238,8 +244,7 @@ function makeSpec(
                 "2 units",
                 "3-4 units",
                 "5+ units",
-                // Commenting out for now, since we have data for all of 2021. Will uncomment when we get Jan 2022.
-                // "Projected units, 2021*",
+                projectedUnitsLabel,
               ],
               // Taken from Tableau 10 (https://www.tableau.com/about/blog/2016/7/colors-upgrade-tableau-10-56782)
               range: [
@@ -247,7 +252,7 @@ function makeSpec(
                 "#f28e2b",
                 "#e15759",
                 "#76b7b2",
-                // "url(#diagonalHatch)",
+                "url(#diagonalHatch)",
               ],
             },
           },
@@ -265,12 +270,11 @@ function makeSpec(
             { field: "3_to_4_units_units", title: "3-4 units", format: "," },
             { field: "5_plus_units_units", title: "5+ units", format: "," },
             { field: "total_units", title: "Total units", format: "," },
-            // Will uncomment when we have Jan 2022 data.
-            // {
-            //   field: "projected_units",
-            //   title: "Projected units, 2021",
-            //   format: ",",
-            // },
+            {
+              field: "projected_units",
+              title: projectedUnitsLabel,
+              format: ",",
+            },
           ],
         },
       },

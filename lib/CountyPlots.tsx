@@ -6,7 +6,7 @@ import us from "us"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { makeUnitsSelect, usePerCapitaInput } from "../lib/selects"
 import { PathMapping } from "../lib/utils"
-import { CurrentYearExtrapolationInfo } from "./common_elements"
+import { CurrentYearExtrapolationInfo } from "lib/projections"
 
 function getStateAbbreviation(stateCode: number): string {
   const twoDigitStringCode = String(stateCode).padStart(2, "0")

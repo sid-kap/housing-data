@@ -61,7 +61,8 @@ COUNTY_POPULATION_DIR = Path("data", "population", "county")
 PLACE_POPULATION_DIR = Path("data", "population", "place")
 
 # Last year and month for which monthly BPS data is available (and is cloned to housing-data-data).
-LATEST_MONTH = (2021, 12)
+LATEST_MONTH = (2022, 1)
+LAST_YEAR_ANNUAL_DATA_RELEASED = False
 
 
 def write_to_json_directory(
@@ -140,8 +141,8 @@ def load_bps_all_years_plus_monthly(
     extrapolate_rest_of_year: bool = True,
 ) -> pd.DataFrame:
     """
-    Loads the annual data from 1980 to 2020, plus the year-to-date data for the current
-    year (2021).
+    Loads the annual data from 1980 to the latest full year available, plus the year-to-date data for the current
+    year and possibly the previous year if the previous year's annual data isn't released yet.
 
     Adds columns "year" and "month" to identify when the data came from.
     ("month" will only be present for the final (incomplete) year.)
@@ -149,7 +150,14 @@ def load_bps_all_years_plus_monthly(
     data_path = Path(data_repo_path, BPS_DIR) if data_repo_path else None
 
     dfs = []
-    for year in range(start_year, 2021):
+
+    # E.g. in early 2022, this will be 2020.
+    # In mid/late-2022 (after the annual 2021 data is released) this will be 2021.
+    last_full_year = (
+        LATEST_MONTH[0] - 1 if LAST_YEAR_ANNUAL_DATA_RELEASED else LATEST_MONTH[0] - 2
+    )
+
+    for year in range(start_year, last_full_year + 1):
         data = bps.load_data(
             scale=scale,
             time_scale="annual",
@@ -159,6 +167,18 @@ def load_bps_all_years_plus_monthly(
             data_path=data_path,
         ).assign(year=str(year), month=None)
         dfs.append(data)
+
+    if not LAST_YEAR_ANNUAL_DATA_RELEASED:
+        # Use the monthly year to date data for last year since the annual data isn't out yet.
+        last_year_data = bps.load_data(
+            scale=scale,
+            time_scale="monthly_year_to_date",
+            year=last_full_year + 1,
+            month=12,
+            region=region,
+            data_path=data_path,
+        ).assign(year=str(last_full_year + 1))
+        dfs.append(last_year_data)
 
     current_year_data = bps.load_data(
         scale=scale,
@@ -193,3 +213,18 @@ def add_current_year_projections(year_to_date_df: pd.DataFrame) -> pd.DataFrame:
         ).astype(int)
 
     return year_to_date_df
+
+
+def impute_2020s_population(df_2010s: pd.DataFrame) -> pd.DataFrame:
+    """
+    Impute 2021 and 2022 with the 2020 population; that's the best I think we can do
+    until the intercensals start coming out...
+    (I guess we could use the overall US population growth rate, but that's a little sketchy for
+    slow-growing metros...)
+    """
+    return pd.concat(
+        [
+            df_2010s[df_2010s["year"] == "2020"].assign(year="2021"),
+            df_2010s[df_2010s["year"] == "2020"].assign(year="2022"),
+        ]
+    )

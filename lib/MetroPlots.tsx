@@ -5,7 +5,7 @@ import { useFetch } from "lib/queries"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
-import { CurrentYearExtrapolationInfo } from "./common_elements"
+import { CurrentYearExtrapolationInfo } from "lib/projections"
 
 function getJsonUrl(metro: string): string {
   if (metro === null || typeof metro === "undefined") {

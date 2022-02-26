@@ -6,7 +6,7 @@ import us from "us"
 import { useRouter } from "next/router"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
-import { CurrentYearExtrapolationInfo } from "./common_elements"
+import { CurrentYearExtrapolationInfo } from "lib/projections"
 
 export function getJsonUrl(place: string, state: string): string {
   if (place === null) {
