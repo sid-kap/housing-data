@@ -11,7 +11,7 @@ repos:
       - id: isort
         args: [--profile, black] # make it compatible with black
   - repo: https://github.com/psf/black
-    rev: 19.3b0
+    rev: 22.3.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-prettier
