@@ -16,7 +16,7 @@ const months = {
   12: "December",
 }
 
-const latestMonth: number = 2
+const latestMonth: number = 3
 const glueWord = latestMonth == 2 ? "and" : "through"
 const observedMonths =
   latestMonth == 1
