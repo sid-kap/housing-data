@@ -61,7 +61,7 @@ COUNTY_POPULATION_DIR = Path("data", "population", "county")
 PLACE_POPULATION_DIR = Path("data", "population", "place")
 
 # Last year and month for which monthly BPS data is available (and is cloned to housing-data-data).
-LATEST_MONTH = (2022, 4)
+LATEST_MONTH = (2022, 5)
 LAST_YEAR_ANNUAL_DATA_RELEASED = True
 
 
