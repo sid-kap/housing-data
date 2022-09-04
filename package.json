@@ -10,13 +10,13 @@
   "dependencies": {
     "@react-hook/media-query": "^1.1.1",
     "date-fns": "^2.23.0",
-    "fuzzysort": "^1.1.4",
+    "fuzzysort": "^2.0.1",
     "immutable": "^4.0.0",
     "moment": "^2.29.1",
-    "next": "12.0.7",
-    "react": "^17.0.1",
+    "next": "12.2.5",
+    "react": "^18.2.0",
     "react-container-dimensions": "^1.4.1",
-    "react-dom": "17.0.1",
+    "react-dom": "18.2.0",
     "react-query": "^3.5.5",
     "react-select-search": "^2.2.1",
     "react-vega": "^7.4.2",
@@ -24,16 +24,16 @@
     "sass": "^1.29.0",
     "us": "^2.0.0",
     "vega": "^5.21.0",
-    "vega-lite": "sid-kap/vega-lite#ab4760fb6125340228b3ce917a5d1ce3214b91ca"
+    "vega-lite": "^5.5.0"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^3.2.0",
-    "@types/node": "^15.12.1",
-    "@types/react": "^17.0.38",
+    "@types/node": "^18.7.14",
+    "@types/react": "^18.0.18",
     "autoprefixer": "^10.0.2",
     "postcss": "^8.1.10",
-    "standard": "^16.0.3",
-    "tailwindcss": "^2.0.1",
+    "standard": "^17.0.0",
+    "tailwindcss": "^3.1.8",
     "typescript": "^4.5.4"
   },
   "prettier": {
