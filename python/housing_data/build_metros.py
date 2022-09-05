@@ -42,6 +42,8 @@ def load_crosswalk_df() -> pd.DataFrame:
         ]
     )
 
+    crosswalk_df = crosswalk_df.astype({"fips_state": "Int64", "fips_county": "Int64"})
+
     return crosswalk_df
 
 
