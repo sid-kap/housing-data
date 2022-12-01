@@ -143,6 +143,14 @@ expressionFunction("yearRangeOldFormat", function (datum, params) {
   return yearRangeOldMapping[year] || year.toString()
 })
 
+expressionFunction("yearFormat", function (datum, params) {
+  if (typeof datum === "number") {
+    // TODO figure out why the type is sometimes a number rather than a Date?
+    datum = new Date(datum)
+  }
+  return datum.getUTCFullYear()
+})
+
 function spec(
   width: number,
   height: number,
@@ -199,7 +207,7 @@ function spec(
           formatType: {
             five_years: "yearRangeAllFormat",
             five_years_old: "yearRangeOldFormat",
-            none: null,
+            none: "yearFormat",
           }[grouping],
           values: getYearTickValues(grouping),
           labelOverlap: isWide ? "greedy" : false,
