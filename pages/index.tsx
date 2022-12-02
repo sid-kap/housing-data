@@ -64,48 +64,30 @@ function makeYearBuckets(
     for (let year = minYear; year <= maxYear; year++) {
       const middleYear = (minYear + maxYear) / 2
       yearBuckets.push({
-        year: Date.parse(`${year}`),
-        binned_year: Date.parse(`${middleYear}`),
+        year: year,
+        binned_year: middleYear,
       })
     }
   }
   for (let year = firstNonRangeYear; year <= 2021; year++) {
     yearBuckets.push({
-      year: Date.parse(`${year}`),
-      binned_year: Date.parse(`${year}`),
+      year: year,
+      binned_year: year,
     })
   }
 
   return yearBuckets
 }
 
-const midYearDatesThrough2010 = [
-  Date.parse("1982-01-01"),
-  Date.parse("1987-01-01"),
-  Date.parse("1992-01-01"),
-  Date.parse("1997-01-01"),
-  Date.parse("2002-01-01"),
-  Date.parse("2007-01-01"),
-]
+const midYearDatesThrough2010 = [1982, 1987, 1992, 1997, 2002, 2007]
 
 function getYearTickValues(grouping) {
   if (grouping === "none") {
     return null
   } else if (grouping === "five_years") {
-    return midYearDatesThrough2010.concat([
-      Date.parse("2012-01-01"),
-      Date.parse("2017-01-01"),
-      Date.parse("2020-01-01"),
-    ])
+    return midYearDatesThrough2010.concat([2012, 2017, 2020])
   } else if (grouping === "five_years_old") {
-    return midYearDatesThrough2010.concat([
-      Date.parse("2010"),
-      Date.parse("2012"),
-      Date.parse("2014"),
-      Date.parse("2016"),
-      Date.parse("2018"),
-      Date.parse("2020"),
-    ])
+    return midYearDatesThrough2010.concat([2010, 2012, 2014, 2016, 2018, 2020])
   }
 }
 
@@ -126,29 +108,15 @@ const yearRangeAllMapping = makeYearToRangeStringMapping("five_years")
 const yearRangeOldMapping = makeYearToRangeStringMapping("five_years_old")
 
 expressionFunction("yearRangeAllFormat", function (datum, params) {
-  if (typeof datum === "number") {
-    // TODO figure out why the type is sometimes a number rather than a Date?
-    datum = new Date(datum)
-  }
-  const year = datum.getUTCFullYear()
-  return yearRangeAllMapping[year] || year.toString()
+  return yearRangeAllMapping[datum] || datum.toString()
 })
 
 expressionFunction("yearRangeOldFormat", function (datum, params) {
-  if (typeof datum === "number") {
-    // TODO figure out why the type is sometimes a number rather than a Date?
-    datum = new Date(datum)
-  }
-  const year = datum.getUTCFullYear()
-  return yearRangeOldMapping[year] || year.toString()
+  return yearRangeOldMapping[datum] || datum.toString()
 })
 
 expressionFunction("yearFormat", function (datum, params) {
-  if (typeof datum === "number") {
-    // TODO figure out why the type is sometimes a number rather than a Date?
-    datum = new Date(datum)
-  }
-  return datum.getUTCFullYear()
+  return datum.toString()
 })
 
 function spec(
@@ -185,25 +153,24 @@ function spec(
             values: makeYearBuckets(grouping),
             format: {
               parse: {
-                year: "date",
-                binned_year: "date",
+                year: "number",
+                binned_year: "number",
               },
             },
           },
           key: "year",
           fields: ["binned_year"],
         },
-        default: Date.parse("2022-01-01 13:01"),
+        default: 2022,
       },
     ],
     encoding: {
       x: {
         field: "binned_year",
-        type: "temporal",
+        type: "quantitative",
         axis: {
           title: "Year",
           grid: false,
-          format: "%Y",
           formatType: {
             five_years: "yearRangeAllFormat",
             five_years_old: "yearRangeOldFormat",
@@ -213,6 +180,7 @@ function spec(
           labelOverlap: isWide ? "greedy" : false,
           labelAngle: isWide ? 0 : 45,
         },
+	scale: { nice: false },
       },
       y: {
         field: yField,
@@ -374,14 +342,7 @@ function combineDatas(datas) {
     .flatMap((d) => d.data ?? [])
     .filter((d) => d.year != "2022")
 
-  const dataCopied = []
-  for (const row of data) {
-    const newRow = Object.assign({}, row)
-    newRow.year = Date.parse(newRow.year)
-    dataCopied.push(newRow)
-  }
-
-  return dataCopied
+  return data
 }
 
 type Option = {
