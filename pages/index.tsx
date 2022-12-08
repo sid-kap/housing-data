@@ -180,7 +180,7 @@ function spec(
           labelOverlap: isWide ? "greedy" : false,
           labelAngle: isWide ? 0 : 45,
         },
-	    scale: { nice: false },
+        scale: { nice: false },
       },
       y: {
         field: yField,
