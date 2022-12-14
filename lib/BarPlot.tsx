@@ -231,10 +231,10 @@ function makeSpec(
         },
         encoding: {
           x: {
-            field: "year",
+            field: "year"
           },
           y: {
-            field: "value",
+            field: "value"
           },
           fill: {
             title: "Building type",

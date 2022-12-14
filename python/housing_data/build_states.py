@@ -12,7 +12,7 @@ from housing_data.build_data_utils import (
 )
 
 
-def load_states(data_repo_path: Optional[str]):
+def load_states(data_repo_path: Optional[str]) -> None:
     states_df = load_bps_all_years_plus_monthly(data_repo_path, "state")
     states_df = states_df.astype({"survey_date": str})
 

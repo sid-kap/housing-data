@@ -241,7 +241,7 @@ def _load_raw_place_populations_1990s(data_path: Optional[str] = None) -> pd.Dat
     return combined_df
 
 
-def _fix_place_names(place_names):
+def _fix_place_names(place_names: pd.Series) -> pd.Series:
     """
     For the 1990s dataset
     """
@@ -466,7 +466,7 @@ def interpolate_1980s_populations(
     return interp_df
 
 
-def get_place_population_estimates(data_path: Optional[Path] = None):
+def get_place_population_estimates(data_path: Optional[Path] = None) -> pd.DataFrame:
     print("Loading 1980 populations...")
     df_1980 = get_place_populations_1980(data_path)
     print("Loading 1990s populations...")
