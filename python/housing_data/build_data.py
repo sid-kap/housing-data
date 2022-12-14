@@ -35,7 +35,7 @@ def main():
     counties_df = load_counties(
         args.data_repo_path, raw_places_df, county_population_df
     )
-    load_metros(counties_df)
+    # load_metros(counties_df)
 
 
 if __name__ == "__main__":
