@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-import requests
 from housing_data.build_data_utils import impute_2020s_population
 from housing_data.data_loading_helpers import get_path, get_url_text
 
@@ -157,7 +156,7 @@ def _load_raw_place_populations_1990s(data_path: Optional[str] = None) -> pd.Dat
     tables = get_url_text(
         "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/"
         "2000-subcounties-evaluation-estimates/sc2000f_us.txt",
-        data_path
+        data_path,
     ).split("\f")
 
     common_cols = [

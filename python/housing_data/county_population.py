@@ -87,7 +87,9 @@ def get_county_populations_2000s(data_path: Optional[Path] = None) -> pd.DataFra
     )
 
     df = df.merge(
-        get_county_fips_crosswalk(data_path), how="left", on=["county_name", "state_code"]
+        get_county_fips_crosswalk(data_path),
+        how="left",
+        on=["county_name", "state_code"],
     )
     df = df.drop(columns=["county_name"])
     df = df[df["county_code"].notnull()].copy()
