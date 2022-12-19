@@ -5,12 +5,12 @@ repos:
       - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
-  # Run autoimport before isort
-  - repo: https://github.com/lyz-code/autoimport
-    rev: 1.3.2
-    hooks:
-      - id: autoimport
-        args: [--config-file, python/pyproject.toml]
+  # This doesn't interact well with isort and typing blocks. TODO can contribute a fix
+  # - repo: https://github.com/lyz-code/autoimport
+  #   rev: 1.3.2
+  #   hooks:
+  #     - id: autoimport
+  #       args: [--config-file, python/pyproject.toml]
   - repo: https://github.com/PyCQA/isort
     rev: 5.10.1
     hooks:
