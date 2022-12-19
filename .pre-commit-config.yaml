@@ -21,6 +21,10 @@ repos:
         additional_dependencies:
           - prettier@2.7.1
           - "@trivago/prettier-plugin-sort-imports@3.3.0"
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.0.0
+    hooks:
+      - id: autoflake
   # Based on https://rednafi.github.io/digressions/python/2020/04/06/python-precommit.html
   - repo: https://github.com/pycqa/flake8
     rev: 5.0.4

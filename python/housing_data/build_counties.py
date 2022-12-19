@@ -72,19 +72,6 @@ def load_counties(
 
     counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")
 
-    write_list_to_json(
-        counties_df.drop(columns=["state_code"]).rename(
-            columns={"fips_state": "state_code"}
-        ),
-        PUBLIC_DIR / "counties_list.json",
-        ["county_name", "state_code"],
-        add_latest_population_column=True,
-    )
-
-    write_to_json_directory(
-        counties_df, Path(PUBLIC_DIR / "counties_data"), ["county_name", "fips_state"]
-    )
-
     return counties_df
 
 

@@ -205,7 +205,7 @@ def add_alt_names(raw_places_df):
 
 def load_places(
     data_repo_path: Optional[str], counties_population_df: pd.DataFrame = None
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     dfs = []
     regions: List[Region] = ["west", "midwest", "south", "northeast"]
     for region in regions:
@@ -253,15 +253,4 @@ def load_places(
 
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
-    write_list_to_json(
-        places_df,
-        PUBLIC_DIR / "places_list.json",
-        ["place_name", "state_code", "alt_name", "name"],
-        add_latest_population_column=True,
-    )
-
-    write_to_json_directory(
-        places_df, Path(PUBLIC_DIR, "places_data"), ["place_name", "state_code"]
-    )
-
-    return raw_places_df
+    return raw_places_df, places_df

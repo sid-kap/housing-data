@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+from housing_data.build_data_utils import PUBLIC_DIR
 
 PROVINCE_ABBREVIATIONS = {
     10: "NL",
@@ -70,11 +71,17 @@ def fix_sgc(sgc: str) -> str:
     return sgc[:2] + sgc[3:]
 
 
-def standardize_municipality_names(df: pd.DataFrame) -> None:
+def standardize_municipality_names(
+    df: pd.DataFrame, old_df: pd.DataFrame, recent_df: pd.DataFrame
+) -> None:
     # The earlier years are properly title-cased, while the later years (2018-2021)
     # are all upper-case. Title-case is better
+    old_df = old_df[["SGC", "Municipality Name", "year"]]
+    recent_df = recent_df[["SGC", "Municipality Name", "year"]].copy()
+    recent_df["Municipality Name"] = recent_df["Municipality Name"].str.title()
+
     name_mapping = (
-        df[["SGC", "Municipality Name", "year"]]
+        pd.concat([old_df, recent_df])
         .drop_duplicates()
         .sort_values("year")
         .groupby("SGC")
@@ -104,7 +111,53 @@ def load_all(data_path: Path) -> pd.DataFrame:
     )
 
     df["units"] = df["UnitsCategory"].map(UNITS_CATEGORIES).astype(UNITS_CATEGORY_TYPE)
+    df = df.drop(columns=["UnitsCategory"])
 
-    standardize_municipality_names(df)
+    # Ignore building type and work type for now
+    # Later we might want to break out rowhouses or condos
+    df = df.drop(columns=["BuildingType", "WorkType"])
+    df = df.drop(columns=["value ($)"])
+
+    standardize_municipality_names(df, old_df, recent_df)
+
+    # 92 duplicate rows
+    df = df.drop_duplicates()
+
+    ids = [
+        "year",
+        "Province",
+        "Municipality Name",
+        "SGC",
+        "Province Name",
+        "Province Abbreviation",
+    ]
+
+    df = (
+        pd.pivot_table(
+            df.astype({"units": str}),
+            index=ids,
+            columns="units",
+            values="UnitsCreated",
+            aggfunc="sum",
+        )
+        .fillna(0)
+        .reset_index()
+    )
+    df["total_units"] = sum(df[col] for col in UNITS_CATEGORIES.values())
 
     return df
+
+
+def serialize(places_df: pd.DataFrame) -> None:
+    places_df.to_parquet(PUBLIC_DIR / "canada_places_annual.parquet")
+
+    write_list_to_json(
+        places_df,
+        PUBLIC_DIR / "canada_places_list.json",
+        ["place_name", "state_code", "alt_name", "name"],
+        add_latest_population_column=True,
+    )
+
+    write_to_json_directory(
+        places_df, Path(PUBLIC_DIR, "places_data"), ["place_name", "state_code"]
+    )

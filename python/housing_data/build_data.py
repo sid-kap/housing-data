@@ -1,15 +1,24 @@
 import argparse
 from pathlib import Path
 
+import pandas as pd
 from housing_data import county_population
 from housing_data.build_counties import load_counties
-from housing_data.build_data_utils import COUNTY_POPULATION_DIR, PUBLIC_DIR
+from housing_data.build_data_utils import (
+    COUNTY_POPULATION_DIR,
+    PUBLIC_DIR,
+    STATE_POPULATION_DIR,
+    add_per_capita_columns,
+    load_bps_all_years_plus_monthly,
+    write_list_to_json,
+    write_to_json_directory,
+)
 from housing_data.build_metros import load_metros
 from housing_data.build_places import load_places
 from housing_data.build_states import load_states
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--data-repo-path",
@@ -31,11 +40,71 @@ def main():
     )
     county_population_df.to_parquet(PUBLIC_DIR / "county_populations.parquet")
 
-    raw_places_df = load_places(args.data_repo_path, county_population_df)
+    raw_places_df, places_df = load_places(args.data_repo_path, county_population_df)
     counties_df = load_counties(
         args.data_repo_path, raw_places_df, county_population_df
     )
-    # load_metros(counties_df)
+    metros_df = load_metros(counties_df)
+
+    write_all_json(
+        places_df,
+        counties_df,
+        metros_df,
+    )
+
+
+def generate_json(
+    places_df: pd.DataFrame,
+    counties_df: pd.DataFrame,
+    metros_df: pd.DataFrame,
+    states_df: pd.DataFrame,
+) -> None:
+    write_list_to_json(
+        places_df,
+        PUBLIC_DIR / "places_list.json",
+        ["place_name", "state_code", "alt_name", "name"],
+        add_latest_population_column=True,
+    )
+
+    write_to_json_directory(
+        places_df, Path(PUBLIC_DIR, "places_data"), ["place_name", "state_code"]
+    )
+
+    write_list_to_json(
+        metros_df,
+        PUBLIC_DIR / "metros_list.json",
+        ["metro_name", "metro_name_with_suffix", "metro_type", "path", "county_names"],
+        add_latest_population_column=True,
+        unhashable_columns=["county_names"],  # can't merge on a list-valued column
+    )
+
+    write_to_json_directory(
+        metros_df.drop(columns=["county_names"]),
+        Path(PUBLIC_DIR, "metros_data"),
+        ["path"],
+    )
+
+    write_list_to_json(
+        counties_df.drop(columns=["state_code"]).rename(
+            columns={"fips_state": "state_code"}
+        ),
+        PUBLIC_DIR / "counties_list.json",
+        ["county_name", "state_code"],
+        add_latest_population_column=True,
+    )
+
+    write_to_json_directory(
+        counties_df, Path(PUBLIC_DIR / "counties_data"), ["county_name", "fips_state"]
+    )
+
+    write_list_to_json(
+        states_df,
+        PUBLIC_DIR / "states_list.json",
+        ["state_name", "name"],
+        add_latest_population_column=True,
+    )
+
+    write_to_json_directory(states_df, Path(PUBLIC_DIR, "states_data"), ["state_name"])
 
 
 if __name__ == "__main__":

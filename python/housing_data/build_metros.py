@@ -119,7 +119,7 @@ def get_aggregate_functions() -> Dict[str, pd.NamedAgg]:
     return aggregate_functions
 
 
-def load_metros(counties_df: pd.DataFrame) -> None:
+def load_metros(counties_df: pd.DataFrame) -> pd.DataFrame:
     counties_df = counties_df.drop(
         columns=[col for col in counties_df.columns if "_per_capita" in col]
     )
@@ -153,16 +153,4 @@ def load_metros(counties_df: pd.DataFrame) -> None:
 
     metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
 
-    write_list_to_json(
-        metros_df,
-        PUBLIC_DIR / "metros_list.json",
-        ["metro_name", "metro_name_with_suffix", "metro_type", "path", "county_names"],
-        add_latest_population_column=True,
-        unhashable_columns=["county_names"],  # can't merge on a list-valued column
-    )
-
-    write_to_json_directory(
-        metros_df.drop(columns=["county_names"]),
-        Path(PUBLIC_DIR, "metros_data"),
-        ["path"],
-    )
+    return metros_df
