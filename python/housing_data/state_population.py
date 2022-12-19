@@ -10,7 +10,7 @@ from housing_data.build_data_utils import impute_2020s_population
 from housing_data.data_loading_helpers import get_path, get_url_text
 
 if TYPE_CHECKING:
-    from typing import Optional, List
+    from typing import List, Optional
 
 DIVISIONS = {
     "New England": [

@@ -88,7 +88,9 @@ def load_counties(
     return counties_df
 
 
-def impute_pre_1990_counties(counties_df: pd.DataFrame, places_df: pd.DataFrame) -> pd.DataFrame:
+def impute_pre_1990_counties(
+    counties_df: pd.DataFrame, places_df: pd.DataFrame
+) -> pd.DataFrame:
     summed_places_df = (
         places_df.groupby(["county_code", "state_code", "year"])[NUMERICAL_COLUMNS]
         .sum()

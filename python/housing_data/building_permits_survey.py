@@ -10,7 +10,7 @@ from housing_data.data_loading_helpers import get_url_text
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Any
+    from typing import Any, List, Optional
 
 Region = Literal["west", "midwest", "south", "northeast"]
 

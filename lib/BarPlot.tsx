@@ -230,12 +230,8 @@ function makeSpec(
           tooltip: { content: "data" },
         },
         encoding: {
-          x: {
-            field: "year"
-          },
-          y: {
-            field: "value"
-          },
+          x: { field: "year" },
+          y: { field: "value" },
           fill: {
             title: "Building type",
             field: "key_pretty_printed",
