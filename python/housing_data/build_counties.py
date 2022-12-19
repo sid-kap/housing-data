@@ -10,8 +10,6 @@ from housing_data.build_data_utils import (
     add_per_capita_columns,
     get_state_abbrs,
     load_bps_all_years_plus_monthly,
-    write_list_to_json,
-    write_to_json_directory,
 )
 
 

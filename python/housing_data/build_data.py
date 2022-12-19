@@ -7,9 +7,6 @@ from housing_data.build_counties import load_counties
 from housing_data.build_data_utils import (
     COUNTY_POPULATION_DIR,
     PUBLIC_DIR,
-    STATE_POPULATION_DIR,
-    add_per_capita_columns,
-    load_bps_all_years_plus_monthly,
     write_list_to_json,
     write_to_json_directory,
 )

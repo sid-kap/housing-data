@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Dict
 
 import pandas as pd
@@ -6,8 +5,6 @@ from housing_data.build_data_utils import (
     NUMERICAL_COLUMNS,
     PUBLIC_DIR,
     add_per_capita_columns,
-    write_list_to_json,
-    write_to_json_directory,
 )
 
 

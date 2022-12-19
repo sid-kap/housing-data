@@ -7,8 +7,6 @@ from housing_data.build_data_utils import (
     STATE_POPULATION_DIR,
     add_per_capita_columns,
     load_bps_all_years_plus_monthly,
-    write_list_to_json,
-    write_to_json_directory,
 )
 
 

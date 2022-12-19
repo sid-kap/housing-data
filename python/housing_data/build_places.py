@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import pandas as pd
 from housing_data import place_population
@@ -10,8 +10,6 @@ from housing_data.build_data_utils import (
     add_per_capita_columns,
     get_state_abbrs,
     load_bps_all_years_plus_monthly,
-    write_list_to_json,
-    write_to_json_directory,
 )
 from housing_data.building_permits_survey import Region
 

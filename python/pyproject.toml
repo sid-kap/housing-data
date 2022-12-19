@@ -29,3 +29,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 build_data = "housing_data.build_data:main"
+
+[tool.autoimport.common_statements]
+"np" = "import numpy as np"
+"pd" = "import pandas as pd"
