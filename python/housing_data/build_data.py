@@ -43,7 +43,7 @@ def main() -> None:
     )
     metros_df = load_metros(counties_df)
 
-    write_all_json(
+    generate_json(
         places_df,
         counties_df,
         metros_df,

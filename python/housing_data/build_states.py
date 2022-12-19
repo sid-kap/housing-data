@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
+import pandas as pd
 from housing_data import state_population
 from housing_data.build_data_utils import (
     PUBLIC_DIR,
