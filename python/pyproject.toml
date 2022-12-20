@@ -29,3 +29,17 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 build_data = "housing_data.build_data:main"
+
+[tool.mypy]
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+  "pandas.*",
+  "numpy.*",
+  "tqdm.*",
+  "us.*",
+  "requests.*",
+]
+ignore_missing_imports = true

@@ -69,7 +69,7 @@ def make_bps_fips_mapping(
     return mapping
 
 
-def make_place_name_fips_mapping(merged_rows):
+def make_place_name_fips_mapping(merged_rows: pd.DataFrame) -> pd.DataFrame:
     mapping = merged_rows[
         ["place_name", "state_code", "place_or_county_code"]
     ].drop_duplicates()
@@ -164,7 +164,7 @@ def add_place_population_data(
     return final_places_df
 
 
-def _make_nyc_rows(raw_places_df):
+def _make_nyc_rows(raw_places_df: pd.DataFrame) -> pd.DataFrame:
     nyc_df = raw_places_df[
         raw_places_df["place_name"].isin(
             ["Manhattan", "Bronx", "Brooklyn", "Queens", "Staten Island"]
@@ -184,7 +184,7 @@ def _make_nyc_rows(raw_places_df):
     return nyc_rows
 
 
-def add_alt_names(raw_places_df):
+def add_alt_names(raw_places_df: pd.DataFrame) -> None:
     """
     Add extra names to help with searching
     """

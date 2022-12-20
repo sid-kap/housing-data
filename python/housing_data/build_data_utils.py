@@ -202,6 +202,9 @@ def add_current_year_projections(year_to_date_df: pd.DataFrame) -> pd.DataFrame:
     Given a DataFrame with "monthly_year_to_date" data and a "month" column,
     adds columns for projected_{bldgs,units,value} for the remainder of the year
     (assuming a constant rate across all months).
+
+    The projected units for the remainder of the year will be stacked on top of
+    the already observed units in the bar chart, with a different shading pattern.
     """
     for value_type in ["bldgs", "units", "value"]:
         # number of remaining months in the year / number of observed months

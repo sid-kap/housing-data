@@ -9,7 +9,7 @@ from housing_data.build_places import load_places
 from housing_data.build_states import load_states
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--data-repo-path",

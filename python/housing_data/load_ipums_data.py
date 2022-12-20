@@ -5,11 +5,11 @@ from pathlib import Path
 import requests
 
 
-def main():
+def main() -> None:
     if Path("IPUMS_KEY").is_file():
         key = Path("IPUMS_KEY").read_text().strip()
     else:
-        key = os.env.get("IPUMS_KEY").strip()
+        key = os.environ["IPUMS_KEY"].strip()
 
     zip_response = requests.get(
         "https://live.nhgis.datadownload.ipums.org/web/extracts/nhgis/1533119/nhgis0015_csv.zip",

@@ -22,7 +22,7 @@ dataset_params = {
 }
 
 
-def main():
+def main() -> None:
     key = Path("IPUMS_KEY").read_text().strip()
     headers = {"Authorization": key}
 
