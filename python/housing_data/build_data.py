@@ -5,7 +5,6 @@ import pandas as pd
 from housing_data import county_population
 from housing_data.build_counties import load_counties
 from housing_data.build_data_utils import (
-    CANADA_BPER_DIR,
     COUNTY_POPULATION_DIR,
     PUBLIC_DIR,
     write_list_to_json,
@@ -14,7 +13,6 @@ from housing_data.build_data_utils import (
 from housing_data.build_metros import load_metros
 from housing_data.build_places import load_places
 from housing_data.build_states import load_states
-from housing_data.canada_bper import load_canada_bper
 
 
 def main() -> None:
@@ -45,14 +43,11 @@ def main() -> None:
     )
     metros_df = load_metros(counties_df)
 
-    canada_places_df = load_canada_bper(Path(args.data_repo_path, CANADA_BPER_DIR))
-
     generate_json(
         places_df,
         counties_df,
         metros_df,
         states_df,
-        canada_places_df,
     )
 
 
@@ -61,18 +56,15 @@ def generate_json(
     counties_df: pd.DataFrame,
     metros_df: pd.DataFrame,
     states_df: pd.DataFrame,
-    canada_places_df: pd.DataFrame,
 ) -> None:
     # Places
-    places_combined_df = pd.concat([places_df, canada_places_df])
-
     write_list_to_json(
-        places_combined_df,
+        places_df,
         PUBLIC_DIR / "places_list.json",
         ["place_name", "state_code", "alt_name", "name", "path"],
         add_latest_population_column=True,
     )
-    write_to_json_directory(places_combined_df, PUBLIC_DIR / "places_data")
+    write_to_json_directory(places_df, PUBLIC_DIR / "places_data")
 
     # Metros
     write_list_to_json(
