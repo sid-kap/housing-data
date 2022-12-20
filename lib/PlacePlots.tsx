@@ -2,45 +2,16 @@ import { useCallback, useMemo } from "react"
 
 import { useRouter } from "next/router"
 
-import us from "us"
-
 import BarPlot from "lib/BarPlot"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
+import { getStateFips, getStateAbbreviation } from "lib/geo_helpers"
 
-export function getJsonUrl(place: string, state: string): string {
-  if (place === null) {
-    return null
-  }
-  place = place.replace("#", "%23")
-  const stateFips = getStateFips(state)
-  if (stateFips) {
-    return "/places_data/" + stateFips + "/" + place + ".json"
-  } else {
-    return ""
-  }
-}
-
-function getStateFips(stateStr: string): number {
-  const state = us.lookup(stateStr)
-  if (state) {
-    return parseInt(state.fips)
-  } else {
-    return undefined
-  }
-}
-
-function getStateAbbreviation(stateCode: number): string {
-  const twoDigitStringCode = String(stateCode).padStart(2, "0")
-  const state = us.lookup(twoDigitStringCode)
-  if (typeof state === "undefined") {
-    return ""
-  } else {
-    return state.abbr
-  }
+export function getJsonUrl(place: object): string {
+  return "/places_data/" + place.path.replace("#", "%23") + ".json"
 }
 
 type Option = {
@@ -62,20 +33,41 @@ export function makePlaceOptions(
     population: number
   }>
 ): Option[] {
+  console.log(placesList)
   const options = []
   for (let i = 0; i < placesList.length; i++) {
     const place = placesList[i]
-    if (place.state_code !== null && place.place_name !== null) {
-      const abbr = getStateAbbreviation(place.state_code)
-      options.push({
-        value: i,
-        abbr: abbr,
-        place_name: place.place_name,
-        name: place.name,
-        alt_name: place.alt_name,
-        path: getJsonUrl(place.place_name, abbr),
-        population: place.population,
-      })
+    const abbr = getStateAbbreviation(place.state_code)
+    if (typeof place.state_code === "string" && place.state_code.includes("CA-")) {
+      console.log(place)
+    }
+    /* if (place.name.includes("Toronto")) {
+     *   console.log(place)
+     *   console.log({
+     *     value: i,
+     *     abbr: abbr,
+     *     place_name: place.place_name,
+     *     name: place.name,
+     *     alt_name: place.alt_name,
+     *     path: getJsonUrl(place),
+     *     population: place.population,
+     *   })
+     * } */
+    /* console.log(i) */
+    options.push({
+      value: i,
+      abbr: abbr,
+      place_name: place.place_name,
+      name: place.name,
+      alt_name: place.alt_name,
+      path: getJsonUrl(place),
+      population: place.population,
+    })
+  }
+
+  for (let op of options) {
+    if (op.name.includes("Vancouver")) {
+      console.log(op)
     }
   }
 
@@ -112,12 +104,19 @@ export default function PlacePlots({
     [placesList]
   )
 
+  for (let place of (placesList ?? [])) {
+    if (place.stateCode === "CA-ON") {
+      console.log(place)
+    }
+  }
+
   const optionVal = useMemo(
     () => pathMapping.getEntryForPath(place + "/" + state),
     [place, state, pathMapping]
   )
 
-  const { data } = useFetch(getJsonUrl(place, state))
+  console.log(place)
+  const { data } = useFetch(place !== null ? "/places_data/" + place + ".json" : null)
 
   const onChange = useCallback(
     (newPlace) => {
