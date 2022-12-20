@@ -4,11 +4,11 @@ import { useRouter } from "next/router"
 
 import BarPlot from "lib/BarPlot"
 import WindowSelectSearch from "lib/WindowSelectSearch"
+import { getStateAbbreviation, getStateFips } from "lib/geo_helpers"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
-import { getStateFips, getStateAbbreviation } from "lib/geo_helpers"
 
 export function getJsonUrl(place: object): string {
   return "/places_data/" + place.path.replace("#", "%23") + ".json"
@@ -38,7 +38,10 @@ export function makePlaceOptions(
   for (let i = 0; i < placesList.length; i++) {
     const place = placesList[i]
     const abbr = getStateAbbreviation(place.state_code)
-    if (typeof place.state_code === "string" && place.state_code.includes("CA-")) {
+    if (
+      typeof place.state_code === "string" &&
+      place.state_code.includes("CA-")
+    ) {
       console.log(place)
     }
     /* if (place.name.includes("Toronto")) {
@@ -104,7 +107,7 @@ export default function PlacePlots({
     [placesList]
   )
 
-  for (let place of (placesList ?? [])) {
+  for (let place of placesList ?? []) {
     if (place.stateCode === "CA-ON") {
       console.log(place)
     }
@@ -116,7 +119,9 @@ export default function PlacePlots({
   )
 
   console.log(place)
-  const { data } = useFetch(place !== null ? "/places_data/" + place + ".json" : null)
+  const { data } = useFetch(
+    place !== null ? "/places_data/" + place + ".json" : null
+  )
 
   const onChange = useCallback(
     (newPlace) => {

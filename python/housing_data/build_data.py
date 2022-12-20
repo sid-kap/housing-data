@@ -78,7 +78,14 @@ def generate_json(
     write_list_to_json(
         metros_df,
         PUBLIC_DIR / "metros_list.json",
-        ["name", "metro_name", "metro_name_with_suffix", "metro_type", "path", "county_names"],
+        [
+            "name",
+            "metro_name",
+            "metro_name_with_suffix",
+            "metro_type",
+            "path",
+            "county_names",
+        ],
         add_latest_population_column=True,
         unhashable_columns=["county_names"],  # can't merge on a list-valued column
     )
