@@ -35,5 +35,5 @@ export function scoreFnWithPopulation(a) {
     if (score > max) max = score
   }
   if (max === -9007199254740991) return null
-  return max + Math.log(a.obj.population)
+  return max + Math.log(a.obj.population + 1)
 }

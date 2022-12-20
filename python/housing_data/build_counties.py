@@ -67,6 +67,7 @@ def load_counties(
     counties_df["name"] = (
         counties_df["county_name"] + ", " + get_state_abbrs(counties_df["fips_state"])
     )
+    counties_df["path"] = counties_df["name"]
 
     counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")
 

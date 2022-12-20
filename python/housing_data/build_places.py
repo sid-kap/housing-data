@@ -248,7 +248,11 @@ def load_places(
         + ", "
         + get_state_abbrs(places_df["state_code"])
     )
+    places_df["path"] = places_df["name"].replace("/", "-")
 
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
+
+    # Not sure why I have to do this
+    places_df = places_df[places_df["path"].notnull()]
 
     return raw_places_df, places_df

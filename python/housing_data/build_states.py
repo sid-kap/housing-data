@@ -29,6 +29,7 @@ def load_states(data_repo_path: Optional[str]) -> pd.DataFrame:
     add_per_capita_columns(states_df)
 
     states_df["name"] = states_df["state_name"]
+    states_df["path"] = states_df["state_name"]
 
     states_df.to_parquet(PUBLIC_DIR / "states_annual.parquet")
 

@@ -1,11 +1,6 @@
 from pathlib import Path
 
 import pandas as pd
-from housing_data.build_data_utils import (
-    PUBLIC_DIR,
-    write_list_to_json,
-    write_to_json_directory,
-)
 
 PROVINCE_ABBREVIATIONS = {
     10: "NL",
@@ -39,21 +34,23 @@ PROVINCE_NAMES = {
     62: "Nunavut",
 }
 
-UNITS_CATEGORIES = {
+_UNITS_CATEGORIES = {
     1: "1_unit",
     2: "2_units",
     3: "3_to_4_units",
-    4: "5_to_9_units",
-    5: "10_to_19_units",
-    6: "20_to_49_units",
-    7: "50_to_99_units",
-    8: "100_plus_units",
+    4: "5_plus_units",
+    5: "5_plus_units",
+    6: "5_plus_units",
+    7: "5_plus_units",
+    8: "5_plus_units",
+    # 4: "5_to_9_units",
+    # 5: "10_to_19_units",
+    # 6: "20_to_49_units",
+    # 7: "50_to_99_units",
+    # 8: "100_plus_units",
 }
 
-UNITS_CATEGORY_TYPE = pd.CategoricalDtype(
-    categories=UNITS_CATEGORIES.values(),
-    ordered=True,
-)
+UNITS_CATEGORIES = {k: v + "_units" for k, v in _UNITS_CATEGORIES.items()}
 
 BUILDING_TYPES = {
     110: "single_detached",
@@ -95,7 +92,7 @@ def standardize_municipality_names(
     df["Municipality Name"] = df["SGC"].map(name_mapping)
 
 
-def load_all(data_path: Path) -> pd.DataFrame:
+def load_canada_bper(data_path: Path) -> pd.DataFrame:
     file_path = data_path / "Case1091138_revised.xlsx"
 
     old_df = pd.read_excel(file_path, sheet_name=0, skiprows=2)
@@ -114,7 +111,7 @@ def load_all(data_path: Path) -> pd.DataFrame:
         df["SGC"].str[:2].astype(int).map(PROVINCE_ABBREVIATIONS)
     )
 
-    df["units"] = df["UnitsCategory"].map(UNITS_CATEGORIES).astype(UNITS_CATEGORY_TYPE)
+    df["units"] = df["UnitsCategory"].map(UNITS_CATEGORIES)
     df = df.drop(columns=["UnitsCategory"])
 
     # Ignore building type and work type for now
@@ -149,19 +146,15 @@ def load_all(data_path: Path) -> pd.DataFrame:
     )
     df["total_units"] = sum(df[col] for col in UNITS_CATEGORIES.values())
 
+    df = df.rename(columns={"Municipality Name": "place_name"})
+    df["state_code"] = "CA-" + df["Province Abbreviation"]
+
+    # Replace / with en dash
+    df["name"] = df["place_name"].str.replace("/", "–") + ", " + df["Province Abbreviation"]
+
+    df["path"] = df["name"]
+    df["population"] = 0
+
+    df["year"] = df["year"].astype(str)
+
     return df
-
-
-def serialize(places_df: pd.DataFrame) -> None:
-    places_df.to_parquet(PUBLIC_DIR / "canada_places_annual.parquet")
-
-    write_list_to_json(
-        places_df,
-        PUBLIC_DIR / "canada_places_list.json",
-        ["place_name", "state_code", "alt_name", "name"],
-        add_latest_population_column=True,
-    )
-
-    write_to_json_directory(
-        places_df, Path(PUBLIC_DIR, "places_data"), ["place_name", "state_code"]
-    )

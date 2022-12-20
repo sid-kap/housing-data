@@ -60,37 +60,21 @@ STATE_POPULATION_DIR = Path("data", "population", "state")
 COUNTY_POPULATION_DIR = Path("data", "population", "county")
 PLACE_POPULATION_DIR = Path("data", "population", "place")
 
+CANADA_BPER_DIR = Path("data", "canada-bper")
+
 # Last year and month for which monthly BPS data is available (and is cloned to housing-data-data).
 LATEST_MONTH = (2022, 9)
 LAST_YEAR_ANNUAL_DATA_RELEASED = True
 
 
-def write_to_json_directory(
-    df: pd.DataFrame, path: Path, group_cols: List[str]
-) -> None:
-    assert len(group_cols) in [1, 2]
+def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
+    if path.exists():
+        shutil.rmtree(path)
+    path.mkdir()
 
-    path.mkdir(exist_ok=True)
-    shutil.rmtree(path)
-
-    for name, group in tqdm(df.groupby(group_cols)):
-        # small_name is the place or county name, big_name is the state code
-        if isinstance(name, tuple):
-            small_name, big_name = name
-            assert isinstance(small_name, str)
-            assert isinstance(big_name, (str, int, np.int64))
-            sub_path = Path(path, f"{big_name}")
-        elif isinstance(name, str):
-            small_name = name
-            sub_path = Path(path)
-        else:
-            raise ValueError(
-                f"Unknown type of grouping columns: {group_cols}. Found: {name}"
-            )
-
-        sub_path.mkdir(parents=True, exist_ok=True)
+    for path_name, group in tqdm(df.groupby("path")):
         group.reset_index(drop=True).to_json(
-            Path(sub_path, f"{small_name}.json"), orient="records"
+            path / f"{path_name}.json", orient="records"
         )
 
 
@@ -112,7 +96,9 @@ def write_list_to_json(
         latest_populations = df[df["year"] == "2020"][
             hashable_columns + ["population"]
         ].drop_duplicates()
-        subset_df = subset_df.merge(latest_populations, on=hashable_columns)
+        subset_df = subset_df.merge(latest_populations, on=hashable_columns, how="left")
+        subset_df["population"] = subset_df["population"].fillna(0).astype(int)
+        subset_df = subset_df.sort_values("name", ascending=False)
 
     subset_df.sort_values(hashable_columns).to_json(output_path, orient="records")
 
