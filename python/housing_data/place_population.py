@@ -245,15 +245,8 @@ def _fix_place_names(place_names: pd.Series) -> pd.Series:
     """
     For the 1990s dataset
     """
-    suffixes = ["city", "village", "town", "township", "borough"]
 
-    replace_pt_strings = [
-        (f" {suffix} \\(pt.\\)$", " " + suffix) for suffix in suffixes
-    ]
-
-    for s1, s2 in replace_pt_strings:
-        place_names = place_names.str.replace(s1, s2, regex=True)
-
+    place_names = place_names.str.replace(" \\(pt.\\)$", "", regex=True)
     place_names = place_names.str.replace("^Balance of ", "", regex=True)
     place_names = place_names.str.replace(r" \(balance\)$", "", regex=True)
 
