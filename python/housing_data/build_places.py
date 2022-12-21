@@ -242,17 +242,20 @@ def load_places(
         "place_name"
     ].str.contains("Parish")
 
-    places_df["name"] = (
+    name = (
         is_unincorporated.map({True: "Unincorporated ", False: ""})
         + places_df["place_name"]
-        + ", "
-        + get_state_abbrs(places_df["state_code"])
     )
-    places_df["path"] = places_df["name"].replace("/", "-")
+    state_abbrs = get_state_abbrs(places_df["state_code"])
+    places_df["name"] = name + ", " + state_abbrs
+    places_df["path_1"] = state_abbrs
+    places_df["path_2"] = name.str.replace("/", "-").str.replace(" ", "_")
+
+    places_df = places_df.drop(columns=["place_name"])
 
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
     # Not sure why I have to do this
-    places_df = places_df[places_df["path"].notnull()]
+    places_df = places_df[places_df["path_1"].notnull() & places_df["path_2"].notnull()]
 
     return raw_places_df, places_df

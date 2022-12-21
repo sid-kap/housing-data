@@ -69,10 +69,15 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
         shutil.rmtree(path)
     path.mkdir()
 
-    for path_name, group in tqdm(df.groupby("path")):
+    for (json_dir, json_name), group in tqdm(df.groupby(["path_1", "path_2"])):
+        sub_path = path / json_dir if json_dir is not None else path
+        sub_path.mkdir(exist_ok=True)
         group.reset_index(drop=True).to_json(
-            path / f"{path_name}.json", orient="records"
+            sub_path / f"{json_name}.json", orient="records"
         )
+
+
+DEFAULT_COLUMNS = ["name", "path_1", "path_2"]
 
 
 def write_list_to_json(
@@ -86,8 +91,15 @@ def write_list_to_json(
     :param unhashable_columns: Columns to not include in calls to drop_duplicates, merge, etc. because
         they would cause "[type] is not hashable" errors.
     """
+    columns = DEFAULT_COLUMNS + columns
     hashable_columns = list(set(columns) - set(unhashable_columns or []))
-    subset_df = df[columns].drop_duplicates(subset=hashable_columns)
+    subset_df = df[columns].copy().drop_duplicates(subset=hashable_columns)
+
+    # print(subset_df["path_1"])
+    # print(subset_df["path_2"])
+    subset_df["path"] = (
+        "/" + (subset_df["path_1"] + "/").fillna("") + subset_df["path_2"]
+    )  # + ".json"
 
     if add_latest_population_column:
         latest_populations = df[df["year"] == "2020"][
@@ -97,7 +109,9 @@ def write_list_to_json(
         subset_df["population"] = subset_df["population"].fillna(0).astype(int)
         subset_df = subset_df.sort_values("name", ascending=False)
 
-    subset_df.sort_values(hashable_columns).to_json(output_path, orient="records")
+    subset_df = subset_df.sort_values(hashable_columns)
+    subset_df = subset_df.drop(columns=["path_1", "path_2"])
+    subset_df.to_json(output_path, orient="records")
 
 
 def add_per_capita_columns(df: pd.DataFrame) -> None:

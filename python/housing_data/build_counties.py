@@ -64,10 +64,11 @@ def load_counties(
     # TODO figure out why some are null/which ones are getting dropped
     counties_df = counties_df[counties_df["county_name"].notnull()]
 
-    counties_df["name"] = (
-        counties_df["county_name"] + ", " + get_state_abbrs(counties_df["fips_state"])
-    )
-    counties_df["path"] = counties_df["name"]
+    state_abbrs = get_state_abbrs(counties_df["fips_state"])
+    counties_df["name"] = counties_df["county_name"] + ", " + state_abbrs
+    counties_df["path_1"] = state_abbrs
+    counties_df["path_2"] = counties_df["county_name"]
+    counties_df = counties_df.drop(columns=["county_name"])
 
     counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")
 

@@ -104,13 +104,13 @@ def get_aggregate_functions() -> Dict[str, pd.NamedAgg]:
         col: pd.NamedAgg(column=col, aggfunc="sum") for col in NUMERICAL_COLUMNS
     }
     aggregate_functions["county_names"] = pd.NamedAgg(
-        column="county_name", aggfunc=lambda counties: counties.tolist()
+        column="name", aggfunc=lambda counties: counties.tolist()
     )
     aggregate_functions["population"] = pd.NamedAgg(column="population", aggfunc="sum")
 
     # So that we can check if all the counties in a metro were observed in that year
     aggregate_functions["num_observed_counties"] = pd.NamedAgg(
-        column="county_name", aggfunc="count"
+        column="name", aggfunc="count"
     )
 
     return aggregate_functions
@@ -142,11 +142,13 @@ def load_metros(counties_df: pd.DataFrame) -> pd.DataFrame:
 
     add_per_capita_columns(metros_df)
 
-    metros_df["path"] = metros_df["metro_name"].str.replace("/", "-")
+    metros_df["path_1"] = None
+    metros_df["path_2"] = metros_df["metro_name"].str.replace("/", "-")
 
     # This field is only used in comparison plots in the plotting code.
     # For the plot labels, would like to use the full metro name with the "MSA" or "CSA" suffix.
     metros_df["name"] = metros_df["metro_name_with_suffix"]
+    metros_df = metros_df.drop(columns=["metro_name_with_suffix"])
 
     metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
 
