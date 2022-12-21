@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useEffect } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { useRouter } from "next/router"
 
@@ -10,42 +10,35 @@ import { useFetch } from "lib/queries"
 import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
 
-export function getJsonUrl(place: object): string {
-  // TODO move the replace into python code?
-  return "/places_data/" + place.path.replace("#", "%23") + ".json"
-}
-
 type Option = {
-  value: number
-  abbr: string
-  place_name: string
+  value: string // the path
   name: string
   alt_name: string
-  path: string
   population: number
 }
 
 export function makePlaceOptions(
   placesList: Array<{
-    state_code: number
-    place_name: string
     name: string
-    alt_name: string
+    path: string
     population: number
+    alt_name: string
   }>
-): Option[] {
+): [Option[], Map<string, Option>] {
   const options = []
+  const optionsMap = new Map()
   for (const [i, place] of placesList.entries()) {
-    options.push({
-      value: i,
+    const option = {
+      value: place.path,
       name: place.name,
       alt_name: place.alt_name,
-      path: place.path,
       population: place.population,
-    })
+    }
+    options.push(option)
+    optionsMap[place.path] = option
   }
 
-  return options
+  return [options, optionsMap]
 }
 
 const fuzzysortOptions = {
@@ -54,42 +47,46 @@ const fuzzysortOptions = {
   scoreFn: scoreFnWithPopulation,
 }
 
-export default function PlacePlots({ path, setTitle }: { path: string, setTitle: (string) => void }): JSX.Element {
+export default function PlacePlots({
+  path,
+  setTitle,
+}: {
+  path: string
+  setTitle: (string) => void
+}): JSX.Element {
   const router = useRouter()
   const { status, data: placesList } = useFetch("/places_list.json")
   const [place, setPlace] = useState<Option | null>(null)
 
-  const placeOptions = useMemo(
+  const [options, optionsMap] = useMemo(
     () => makePlaceOptions(placesList ?? []),
     [placesList]
   )
 
   // When the page first loads, figure out which place we're at
   useEffect(() => {
-    console.log(path)
-    if (status === "success") {
-      const place = placeOptions.find((place) => place.path === "/" + path)
+    if (optionsMap != null && path != null) {
+      const place = optionsMap[path]
       if (place) {
         setPlace(place)
         setTitle(place.name)
       }
     }
-  }, [status, path, placeOptions])
+  }, [optionsMap, path])
 
   const onChange = useCallback(
     (newIndex) => {
-      const newPlace = placeOptions[newIndex]
-      router.push("/places/" + newPlace.path)
-      setPlace(newPlace)
+      const newPlace = optionsMap[newIndex]
+      router.push("/places/" + newPlace.value)
     },
-    [path, placeOptions.length]
+    [path, options?.length]
   )
   const select = (
     <WindowSelectSearch
       search
       onChange={onChange}
-      options={placeOptions}
-      value={place?.value ?? 0}
+      options={options ?? []}
+      value={place?.value ?? path}
       fuzzysortOptions={fuzzysortOptions}
     />
   )
@@ -97,9 +94,15 @@ export default function PlacePlots({ path, setTitle }: { path: string, setTitle:
   return Plots({ place, select })
 }
 
-function Plots({ place, select }: {place: Option | null, select: JSX.Element}): JSX.Element {
+function Plots({
+  place,
+  select,
+}: {
+  place: Option | null
+  select: JSX.Element
+}): JSX.Element {
   const { data } = useFetch(
-    place !== null ? "/places_data/" + place.path + ".json" : null
+    place !== null ? "/places_data/" + place.value + ".json" : null
   )
 
   const { selectedUnits, unitsSelect } = makeUnitsSelect()
@@ -108,9 +111,10 @@ function Plots({ place, select }: {place: Option | null, select: JSX.Element}): 
   const perCapita = denom === "per_capita"
 
   // TODO just mark that it's the county in the JSON
-  const isCounty = place !== null
-    ? (place.name.includes("County") || place.name.includes("Parish"))
-    : false
+  const isCounty =
+    place !== null
+      ? place.name.includes("County") || place.name.includes("Parish")
+      : false
 
   return (
     <div className="mx-auto mb-10 align-center items-center flex flex-col justify-center">

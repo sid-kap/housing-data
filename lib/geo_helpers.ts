@@ -9,7 +9,8 @@ export function getStateFips(stateStr: string): number {
   }
 }
 
-export function getStateAbbreviation(stateCode: number): string {
+// TODO make this a consistent type
+export function getStateAbbreviation(stateCode: number | string): string {
   if (typeof stateCode === "string" && stateCode.startsWith("CA-")) {
     return stateCode.substring(3)
   }

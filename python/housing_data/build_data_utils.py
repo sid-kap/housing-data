@@ -95,11 +95,9 @@ def write_list_to_json(
     hashable_columns = list(set(columns) - set(unhashable_columns or []))
     subset_df = df[columns].copy().drop_duplicates(subset=hashable_columns)
 
-    # print(subset_df["path_1"])
-    # print(subset_df["path_2"])
-    subset_df["path"] = (
-        "/" + (subset_df["path_1"] + "/").fillna("") + subset_df["path_2"]
-    )  # + ".json"
+    # Refers to both the path of the json file (https://housingdata.app/places_data/{path}.json)
+    # and the URL path (https://housingdata.app/places/{path})
+    subset_df["path"] = (subset_df["path_1"] + "/").fillna("") + subset_df["path_2"]
 
     if add_latest_population_column:
         latest_populations = df[df["year"] == "2020"][
