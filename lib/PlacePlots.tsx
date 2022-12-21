@@ -7,8 +7,9 @@ import WindowSelectSearch from "lib/WindowSelectSearch"
 import { getStateAbbreviation, getStateFips } from "lib/geo_helpers"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
-import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
+import { useUnitsSelect, usePerCapitaInput } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
+import PlotsTemplate from "lib/PlotsTemplate"
 
 type Option = {
   value: string // the path
@@ -35,7 +36,7 @@ export function makePlaceOptions(
       population: place.population,
     }
     options.push(option)
-    optionsMap[place.path] = option
+    optionsMap.set(place.path, option)
   }
 
   return [options, optionsMap]
@@ -66,76 +67,30 @@ export default function PlacePlots({
   // When the page first loads, figure out which place we're at
   useEffect(() => {
     if (optionsMap != null && path != null) {
-      const place = optionsMap[path]
+      const place = optionsMap.get(path)
       if (place) {
         setPlace(place)
         setTitle(place.name)
       }
     }
-  }, [optionsMap, path])
+  }, [optionsMap, path, setTitle])
 
   const onChange = useCallback(
-    (newIndex) => {
-      const newPlace = optionsMap[newIndex]
-      router.push("/places/" + newPlace.value)
+    (newPath) => {
+      router.push("/places/" + newPath)
     },
-    [path, options?.length]
+    [router]
   )
   const select = (
     <WindowSelectSearch
       search
       onChange={onChange}
-      options={options ?? []}
-      value={place?.value ?? path}
+      options={options}
+      value={place?.value}
       fuzzysortOptions={fuzzysortOptions}
     />
   )
 
-  return Plots({ place, select })
+  return PlotsTemplate({ place, select })
 }
 
-function Plots({
-  place,
-  select,
-}: {
-  place: Option | null
-  select: JSX.Element
-}): JSX.Element {
-  const { data } = useFetch(
-    place !== null ? "/places_data/" + place.value + ".json" : null
-  )
-
-  const { selectedUnits, unitsSelect } = makeUnitsSelect()
-
-  const { denom, populationInput } = usePerCapitaInput()
-  const perCapita = denom === "per_capita"
-
-  // TODO just mark that it's the county in the JSON
-  const isCounty =
-    place !== null
-      ? place.name.includes("County") || place.name.includes("Parish")
-      : false
-
-  return (
-    <div className="mx-auto mb-10 align-center items-center flex flex-col justify-center">
-      <div className="lg:grid lg:grid-cols-3 flex flex-col">
-        <div className="m-4 col-span-1">{select}</div>
-        <div className="mt-4 mb-1 col-span-1 text-center">
-          {isCounty && <h2 className="text-2xl -mb-2">Unincorporated</h2>}
-          <h1 className="text-4xl">{place?.name}</h1>
-        </div>
-        <div className="col-span-1 m-4">{unitsSelect}</div>
-      </div>
-
-      <div className="w-full flex flex-row">
-        <BarPlot
-          data={{ table: data }}
-          units={selectedUnits}
-          perCapita={perCapita}
-        />
-      </div>
-      {populationInput}
-      <CurrentYearExtrapolationInfo />
-    </div>
-  )
-}
