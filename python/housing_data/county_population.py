@@ -199,7 +199,7 @@ def get_county_populations_1980s(data_path: Optional[Path]) -> pd.DataFrame:
         df = (
             df.dropna(subset=["year"])
             .groupby(["year", "combined_fips"])
-            .sum()
+            .sum(numeric_only=True)
             .sum(axis=1)
             .rename("population")
             .reset_index()
