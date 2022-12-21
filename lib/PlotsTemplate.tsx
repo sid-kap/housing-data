@@ -1,0 +1,48 @@
+import { useUnitsSelect, usePerCapitaInput } from "lib/selects"
+import BarPlot from "lib/BarPlot"
+import { useFetch } from "lib/queries"
+import { CurrentYearExtrapolationInfo } from "lib/projections"
+
+interface Option {
+  value: string
+  name: string
+}
+
+export default function PlotsTemplate ({
+  place,
+  select,
+}: {
+  place: Option | null
+  select: JSX.Element
+}): JSX.Element {
+  const { data } = useFetch(
+    place !== null ? "/places_data/" + place.value + ".json" : null
+  )
+
+  const { selectedUnits, unitsSelect } = useUnitsSelect()
+
+  const { denom, populationInput } = usePerCapitaInput()
+  const perCapita = denom === "per_capita"
+
+  return (
+    <div className="mx-auto mb-10 align-center items-center flex flex-col justify-center">
+      <div className="lg:grid lg:grid-cols-3 flex flex-col">
+        <div className="m-4 col-span-1">{select}</div>
+        <div className="mt-4 mb-1 col-span-1 text-center">
+          <h1 className="text-4xl">{place?.name}</h1>
+        </div>
+        <div className="col-span-1 m-4">{unitsSelect}</div>
+      </div>
+
+      <div className="w-full flex flex-row">
+        <BarPlot
+          data={{ table: data }}
+          units={selectedUnits}
+          perCapita={perCapita}
+        />
+      </div>
+      {populationInput}
+      <CurrentYearExtrapolationInfo />
+    </div>
+  )
+}
