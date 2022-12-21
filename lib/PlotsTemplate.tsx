@@ -1,14 +1,14 @@
-import { useUnitsSelect, usePerCapitaInput } from "lib/selects"
 import BarPlot from "lib/BarPlot"
-import { useFetch } from "lib/queries"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
+import { useFetch } from "lib/queries"
+import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
 
 interface Option {
   value: string
   name: string
 }
 
-export default function PlotsTemplate ({
+export default function PlotsTemplate({
   place,
   select,
 }: {

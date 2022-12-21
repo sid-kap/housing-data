@@ -288,6 +288,6 @@ WindowSelectSearch.defaultProps = {
 }
 /* eslint-enable */
 
-WindowSelectSearch.displayName = 'WindowSelectSearch'
+WindowSelectSearch.displayName = "WindowSelectSearch"
 
 export default memo(WindowSelectSearch)

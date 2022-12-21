@@ -3,13 +3,13 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/router"
 
 import BarPlot from "lib/BarPlot"
+import PlotsTemplate from "lib/PlotsTemplate"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { getStateAbbreviation, getStateFips } from "lib/geo_helpers"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
-import { useUnitsSelect, usePerCapitaInput } from "lib/selects"
+import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
-import PlotsTemplate from "lib/PlotsTemplate"
 
 type Option = {
   value: string // the path
@@ -93,4 +93,3 @@ export default function PlacePlots({
 
   return PlotsTemplate({ place, select })
 }
-
