@@ -27,7 +27,7 @@ export class PathMapping<T> {
  * eps * log(population) would be more correct than what we're doing now.
  */
 export function scoreFnWithPopulation(a) {
-  const max = -9007199254740991
+  let max = -9007199254740991
   for (let i = a.length - 1; i >= 0; --i) {
     const result = a[i]
     if (result === null) continue

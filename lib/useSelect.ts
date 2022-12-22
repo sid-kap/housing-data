@@ -96,6 +96,7 @@ export default function useSelect({
     let newOption = getOption(value, [...flatDefaultOptions, ...addedOptions])
 
     if (!newOption && !allowEmpty && !multiple) {
+      // eslint-disable-next-line @typescript-eslint/no-extra-semi
       ;[newOption] = flatDefaultOptions
     }
 
@@ -271,7 +272,8 @@ export default function useSelect({
     if (state.changed !== false) {
       // No idea why I'm getting type errors here, TODO fix it
       setState((oldState) => ({ ...oldState, changed: false }))
-      onChange(state.changed)
+      // eslint-disable-next-line prefer-spread
+      onChange.apply(null, state.changed)
     }
   }, [state.changed, onChange])
 

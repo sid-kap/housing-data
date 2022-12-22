@@ -63,6 +63,7 @@ export default function MultiSelect<T extends Option>({
   const ensureItemInView = useCallback(
     (index) => {
       // There should be a better way to get around this TypeScript error...
+      // eslint-disable-next-line @typescript-eslint/no-extra-semi
       ;(listRef.current as any).scrollToItem(index)
     },
     [listRef]
@@ -97,6 +98,7 @@ export default function MultiSelect<T extends Option>({
           }
         })
       } else if (e.key === "Escape") {
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
         ;(inputRef.current as any).blur()
       } else if (e.key === "Enter") {
         e.preventDefault()
