@@ -243,15 +243,12 @@ function spec(
   }
 }
 
-function addPrefixes(options, prefix, use_metro_name_suffix = false) {
+function addPrefixes(options, prefix) {
   const newOptions = []
   for (const option of options) {
     // IDK if we want name or value... let's just go with name for now.
     const changes: { value: string; name?: string } = {
-      value: prefix + "/" + option.name,
-    }
-    if (use_metro_name_suffix) {
-      changes.name = option.name_with_suffix
+      value: prefix + "/" + option.value,
     }
     newOptions.push(Object.assign(option, changes))
   }
@@ -266,7 +263,7 @@ function makeAllOptions(statesList, metrosList, countiesList, placesList) {
   if (!(typeof csaOptions === "object" && csaOptions.name === "CSAs")) {
     throw new Error("second element makeMetroOptions is not CSAs")
   }
-  const stateOptions: any[] = makeOptions(statesList)
+  const stateOptions: any[] = makeOptions(statesList)[0]
   const countyOptions: any[] = makeOptions(countiesList)[0]
   const placeOptions: any[] = makeOptions(placesList)[0]
 
@@ -290,11 +287,11 @@ function makeAllOptions(statesList, metrosList, countiesList, placesList) {
   return [
     {
       groupName: "Places",
-      items: addPrefixes(placeOptions, "Places"),
+      items: addPrefixes(placeOptions, "places_data"),
     },
     {
       groupName: "Counties",
-      items: addPrefixes(countyOptions, "Counties"),
+      items: addPrefixes(countyOptions, "counties_data"),
     },
     // I've filtered out the μSAs, so we can use MSA and CBSA interchangeably.
     // Most people know what an MSA is but not a CBSA, so we should use that name.
@@ -302,15 +299,15 @@ function makeAllOptions(statesList, metrosList, countiesList, placesList) {
     // data files.
     {
       groupName: "MSAs",
-      items: addPrefixes(msaOptions.items, "MSAs", true),
+      items: addPrefixes(msaOptions.items, "metros_data"),
     },
     {
       groupName: "CSAs",
-      items: addPrefixes(csaOptions.items, "CSAs", true),
+      items: addPrefixes(csaOptions.items, "metros_data"),
     },
     {
       groupName: "States",
-      items: addPrefixes(stateOptions, "States"),
+      items: addPrefixes(stateOptions, "states_data"),
     },
   ]
 }
@@ -389,7 +386,7 @@ export default function Home(): JSX.Element {
     .map((item) => {
       return {
         queryKey: [item.value],
-        queryFn: () => getData(item.path),
+        queryFn: () => getData(item.value + ".json"),
       }
     })
   const datas: any = useQueries(queries)
