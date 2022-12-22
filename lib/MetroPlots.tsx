@@ -122,7 +122,6 @@ export default function MetroPlots({
     [router]
   )
 
-  /* eslint-disable */
   const countyList = useMemo(() => {
     return metro != null ? (
       <div className="max-w-3xl text-sm mt-4">

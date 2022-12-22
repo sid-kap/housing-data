@@ -9,10 +9,8 @@
   },
   "dependencies": {
     "@react-hook/media-query": "^1.1.1",
-    "date-fns": "^2.23.0",
     "fuzzysort": "^2.0.1",
     "immutable": "^4.0.0",
-    "moment": "^2.29.1",
     "next": "12.2.5",
     "react": "^18.2.0",
     "react-container-dimensions": "^1.4.1",
