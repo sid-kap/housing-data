@@ -47,7 +47,9 @@ def main() -> None:
 
     canada_places_df = load_canada_bper(Path(args.data_repo_path, CANADA_BPER_DIR))
 
-    generate_json(pd.concat([places_df, canada_places_df]), counties_df, metros_df, states_df)
+    generate_json(
+        pd.concat([places_df, canada_places_df]), counties_df, metros_df, states_df
+    )
 
 
 def generate_json(

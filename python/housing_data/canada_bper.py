@@ -150,7 +150,9 @@ def load_canada_bper(data_path: Path) -> pd.DataFrame:
     df["state_code"] = "CA-" + df["Province Abbreviation"]
 
     # Replace / with en dash
-    df["name"] = df["place_name"].str.replace("/", "–") + ", " + df["Province Abbreviation"]
+    df["name"] = (
+        df["place_name"].str.replace("/", "–") + ", " + df["Province Abbreviation"]
+    )
 
     df["path"] = df["name"]
     df["population"] = 0
