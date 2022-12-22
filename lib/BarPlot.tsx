@@ -100,10 +100,7 @@ export default function BarPlot({
       </svg>
       <ContainerDimensions>
         {({ width }) => (
-          <VegaLite
-            spec={makeSpec(units, perCapita, width)}
-            data={data}
-          />
+          <VegaLite spec={makeSpec(units, perCapita, width)} data={data} />
         )}
       </ContainerDimensions>
     </>

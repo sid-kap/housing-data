@@ -65,7 +65,9 @@ export default function useSelect({
   search: canSearch = false,
   options: defaultOptions,
   fuzzysortOptions = { keys: ["name"], threshold: -10000 },
-  onChange = function () { /* do nothing */ },
+  onChange = function () {
+    /* do nothing */
+  },
   getOptions = null,
   allowEmpty = true,
   closeOnSelect = true,
@@ -94,7 +96,7 @@ export default function useSelect({
     let newOption = getOption(value, [...flatDefaultOptions, ...addedOptions])
 
     if (!newOption && !allowEmpty && !multiple) {
-      [newOption] = flatDefaultOptions
+      ;[newOption] = flatDefaultOptions
     }
 
     return newOption
