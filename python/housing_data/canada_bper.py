@@ -146,17 +146,13 @@ def load_canada_bper(data_path: Path) -> pd.DataFrame:
     )
     df["total_units"] = sum(df[col] for col in UNITS_CATEGORIES.values())
 
-    df = df.rename(columns={"Municipality Name": "place_name"})
-    df["state_code"] = "CA-" + df["Province Abbreviation"]
+    df["name"] = df["Municipality Name"] + ", " + df["Province Abbreviation"]
+    df["path_1"] = df["Province Abbreviation"]
+    df["path_2"] = df["Municipality Name"].str.replace("/", "–").str.replace(" ", "_")
 
-    # Replace / with en dash
-    df["name"] = (
-        df["place_name"].str.replace("/", "–") + ", " + df["Province Abbreviation"]
-    )
-
-    df["path"] = df["name"]
-    df["population"] = 0
+    df["population"] = 1
 
     df["year"] = df["year"].astype(str)
+    df = df.drop(columns=["Province Name", "Province Abbreviation", "Municipality Name"])
 
     return df
