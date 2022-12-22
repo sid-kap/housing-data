@@ -152,7 +152,7 @@ def get_place_populations_1980(data_path: Optional[Path]) -> pd.DataFrame:
     return df
 
 
-def _load_raw_place_populations_1990s(data_path: Optional[str] = None) -> pd.DataFrame:
+def _load_raw_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
     tables = get_url_text(
         "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/"
         "2000-subcounties-evaluation-estimates/sc2000f_us.txt",
