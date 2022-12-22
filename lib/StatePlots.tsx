@@ -3,13 +3,9 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/router"
 
 import SelectSearch from "react-select-search/dist/cjs"
-import { PlainObject } from "react-vega/src/types"
 
-import BarPlot from "lib/BarPlot"
 import PlotsTemplate from "lib/PlotsTemplate"
-import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
-import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
 
 type RawOption = {
   name: string
@@ -44,7 +40,7 @@ export default function StatePlots({
   setTitle: (string) => void
 }): JSX.Element {
   const router = useRouter()
-  const { status, data: statesList } = useFetch("/states_list.json")
+  const { data: statesList } = useFetch("/states_list.json")
   const [state, setState] = useState<Option | null>(null)
 
   const [options, optionsMap] = useMemo(

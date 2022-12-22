@@ -1,8 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useState } from "react"
 
 import { useRouter } from "next/router"
-
-import us from "us"
 
 import CountyPlots from "lib/CountyPlots"
 import { Page } from "lib/common_elements"

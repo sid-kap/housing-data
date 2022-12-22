@@ -2,15 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { useRouter } from "next/router"
 
-import us from "us"
-
-import BarPlot from "lib/BarPlot"
 import PlotsTemplate from "lib/PlotsTemplate"
 import WindowSelectSearch from "lib/WindowSelectSearch"
-import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
-import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
-import { PathMapping } from "lib/utils"
 
 // The schema for /counties_list.json
 type RawOption = {
@@ -50,7 +44,7 @@ export default function CountyPlots({
   setTitle: (string) => void
 }): JSX.Element {
   const router = useRouter()
-  const { status, data: countiesList } = useFetch("/counties_list.json")
+  const { data: countiesList } = useFetch("/counties_list.json")
   const [county, setCounty] = useState<Option | null>(null)
 
   console.log(path)

@@ -4,11 +4,8 @@ import { useRouter } from "next/router"
 
 import PlotsTemplate from "lib/PlotsTemplate"
 import WindowSelectSearch from "lib/WindowSelectSearch"
-import { getStateAbbreviation, getStateFips } from "lib/geo_helpers"
-import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
-import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
-import { PathMapping, scoreFnWithPopulation } from "lib/utils"
+import { scoreFnWithPopulation } from "lib/utils"
 
 // The schema for /places_list.json
 type RawOption = {
