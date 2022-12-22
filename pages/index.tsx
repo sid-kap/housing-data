@@ -243,16 +243,11 @@ function spec(
   }
 }
 
-function addPrefixes(options, prefix) {
-  const newOptions = []
-  for (const option of options) {
-    // IDK if we want name or value... let's just go with name for now.
-    const changes: { value: string; name?: string } = {
-      value: prefix + "/" + option.value,
-    }
-    newOptions.push(Object.assign(option, changes))
-  }
-  return newOptions
+function addPathPrefixes(options: any[], prefix: string): any[] {
+  return options.map(({ value, ...rest }) => ({
+    value: prefix + "/" + value,
+    ...rest,
+  }))
 }
 
 function makeAllOptions(statesList, metrosList, countiesList, placesList) {
@@ -287,11 +282,11 @@ function makeAllOptions(statesList, metrosList, countiesList, placesList) {
   return [
     {
       groupName: "Places",
-      items: addPrefixes(placeOptions, "places_data"),
+      items: addPathPrefixes(placeOptions, "places_data"),
     },
     {
       groupName: "Counties",
-      items: addPrefixes(countyOptions, "counties_data"),
+      items: addPathPrefixes(countyOptions, "counties_data"),
     },
     // I've filtered out the μSAs, so we can use MSA and CBSA interchangeably.
     // Most people know what an MSA is but not a CBSA, so we should use that name.
@@ -299,15 +294,15 @@ function makeAllOptions(statesList, metrosList, countiesList, placesList) {
     // data files.
     {
       groupName: "MSAs",
-      items: addPrefixes(msaOptions.items, "metros_data"),
+      items: addPathPrefixes(msaOptions.items, "metros_data"),
     },
     {
       groupName: "CSAs",
-      items: addPrefixes(csaOptions.items, "metros_data"),
+      items: addPathPrefixes(csaOptions.items, "metros_data"),
     },
     {
       groupName: "States",
-      items: addPrefixes(stateOptions, "states_data"),
+      items: addPathPrefixes(stateOptions, "states_data"),
     },
   ]
 }
