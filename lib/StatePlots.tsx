@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { useRouter } from "next/router"
 
@@ -23,14 +23,18 @@ type Option = {
   name: string
 }
 
-export function makeOptions(statesList: RawOption[]): [Option[], Map<string, Option>] {
-  const options = statesList.map((state) => ({value: state.path, name: state.name}))
+export function makeOptions(
+  statesList: RawOption[]
+): [Option[], Map<string, Option>] {
+  const options = statesList.map((state) => ({
+    value: state.path,
+    name: state.name,
+  }))
 
   const optionsMap = new Map(options.map((option) => [option.value, option]))
 
   return [options, optionsMap]
 }
-
 
 export default function StatePlots({
   path,
