@@ -10,7 +10,7 @@ interface Option {
 
 export function makeOptions<T extends { path: string }, U>(
   jsonList: T[]
-): [Option[], Map<string, U>] {
+): [U[], Map<string, U>] {
   const options = []
   const optionsMap = new Map()
   for (const { path, ...fields } of jsonList) {

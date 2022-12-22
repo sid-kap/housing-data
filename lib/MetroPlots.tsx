@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { useRouter } from "next/router"
 
-import PlotsTemplate from "lib/PlotsTemplate"
+import PlotsTemplate, { makeOptions } from "lib/PlotsTemplate"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { useFetch } from "lib/queries"
 import { scoreFnWithPopulation } from "lib/utils"
@@ -16,58 +16,34 @@ type RawOption = {
 }
 
 type Option = {
-  value: string // the path
   name: string
+  value: string // the path
   metro_type: string
   county_names: string[]
   population: number
 }
 
-type Group<T> = {
+type OptionGroup = {
   name: string
   type: string
-  items: T[]
+  items: Option[]
 }
 
-export function makeOptions(
+export function makeMetroOptions(
   metrosList: RawOption[]
-): [[Group<Option>, Group<Option>], Map<string, Option>] {
-  const msaOptions = []
-  const csaOptions = []
-  const optionsMap = new Map()
+): [[OptionGroup, OptionGroup], Map<string, Option>] {
+  const [msaOptions, msaOptionsMap] = makeOptions<RawOption, Option>(
+    metrosList.filter((m) => m.metro_type === "msa")
+  )
+  const [csaOptions, csaOptionsMap] = makeOptions<RawOption, Option>(
+    metrosList.filter((m) => m.metro_type === "csa")
+  )
 
-  for (const metro of metrosList) {
-    const option = {
-      value: metro.path,
-      name: metro.name,
-      metro_type: metro.metro_type,
-      county_names: metro.county_names,
-      population: metro.population,
-    }
-
-    if (metro.metro_type === "msa") {
-      msaOptions.push(option)
-    } else if (metro.metro_type === "csa") {
-      csaOptions.push(option)
-    } else {
-      throw new Error("Unknown metro_type: " + metro.metro_type)
-    }
-    optionsMap.set(metro.path, option)
-  }
-
-  const options: [Group<Option>, Group<Option>] = [
-    {
-      name: "MSAs",
-      type: "group",
-      items: msaOptions,
-    },
-    {
-      name: "CSAs",
-      type: "group",
-      items: csaOptions,
-    },
+  const options: [OptionGroup, OptionGroup] = [
+    { name: "MSAs", type: "group", items: msaOptions },
+    { name: "CSAs", type: "group", items: csaOptions },
   ]
-  return [options, optionsMap]
+  return [options, new Map([...msaOptionsMap, ...csaOptionsMap])]
 }
 
 function renderOption(
@@ -102,7 +78,7 @@ export default function MetroPlots({
   const [metro, setMetro] = useState<Option | null>(null)
 
   const [options, optionsMap] = useMemo(
-    () => makeOptions(metrosList ?? []),
+    () => makeMetroOptions(metrosList ?? []),
     [metrosList]
   )
 

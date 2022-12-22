@@ -8,7 +8,7 @@ import { VegaLite } from "react-vega"
 import { expressionFunction } from "vega"
 import { TopLevelSpec } from "vega-lite"
 
-import { makeOptions as makeMetroOptions } from "lib/MetroPlots"
+import { makeMetroOptions } from "lib/MetroPlots"
 import MultiSelect from "lib/MultiSelect"
 import { makeOptions } from "lib/PlotsTemplate"
 import { Page } from "lib/common_elements"
