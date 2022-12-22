@@ -8,7 +8,7 @@ import { PlainObject } from "react-vega/src/types"
 import BarPlot from "lib/BarPlot"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
-import { useUnitsSelect, usePerCapitaInput } from "lib/selects"
+import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
 
 type RawOption = {
   type: string

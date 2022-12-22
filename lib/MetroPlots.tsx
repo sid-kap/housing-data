@@ -6,7 +6,7 @@ import BarPlot from "lib/BarPlot"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
-import { useUnitsSelect, usePerCapitaInput } from "lib/selects"
+import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
 
 function getJsonUrl(metro: string): string {
