@@ -8,7 +8,7 @@ import BarPlot from "lib/BarPlot"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
-import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
+import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
 
 export function getJsonUrl(place: string, state: string): string {
@@ -97,7 +97,7 @@ export default function PlacePlots({
 }): JSX.Element {
   const router = useRouter()
 
-  const { status, data: placesList } = useFetch("/places_list.json")
+  const { data: placesList } = useFetch("/places_list.json")
 
   const placeOptions = useMemo(
     () => makePlaceOptions(placesList ?? []),
@@ -138,7 +138,7 @@ export default function PlacePlots({
     ? place.endsWith("County") || place.endsWith("Parish")
     : false
 
-  const { selectedUnits, unitsSelect } = makeUnitsSelect()
+  const { selectedUnits, unitsSelect } = useUnitsSelect()
 
   const { denom, populationInput } = usePerCapitaInput()
   const perCapita = denom === "per_capita"

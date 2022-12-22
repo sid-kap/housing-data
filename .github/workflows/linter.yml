@@ -44,6 +44,14 @@ jobs:
           # Full git history is needed to get a proper list of changed files within `super-linter`
           fetch-depth: 0
 
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Installing dev dependencies for linters
+        run: yarn install --dev
+
       ################################
       # Run Linter against code base #
       ################################
@@ -56,3 +64,5 @@ jobs:
           VALIDATE_PYTHON_PYLINT: false
           JAVASCRIPT_DEFAULT_STYLE: prettier
           TYPESCRIPT_DEFAULT_STYLE: prettier
+          TYPESCRIPT_ES_CONFIG_FILE: .eslintrc.json
+          LINTER_RULES_PATH: / # todo maybe move my config files to .github/linters?

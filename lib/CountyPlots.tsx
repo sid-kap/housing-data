@@ -8,7 +8,7 @@ import BarPlot from "lib/BarPlot"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
-import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
+import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
 import { PathMapping } from "lib/utils"
 
 function getStateAbbreviation(stateCode: number): string {
@@ -110,7 +110,7 @@ export default function CountyPlots({
     [countyName, stateAbbr, status]
   )
 
-  const { selectedUnits, unitsSelect } = makeUnitsSelect()
+  const { selectedUnits, unitsSelect } = useUnitsSelect()
 
   const { denom, populationInput } = usePerCapitaInput()
   const perCapita = denom === "per_capita"

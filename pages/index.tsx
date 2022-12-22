@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from "react"
 import { useMediaQuery } from "@react-hook/media-query"
 import { OrderedMap } from "immutable"
 import ContainerDimensions from "react-container-dimensions"
-import { QueryKey, UseQueryOptions, useQueries } from "react-query"
+import { useQueries } from "react-query"
 import { VegaLite } from "react-vega"
 import { expressionFunction } from "vega"
 import { TopLevelSpec } from "vega-lite"
@@ -107,15 +107,18 @@ function makeYearToRangeStringMapping(grouping: string): Map<number, string> {
 const yearRangeAllMapping = makeYearToRangeStringMapping("five_years")
 const yearRangeOldMapping = makeYearToRangeStringMapping("five_years_old")
 
-expressionFunction("yearRangeAllFormat", function (datum, params) {
+/*eslint @typescript-eslint/no-unused-vars: ["error", { "argsIgnorePattern": "^_" }]*/
+expressionFunction("yearRangeAllFormat", function (datum, _) {
   return yearRangeAllMapping[datum] || datum.toString()
 })
 
-expressionFunction("yearRangeOldFormat", function (datum, params) {
+/*eslint @typescript-eslint/no-unused-vars: ["error", { "argsIgnorePattern": "^_" }]*/
+expressionFunction("yearRangeOldFormat", function (datum, _) {
   return yearRangeOldMapping[datum] || datum.toString()
 })
 
-expressionFunction("yearFormat", function (datum, params) {
+/*eslint @typescript-eslint/no-unused-vars: ["error", { "argsIgnorePattern": "^_" }]*/
+expressionFunction("yearFormat", function (datum, _) {
   return datum.toString()
 })
 

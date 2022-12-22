@@ -6,7 +6,7 @@ import BarPlot from "lib/BarPlot"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
-import { makeUnitsSelect, usePerCapitaInput } from "lib/selects"
+import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
 
 function getJsonUrl(metro: string): string {
@@ -158,7 +158,7 @@ export default function MetroPlots({
   }, [optionVal])
   /* eslint-enable */
 
-  const { selectedUnits, unitsSelect } = makeUnitsSelect()
+  const { selectedUnits, unitsSelect } = useUnitsSelect()
 
   const { denom, populationInput } = usePerCapitaInput()
   const perCapita = denom === "per_capita"
