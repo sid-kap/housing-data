@@ -8,6 +8,23 @@ interface Option {
   name: string
 }
 
+export function makeOptions<T extends { path: string }, U>(
+  jsonList: T[]
+): [Option[], Map<string, U>] {
+  const options = []
+  const optionsMap = new Map()
+  for (const { path, ...fields } of jsonList) {
+    const option = {
+      value: path,
+      ...fields,
+    }
+    options.push(option)
+    optionsMap.set(path, option)
+  }
+
+  return [options, optionsMap]
+}
+
 export default function PlotsTemplate({
   selected,
   select,

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { useRouter } from "next/router"
 
-import PlotsTemplate from "lib/PlotsTemplate"
+import PlotsTemplate, { makeOptions } from "lib/PlotsTemplate"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { useFetch } from "lib/queries"
 
@@ -14,26 +14,9 @@ type RawOption = {
 }
 
 type Option = {
-  value: string // the path
   name: string
-}
-
-export function makeOptions(
-  countiesList: RawOption[]
-): [Option[], Map<string, Option>] {
-  const options = []
-  const optionsMap = new Map()
-  for (const county of countiesList) {
-    const option = {
-      value: county.path,
-      name: county.name,
-      population: county.population,
-    }
-    options.push(option)
-    optionsMap.set(county.path, option)
-  }
-
-  return [options, optionsMap]
+  value: string // the path
+  population: number
 }
 
 export default function CountyPlots({
@@ -48,7 +31,7 @@ export default function CountyPlots({
   const [county, setCounty] = useState<Option | null>(null)
 
   const [options, optionsMap] = useMemo(
-    () => makeOptions(countiesList ?? []),
+    () => makeOptions<RawOption, Option>(countiesList ?? []),
     [countiesList]
   )
 

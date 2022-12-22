@@ -4,7 +4,7 @@ import { useRouter } from "next/router"
 
 import SelectSearch from "react-select-search/dist/cjs"
 
-import PlotsTemplate from "lib/PlotsTemplate"
+import PlotsTemplate, { makeOptions } from "lib/PlotsTemplate"
 import { useFetch } from "lib/queries"
 
 type RawOption = {
@@ -15,21 +15,10 @@ type RawOption = {
 }
 
 type Option = {
-  value: string // the path
   name: string
-}
-
-export function makeOptions(
-  statesList: RawOption[]
-): [Option[], Map<string, Option>] {
-  const options = statesList.map((state) => ({
-    value: state.path,
-    name: state.name,
-  }))
-
-  const optionsMap = new Map(options.map((option) => [option.value, option]))
-
-  return [options, optionsMap]
+  value: string // the path
+  population: string
+  type: string
 }
 
 export default function StatePlots({
@@ -44,7 +33,7 @@ export default function StatePlots({
   const [state, setState] = useState<Option | null>(null)
 
   const [options, optionsMap] = useMemo(
-    () => makeOptions(statesList ?? []),
+    () => makeOptions<RawOption, Option>(statesList ?? []),
     [statesList]
   )
 

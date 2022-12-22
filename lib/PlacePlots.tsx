@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/router"
 
 import PlotsTemplate from "lib/PlotsTemplate"
+import { makeOptions } from "lib/PlotsTemplate"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { useFetch } from "lib/queries"
 import { scoreFnWithPopulation } from "lib/utils"
@@ -16,29 +17,10 @@ type RawOption = {
 }
 
 type Option = {
-  value: string // the path
   name: string
-  alt_name: string
+  value: string // the path
   population: number
-}
-
-export function makeOptions(
-  placesList: RawOption[]
-): [Option[], Map<string, Option>] {
-  const options = []
-  const optionsMap = new Map()
-  for (const place of placesList) {
-    const option = {
-      value: place.path,
-      name: place.name,
-      alt_name: place.alt_name,
-      population: place.population,
-    }
-    options.push(option)
-    optionsMap.set(place.path, option)
-  }
-
-  return [options, optionsMap]
+  alt_name: string
 }
 
 const fuzzysortOptions = {
@@ -59,7 +41,7 @@ export default function PlacePlots({
   const [place, setPlace] = useState<Option | null>(null)
 
   const [options, optionsMap] = useMemo(
-    () => makeOptions(placesList ?? []),
+    () => makeOptions<RawOption, Option>(placesList ?? []),
     [placesList]
   )
 
