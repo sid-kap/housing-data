@@ -277,7 +277,7 @@ WindowSelectSearch.defaultProps = {
     <input {...valueProps} className={className} />
   ),
   getOptions: null,
-  emptyMessage: null,
+  // emptyMessage: null,
   fuzzysortOptions: { keys: ["name"], threshold: -10000 },
 }
 /* eslint-enable */

@@ -16,7 +16,8 @@ const months = {
   12: "December",
 }
 
-const latestMonth = 9
+// eslint-disable-next-line @typescript-eslint/no-inferrable-types
+const latestMonth: number = 9
 const glueWord = latestMonth == 2 ? "and" : "through"
 const observedMonths =
   latestMonth == 1
