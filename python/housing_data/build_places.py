@@ -18,7 +18,10 @@ def make_bps_fips_mapping(
     places_df: pd.DataFrame, place_population_df: pd.DataFrame
 ) -> pd.DataFrame:
     """
-    Returns a DataFrame with columns: 6_digit_id, state_code, place_or_county_code
+    Returns a DataFrame with columns:
+    - 6_digit_id (str)
+    - state_code (int)
+    - place_or_county_code (str)
     """
     # The most recent years have fips code in BPS, so we'll use those to join.
     # Some years will have the same BPS 6-digit ID, so we can join roughly 1992 to present using that.
@@ -27,7 +30,6 @@ def make_bps_fips_mapping(
         ["place_name", "fips place_code", "county_code", "state_code", "6_digit_id"]
     ].copy()
 
-    # For it to be a mapping, each BPS ID should appear only once per state...
     assert (mapping.groupby(["6_digit_id", "state_code"]).size() == 1).all()
 
     fips_place_code_str = mapping["fips place_code"].astype(str).replace("<NA>", "")
@@ -37,7 +39,7 @@ def make_bps_fips_mapping(
         ~mapping["fips place_code"].isin([0, 99990]), county_code_str + "_county"
     )
 
-    # Fix NYC boroughs: we don't want to use the whole city population as the denominator in per-capite calculations
+    # Fix NYC boroughs: we don't want to use the whole city population as the denominator in per-capita calculations
     # for the borough plots.
     # The boroughs all have place_or_county_code = 51000, state_code = 36, and place_name = the borough name.
     # The third condition below is needed because there is also a "New York City" total row which has the same state and
@@ -68,22 +70,29 @@ def make_bps_fips_mapping(
 
 
 def make_place_name_fips_mapping(merged_rows: pd.DataFrame) -> pd.DataFrame:
+    """
+    Returns a DataFrame with columns:
+    - place_name (str)
+    - state_code (int)
+    - place_or_county_code (str)
+
+    This is used to map recent (post-1992) rows to old (pre-1992) rows, since
+    the 6-digit IDs changed and the old rows don't have FIPS codes either.
+
+    This is not great, because it throws out towns with similar names
+    (e.g. Albion town, NY and Albion village, NY).
+    We should probably use the "town", "village", etc. designations for
+    matching instead of throwing them away.
+    """
     mapping = merged_rows[
         ["place_name", "state_code", "place_or_county_code"]
     ].drop_duplicates()
 
     # Remove dupes ( (place_name, state_code) tuples for which there are multiple fips codes)
-    dupes = mapping.groupby(["place_name", "state_code"]).size().loc[lambda x: x > 1]
-    mapping = (
-        mapping.merge(
-            dupes.rename("dupe_count").reset_index().drop(columns=["dupe_count"]),
-            on=["place_name", "state_code"],
-            how="left",
-            indicator=True,
-        )
-        .loc[lambda df: df["_merge"] == "left_only"]
-        .drop(columns=["_merge"])
-    )
+    # TODO: some of these are probably cases of a village and a township with the same name,
+    # or something like that. We can probably deal with this instead of throwing them all out
+    dupes = mapping.duplicated(subset=["place_name", "state_code"], keep=False)
+    mapping = mapping[~dupes].copy()
 
     # For this to be used as a mapping, it must also satisfy this property
     assert (mapping.groupby(["place_name", "state_code"]).size() == 1).all()
@@ -94,12 +103,22 @@ def make_place_name_fips_mapping(merged_rows: pd.DataFrame) -> pd.DataFrame:
 def add_place_population_data(
     places_df: pd.DataFrame, place_population_df: pd.DataFrame
 ) -> pd.DataFrame:
+    """
+    Tries to add a population column to as many rows in places_df as possible.
+
+    The procedure is:
+    - Get a mapping from BPS 6-digit code to FIPS code, via 2019 data
+    - Use this to get FIPS codes for all post-1992 rows
+    - For pre-1992 rows, match them to recent rows via place name and state code.
+      This is lossy, because we throw out dupes (e.g. Albion town, NY and Albion village, NY).
+      TODO: fix this
+    """
     bps_fips_mapping = make_bps_fips_mapping(places_df, place_population_df)
 
     places_df = places_df.drop(columns=["fips place_code", "county_code"])
 
-    # BPS changed their 6-digit IDs starting in 1992. So for rows from before 1992, we add '_pre_1992'
-    # to the ID to distinguish them.
+    # BPS changed their 6-digit IDs starting in 1992. For rows before 1992, we add "_pre_1992"
+    # to distinguish them
     places_df["6_digit_id"] = (
         places_df["6_digit_id"]
         .astype(str)
@@ -143,7 +162,7 @@ def add_place_population_data(
     unmerged_rows_2 = unmerged_rows_2.drop(columns=["_merge"])
     places_with_fips_df = pd.concat([merged_rows, unmerged_rows_2])
 
-    # Finally, let's merge in population!
+    # Now that every row has a FIPS code, let's merge in population!
     final_places_df = places_with_fips_df.merge(
         place_population_df.drop(columns=["place_name"]),
         left_on=["place_or_county_code", "state_code", "year"],
@@ -216,7 +235,7 @@ def load_places(
 
     add_alt_names(raw_places_df)
 
-    # raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
+    raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
     place_populations_df = place_population.get_place_population_estimates(
         data_path=Path(data_repo_path, PLACE_POPULATION_DIR) if data_repo_path else None
