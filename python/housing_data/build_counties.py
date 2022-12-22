@@ -10,8 +10,6 @@ from housing_data.build_data_utils import (
     add_per_capita_columns,
     get_state_abbrs,
     load_bps_all_years_plus_monthly,
-    write_list_to_json,
-    write_to_json_directory,
 )
 
 
@@ -66,24 +64,13 @@ def load_counties(
     # TODO figure out why some are null/which ones are getting dropped
     counties_df = counties_df[counties_df["county_name"].notnull()]
 
-    counties_df["name"] = (
-        counties_df["county_name"] + ", " + get_state_abbrs(counties_df["fips_state"])
-    )
+    state_abbrs = get_state_abbrs(counties_df["fips_state"])
+    counties_df["name"] = counties_df["county_name"] + ", " + state_abbrs
+    counties_df["path_1"] = state_abbrs
+    counties_df["path_2"] = counties_df["county_name"].str.replace(" ", "_")
+    counties_df = counties_df.drop(columns=["county_name"])
 
     counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")
-
-    write_list_to_json(
-        counties_df.drop(columns=["state_code"]).rename(
-            columns={"fips_state": "state_code"}
-        ),
-        PUBLIC_DIR / "counties_list.json",
-        ["county_name", "state_code"],
-        add_latest_population_column=True,
-    )
-
-    write_to_json_directory(
-        counties_df, Path(PUBLIC_DIR / "counties_data"), ["county_name", "fips_state"]
-    )
 
     return counties_df
 

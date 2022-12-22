@@ -6,9 +6,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-import requests
 from housing_data.build_data_utils import impute_2020s_population
-from housing_data.data_loading_helpers import get_path
+from housing_data.data_loading_helpers import get_path, get_url_text
 
 if TYPE_CHECKING:
     from typing import List, Optional
@@ -85,7 +84,7 @@ def get_unincorporated_places_populations_1980() -> pd.DataFrame:
     return remainder_df
 
 
-def get_place_populations_1980(data_path: Optional[Path] = None) -> pd.DataFrame:
+def get_place_populations_1980(data_path: Optional[Path]) -> pd.DataFrame:
     # Assuming this is run from `python/`
     # For the header row, use the nice descriptive names that IPUMS provides rather than the code names
     df = pd.read_csv("../raw_data/nhgis0015_ds104_1980_place_070.csv", header=1)
@@ -153,11 +152,12 @@ def get_place_populations_1980(data_path: Optional[Path] = None) -> pd.DataFrame
     return df
 
 
-def _load_raw_place_populations_1990s(data_path: Optional[str] = None) -> pd.DataFrame:
-    tables = requests.get(
+def _load_raw_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
+    tables = get_url_text(
         "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/"
-        "2000-subcounties-evaluation-estimates/sc2000f_us.txt"
-    ).text.split("\f")
+        "2000-subcounties-evaluation-estimates/sc2000f_us.txt",
+        data_path,
+    ).split("\f")
 
     common_cols = [
         "Block",
@@ -283,8 +283,8 @@ def remove_dupe_cities(df: pd.DataFrame) -> pd.DataFrame:
     return df[~place_state_tuples.isin(dupe_cities)]
 
 
-def get_place_populations_1990s() -> pd.DataFrame:
-    combined_df = _load_raw_place_populations_1990s()
+def get_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
+    combined_df = _load_raw_place_populations_1990s(data_path)
 
     city_rows = (
         combined_df["subcounty_fips"].isnull() & combined_df["place_fips"].notnull()
@@ -397,7 +397,7 @@ def _get_recent_decades_df(
     )
 
 
-def get_place_populations_2000s(data_path: Optional[Path] = None) -> pd.DataFrame:
+def get_place_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
     # This one doesn't include consolidated cities, so no need to remove those rows
     return _get_recent_decades_df(
         get_path(
@@ -409,7 +409,7 @@ def get_place_populations_2000s(data_path: Optional[Path] = None) -> pd.DataFram
     )
 
 
-def get_place_populations_2010s(data_path: Optional[Path] = None) -> pd.DataFrame:
+def get_place_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
     # This one has consolidated cities that need to be removed
     return _get_recent_decades_df(
         get_path(
@@ -470,7 +470,7 @@ def get_place_population_estimates(data_path: Optional[Path] = None) -> pd.DataF
     print("Loading 1980 populations...")
     df_1980 = get_place_populations_1980(data_path)
     print("Loading 1990s populations...")
-    df_1990s = get_place_populations_1990s()
+    df_1990s = get_place_populations_1990s(data_path)
     print("Loading 2000s populations...")
     df_2000s = get_place_populations_2000s(data_path)
     print("Loading 2010s populations...")

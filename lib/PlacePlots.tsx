@@ -1,85 +1,26 @@
-import { useCallback, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { useRouter } from "next/router"
 
-import us from "us"
-
-import BarPlot from "lib/BarPlot"
+import PlotsTemplate from "lib/PlotsTemplate"
+import { makeOptions } from "lib/PlotsTemplate"
 import WindowSelectSearch from "lib/WindowSelectSearch"
-import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
-import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
-import { PathMapping, scoreFnWithPopulation } from "lib/utils"
+import { scoreFnWithPopulation } from "lib/utils"
 
-export function getJsonUrl(place: string, state: string): string {
-  if (place === null) {
-    return null
-  }
-  place = place.replace("#", "%23")
-  const stateFips = getStateFips(state)
-  if (stateFips) {
-    return "/places_data/" + stateFips + "/" + place + ".json"
-  } else {
-    return ""
-  }
-}
-
-function getStateFips(stateStr: string): number {
-  const state = us.lookup(stateStr)
-  if (state) {
-    return parseInt(state.fips)
-  } else {
-    return undefined
-  }
-}
-
-function getStateAbbreviation(stateCode: number): string {
-  const twoDigitStringCode = String(stateCode).padStart(2, "0")
-  const state = us.lookup(twoDigitStringCode)
-  if (typeof state === "undefined") {
-    return ""
-  } else {
-    return state.abbr
-  }
+// The schema for /places_list.json
+type RawOption = {
+  name: string
+  path: string
+  population: number
+  alt_name: string
 }
 
 type Option = {
-  value: number
-  abbr: string
-  place_name: string
   name: string
-  alt_name: string
-  path: string
+  value: string // the path
   population: number
-}
-
-export function makePlaceOptions(
-  placesList: Array<{
-    state_code: number
-    place_name: string
-    name: string
-    alt_name: string
-    population: number
-  }>
-): Option[] {
-  const options = []
-  for (let i = 0; i < placesList.length; i++) {
-    const place = placesList[i]
-    if (place.state_code !== null && place.place_name !== null) {
-      const abbr = getStateAbbreviation(place.state_code)
-      options.push({
-        value: i,
-        abbr: abbr,
-        place_name: place.place_name,
-        name: place.name,
-        alt_name: place.alt_name,
-        path: getJsonUrl(place.place_name, abbr),
-        population: place.population,
-      })
-    }
-  }
-
-  return options
+  alt_name: string
 }
 
 const fuzzysortOptions = {
@@ -89,90 +30,45 @@ const fuzzysortOptions = {
 }
 
 export default function PlacePlots({
-  place,
-  state,
+  path,
+  setTitle,
 }: {
-  place: string
-  state: string
+  path: string
+  setTitle: (string) => void
 }): JSX.Element {
   const router = useRouter()
-
   const { data: placesList } = useFetch("/places_list.json")
+  const [place, setPlace] = useState<Option | null>(null)
 
-  const placeOptions = useMemo(
-    () => makePlaceOptions(placesList ?? []),
-    [placesList]
-  )
-  const pathMapping = useMemo(
-    () =>
-      new PathMapping(
-        placesList || [],
-        (row) => row.place_name + "/" + row.state_code
-      ),
+  const [options, optionsMap] = useMemo(
+    () => makeOptions<RawOption, Option>(placesList ?? []),
     [placesList]
   )
 
-  const optionVal = useMemo(
-    () => pathMapping.getEntryForPath(place + "/" + state),
-    [place, state, pathMapping]
-  )
-
-  const { data } = useFetch(getJsonUrl(place, state))
+  // When the page first loads, figure out which place we're at
+  useEffect(() => {
+    if (optionsMap != null && path != null) {
+      const place = optionsMap.get(path)
+      if (place) {
+        setPlace(place)
+        setTitle(place.name)
+      }
+    }
+  }, [optionsMap, path, setPlace, setTitle])
 
   const onChange = useCallback(
-    (newPlace) => {
-      const chosenOption = placeOptions[newPlace]
-      if (chosenOption.place_name !== place || chosenOption.abbr !== state) {
-        router.push(
-          "/places/" +
-            chosenOption.abbr +
-            "/" +
-            chosenOption.place_name.replace("#", "%23")
-        )
-      }
-    },
-    [place, state, placeOptions.length]
+    (newPath) => router.push("/places/" + newPath),
+    [router]
+  )
+  const select = (
+    <WindowSelectSearch
+      search
+      onChange={onChange}
+      options={options}
+      value={place?.value}
+      fuzzysortOptions={fuzzysortOptions}
+    />
   )
 
-  const isCounty = place
-    ? place.endsWith("County") || place.endsWith("Parish")
-    : false
-
-  const { selectedUnits, unitsSelect } = useUnitsSelect()
-
-  const { denom, populationInput } = usePerCapitaInput()
-  const perCapita = denom === "per_capita"
-
-  return (
-    <div className="mx-auto mb-10 align-center items-center flex flex-col justify-center">
-      <div className="lg:grid lg:grid-cols-3 flex flex-col">
-        <div className="m-4 col-span-1">
-          <WindowSelectSearch
-            search
-            onChange={onChange}
-            options={placeOptions}
-            value={optionVal}
-            fuzzysortOptions={fuzzysortOptions}
-          />
-        </div>
-        <div className="mt-4 mb-1 col-span-1 text-center">
-          {isCounty && <h2 className="text-2xl -mb-2">Unincorporated</h2>}
-          <h1 className="text-4xl">
-            {place}, {state}
-          </h1>
-        </div>
-        <div className="col-span-1 m-4">{unitsSelect}</div>
-      </div>
-
-      <div className="w-full flex flex-row">
-        <BarPlot
-          data={{ table: data }}
-          units={selectedUnits}
-          perCapita={perCapita}
-        />
-      </div>
-      {populationInput}
-      <CurrentYearExtrapolationInfo />
-    </div>
-  )
+  return PlotsTemplate({ selected: place, select, jsonRoot: "/places_data/" })
 }

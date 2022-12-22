@@ -1,23 +1,3 @@
-export class PathMapping<T> {
-  placesList: T[]
-  mapping: Map<string, number>
-  // Class that makes it easy to get from page path to the relevant row in the place list.
-  constructor(placesList: T[], pathFn: (object) => string = (e) => e.path) {
-    this.placesList = placesList
-    this.mapping = new Map()
-
-    for (let i = 0; i < placesList.length; i++) {
-      const row = placesList[i]
-      this.mapping[pathFn(row)] = i
-    }
-  }
-
-  getEntryForPath(path: string): T {
-    const index = this.mapping[path]
-    return index ? this.placesList[index] : undefined
-  }
-}
-
 /**
  * A scoreFn to use with the fuzzysort library that adds a score factor
  * that depends on log(population) field, so that larger cities surface
@@ -35,5 +15,5 @@ export function scoreFnWithPopulation(a) {
     if (score > max) max = score
   }
   if (max === -9007199254740991) return null
-  return max + Math.log(a.obj.population)
+  return max + Math.log(a.obj.population + 1)
 }

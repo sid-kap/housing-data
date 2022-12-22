@@ -9,10 +9,8 @@
   },
   "dependencies": {
     "@react-hook/media-query": "^1.1.1",
-    "date-fns": "^2.23.0",
     "fuzzysort": "^2.0.1",
     "immutable": "^4.0.0",
-    "moment": "^2.29.1",
     "next": "12.2.5",
     "react": "^18.2.0",
     "react-container-dimensions": "^1.4.1",
@@ -22,7 +20,6 @@
     "react-vega": "^7.4.2",
     "react-window": "^1.8.6",
     "sass": "^1.29.0",
-    "us": "^2.0.0",
     "vega": "^5.21.0",
     "vega-lite": "^5.5.0"
   },

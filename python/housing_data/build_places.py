@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import pandas as pd
 from housing_data import place_population
@@ -10,8 +10,6 @@ from housing_data.build_data_utils import (
     add_per_capita_columns,
     get_state_abbrs,
     load_bps_all_years_plus_monthly,
-    write_list_to_json,
-    write_to_json_directory,
 )
 from housing_data.building_permits_survey import Region
 
@@ -205,7 +203,7 @@ def add_alt_names(raw_places_df: pd.DataFrame) -> None:
 
 def load_places(
     data_repo_path: Optional[str], counties_population_df: pd.DataFrame = None
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     dfs = []
     regions: List[Region] = ["west", "midwest", "south", "northeast"]
     for region in regions:
@@ -244,24 +242,20 @@ def load_places(
         "place_name"
     ].str.contains("Parish")
 
-    places_df["name"] = (
+    name = (
         is_unincorporated.map({True: "Unincorporated ", False: ""})
         + places_df["place_name"]
-        + ", "
-        + get_state_abbrs(places_df["state_code"])
     )
+    state_abbrs = get_state_abbrs(places_df["state_code"])
+    places_df["name"] = name + ", " + state_abbrs
+    places_df["path_1"] = state_abbrs
+    places_df["path_2"] = name.str.replace("/", "-").str.replace(" ", "_")
+
+    places_df = places_df.drop(columns=["place_name"])
 
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
-    write_list_to_json(
-        places_df,
-        PUBLIC_DIR / "places_list.json",
-        ["place_name", "state_code", "alt_name", "name"],
-        add_latest_population_column=True,
-    )
+    # Not sure why I have to do this
+    places_df = places_df[places_df["path_1"].notnull() & places_df["path_2"].notnull()]
 
-    write_to_json_directory(
-        places_df, Path(PUBLIC_DIR, "places_data"), ["place_name", "state_code"]
-    )
-
-    return raw_places_df
+    return raw_places_df, places_df

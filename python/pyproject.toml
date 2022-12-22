@@ -43,3 +43,7 @@ module = [
   "requests.*",
 ]
 ignore_missing_imports = true
+
+[tool.autoimport.common_statements]
+"np" = "import numpy as np"
+"pd" = "import pandas as pd"

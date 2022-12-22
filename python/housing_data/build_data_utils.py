@@ -2,7 +2,6 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
-import numpy as np
 import pandas as pd
 import us
 from housing_data import building_permits_survey as bps
@@ -65,33 +64,22 @@ LATEST_MONTH = (2022, 9)
 LAST_YEAR_ANNUAL_DATA_RELEASED = True
 
 
-def write_to_json_directory(
-    df: pd.DataFrame, path: Path, group_cols: List[str]
-) -> None:
-    assert len(group_cols) in [1, 2]
+def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
+    if path.exists():
+        shutil.rmtree(path)
+    path.mkdir()
 
-    path.mkdir(exist_ok=True)
-    shutil.rmtree(path)
-
-    for name, group in tqdm(df.groupby(group_cols)):
-        # small_name is the place or county name, big_name is the state code
-        if isinstance(name, tuple):
-            small_name, big_name = name
-            assert isinstance(small_name, str)
-            assert isinstance(big_name, (str, int, np.int64))
-            sub_path = Path(path, f"{big_name}")
-        elif isinstance(name, str):
-            small_name = name
-            sub_path = Path(path)
-        else:
-            raise ValueError(
-                f"Unknown type of grouping columns: {group_cols}. Found: {name}"
-            )
-
-        sub_path.mkdir(parents=True, exist_ok=True)
+    for (json_dir, json_name), group in tqdm(
+        df.groupby(["path_1", "path_2"], dropna=False)
+    ):
+        sub_path = path / json_dir if not pd.isnull(json_dir) else path
+        sub_path.mkdir(exist_ok=True)
         group.reset_index(drop=True).to_json(
-            Path(sub_path, f"{small_name}.json"), orient="records"
+            sub_path / f"{json_name}.json", orient="records"
         )
+
+
+DEFAULT_COLUMNS = ["name", "path_1", "path_2"]
 
 
 def write_list_to_json(
@@ -105,16 +93,25 @@ def write_list_to_json(
     :param unhashable_columns: Columns to not include in calls to drop_duplicates, merge, etc. because
         they would cause "[type] is not hashable" errors.
     """
+    columns = DEFAULT_COLUMNS + columns
     hashable_columns = list(set(columns) - set(unhashable_columns or []))
-    subset_df = df[columns].drop_duplicates(subset=hashable_columns)
+    subset_df = df[columns].copy().drop_duplicates(subset=hashable_columns)
+
+    # Refers to both the path of the json file (https://housingdata.app/places_data/{path}.json)
+    # and the URL path (https://housingdata.app/places/{path})
+    subset_df["path"] = (subset_df["path_1"] + "/").fillna("") + subset_df["path_2"]
 
     if add_latest_population_column:
         latest_populations = df[df["year"] == "2020"][
             hashable_columns + ["population"]
         ].drop_duplicates()
-        subset_df = subset_df.merge(latest_populations, on=hashable_columns)
+        subset_df = subset_df.merge(latest_populations, on=hashable_columns, how="left")
+        subset_df["population"] = subset_df["population"].fillna(0).astype(int)
+        subset_df = subset_df.sort_values("name", ascending=False)
 
-    subset_df.sort_values(hashable_columns).to_json(output_path, orient="records")
+    subset_df = subset_df.sort_values(hashable_columns)
+    subset_df = subset_df.drop(columns=["path_1", "path_2"])
+    subset_df.to_json(output_path, orient="records")
 
 
 def add_per_capita_columns(df: pd.DataFrame) -> None:

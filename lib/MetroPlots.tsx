@@ -1,90 +1,49 @@
-import { useCallback, useEffect, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { useRouter } from "next/router"
 
-import BarPlot from "lib/BarPlot"
+import PlotsTemplate, { makeOptions } from "lib/PlotsTemplate"
 import WindowSelectSearch from "lib/WindowSelectSearch"
-import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
-import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
-import { PathMapping, scoreFnWithPopulation } from "lib/utils"
-
-function getJsonUrl(metro: string): string {
-  if (metro === null || typeof metro === "undefined") {
-    return null
-  }
-  metro = metro.replace("#", "%23")
-  return "/metros_data/" + metro + ".json"
-}
+import { scoreFnWithPopulation } from "lib/utils"
 
 type RawOption = {
-  path: string
   name: string
-  metro_name: string
-  metro_name_with_suffix: string
+  path: string
   metro_type: string
   county_names: string[]
   population: number
 }
 
 type Option = {
-  value: number
-  path: string
   name: string
-  metro_name: string
-  metro_name_with_suffix: string
+  value: string // the path
   metro_type: string
   county_names: string[]
+  population: number
 }
 
-type Group<T> = {
+type OptionGroup = {
   name: string
   type: string
-  items: T[]
+  items: Option[]
 }
 
-export function makeOptions(
-  metrosListResponse: RawOption[]
-): [Group<Option>, Group<Option>] {
-  const metroNames = metrosListResponse || []
+export function makeMetroOptions(
+  metrosList: RawOption[]
+): [[OptionGroup, OptionGroup], Map<string, Option>] {
+  const [msaOptions, msaOptionsMap] = makeOptions<RawOption, Option>(
+    metrosList.filter((m) => m.metro_type === "msa")
+  )
+  const [csaOptions, csaOptionsMap] = makeOptions<RawOption, Option>(
+    metrosList.filter((m) => m.metro_type === "csa")
+  )
 
-  const cbsaOptions = []
-  const csaOptions = []
-
-  for (const metro of metroNames) {
-    const option = {
-      value: metro.path,
-      name: metro.metro_name,
-      name_with_suffix: metro.metro_name_with_suffix,
-      path: getJsonUrl(metro.path),
-      metro_type: metro.metro_type,
-      county_names: metro.county_names,
-      population: metro.population,
-    }
-
-    if (metro.metro_type === "cbsa") {
-      cbsaOptions.push(option)
-    } else if (metro.metro_type === "csa") {
-      csaOptions.push(option)
-    } else {
-      throw new Error("Unknown metro_type: " + metro.metro_type)
-    }
-  }
-
-  return [
-    {
-      // I've removed all the μSAs, so the CBSAs list will only include the MSAs.
-      // TODO: Replace "CBSA" with "MSA" throughout the code base.
-      name: "MSAs",
-      type: "group",
-      items: cbsaOptions,
-    },
-    {
-      name: "CSAs",
-      type: "group",
-      items: csaOptions,
-    },
+  const options: [OptionGroup, OptionGroup] = [
+    { name: "MSAs", type: "group", items: msaOptions },
+    { name: "CSAs", type: "group", items: csaOptions },
   ]
+  return [options, new Map([...msaOptionsMap, ...csaOptionsMap])]
 }
 
 function renderOption(
@@ -108,92 +67,65 @@ const fuzzysortOptions = {
 }
 
 export default function MetroPlots({
-  metroPath,
+  path,
   setTitle,
 }: {
-  metroPath: string
+  path: string
   setTitle: (title: string) => void
 }): JSX.Element {
   const router = useRouter()
-
   const { data: metrosList } = useFetch("/metros_list.json")
+  const [metro, setMetro] = useState<Option | null>(null)
 
-  const metroOptions = useMemo(() => makeOptions(metrosList), [metrosList])
-  const pathMapping = useMemo(
-    () => new PathMapping<Option>(metrosList || []),
+  const [options, optionsMap] = useMemo(
+    () => makeMetroOptions(metrosList ?? []),
     [metrosList]
   )
 
-  const optionVal = useMemo(
-    () => pathMapping.getEntryForPath(metroPath),
-    [metroPath, pathMapping]
-  )
-
-  useEffect(
-    () => setTitle(optionVal?.metro_name ?? "Housing Data"),
-    [optionVal]
-  )
-
-  const { data } = useFetch(getJsonUrl(metroPath))
+  // When the page first loads, figure out which place we're at
+  useEffect(() => {
+    if (optionsMap != null && path != null) {
+      const place = optionsMap.get(path)
+      if (place) {
+        setMetro(place)
+        setTitle(place.name)
+      }
+    }
+  }, [optionsMap, path, setMetro, setTitle])
 
   const onChange = useCallback(
-    (newMetro) => {
-      if (newMetro !== metroPath) {
-        router.push("/metros/" + newMetro.replace("#", "%23"))
-      }
-    },
-    [metroPath]
+    (newPath) => router.push("/metros/" + newPath),
+    [router]
   )
 
-  /* eslint-disable */
   const countyList = useMemo(() => {
-    return optionVal ? (
+    return metro != null ? (
       <div className="max-w-3xl text-sm mt-4">
-        (The <b>{optionVal.metro_name}</b> {optionVal.metro_type.toUpperCase()}{" "}
-        includes {formatCountiesList(optionVal.county_names)}.)
+        (The <b>{metro.name}</b> {metro.metro_type.toUpperCase()} includes{" "}
+        {formatCountiesList(metro.county_names)}.)
       </div>
     ) : (
       <></>
     )
-  }, [optionVal])
-  /* eslint-enable */
+  }, [metro])
 
-  const { selectedUnits, unitsSelect } = useUnitsSelect()
-
-  const { denom, populationInput } = usePerCapitaInput()
-  const perCapita = denom === "per_capita"
-
-  return (
-    <div className="mx-auto mb-10 align-center items-center flex flex-col justify-center">
-      <div className="lg:grid lg:grid-cols-3 flex flex-col">
-        <div className="m-4 col-span-1">
-          <WindowSelectSearch
-            search
-            onChange={onChange}
-            options={metroOptions}
-            value={optionVal?.value}
-            renderOption={renderOption}
-            fuzzysortOptions={fuzzysortOptions}
-          />
-        </div>
-        <div className="mt-4 mb-1 col-span-1 text-center">
-          <h1 className="text-4xl">{optionVal?.metro_name ?? ""}</h1>
-        </div>
-        <div className="col-span-1 m-4">{unitsSelect}</div>
-      </div>
-
-      <div className="w-full flex flex-row">
-        <BarPlot
-          data={{ table: data }}
-          units={selectedUnits}
-          perCapita={perCapita}
-        />
-      </div>
-      {populationInput}
-      {countyList}
-      <CurrentYearExtrapolationInfo />
-    </div>
+  const select = (
+    <WindowSelectSearch
+      search
+      onChange={onChange}
+      options={options}
+      value={metro?.value}
+      renderOption={renderOption}
+      fuzzysortOptions={fuzzysortOptions}
+    />
   )
+
+  return PlotsTemplate({
+    selected: metro,
+    select,
+    jsonRoot: "/metros_data/",
+    countyList,
+  })
 }
 
 function formatCountiesList(counties: string[]): string {

@@ -70,6 +70,7 @@ def get_county_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
             skiprows=4,
             skipfooter=8,
             encoding="latin_1",
+            engine="python",  # for skipfooter
         )
         df["state_code"] = state_code
         df["County Name"] = df["County Name"].str.lstrip(".")

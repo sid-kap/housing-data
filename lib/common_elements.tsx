@@ -134,15 +134,15 @@ const navItems = [
     name: "States",
   },
   {
-    url: "/metros/Bakersfield, CA",
+    url: "/metros/Bakersfield_CA",
     name: "Metros",
   },
   {
-    url: "/counties/TX/Harris County",
+    url: "/counties/TX/Harris_County",
     name: "Counties",
   },
   {
-    url: "/places/CA/Los Angeles",
+    url: "/places/CA/Los_Angeles",
     name: "Cities",
   },
   {

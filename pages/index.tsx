@@ -8,11 +8,9 @@ import { VegaLite } from "react-vega"
 import { expressionFunction } from "vega"
 import { TopLevelSpec } from "vega-lite"
 
-import { makeCountyOptions } from "lib/CountyPlots"
-import { makeOptions as makeMetroOptions } from "lib/MetroPlots"
+import { makeMetroOptions } from "lib/MetroPlots"
 import MultiSelect from "lib/MultiSelect"
-import { makePlaceOptions } from "lib/PlacePlots"
-import { makeStateOptions } from "lib/StatePlots"
+import { makeOptions } from "lib/PlotsTemplate"
 import { Page } from "lib/common_elements"
 import { useFetch } from "lib/queries"
 import { scoreFnWithPopulation } from "lib/utils"
@@ -245,32 +243,24 @@ function spec(
   }
 }
 
-function addPrefixes(options, prefix, use_metro_name_suffix = false) {
-  const newOptions = []
-  for (const option of options) {
-    // IDK if we want name or value... let's just go with name for now.
-    const changes: { value: string; name?: string } = {
-      value: prefix + "/" + option.name,
-    }
-    if (use_metro_name_suffix) {
-      changes.name = option.name_with_suffix
-    }
-    newOptions.push(Object.assign(option, changes))
-  }
-  return newOptions
+function addPathPrefixes(options: any[], prefix: string): any[] {
+  return options.map(({ value, ...rest }) => ({
+    value: prefix + "/" + value,
+    ...rest,
+  }))
 }
 
-function makeOptions(statesData, metrosList, countiesList, placesList) {
-  const [msaOptions, csaOptions]: [any, any] = makeMetroOptions(metrosList)
+function makeAllOptions(statesList, metrosList, countiesList, placesList) {
+  const [msaOptions, csaOptions]: [any, any] = makeMetroOptions(metrosList)[0]
   if (!(typeof msaOptions === "object" && msaOptions.name === "MSAs")) {
     throw new Error("first element makeMetroOptions is not MSAs")
   }
   if (!(typeof csaOptions === "object" && csaOptions.name === "CSAs")) {
     throw new Error("second element makeMetroOptions is not CSAs")
   }
-  const stateOptions: any[] = makeStateOptions(statesData)
-  const countyOptions: any[] = makeCountyOptions(countiesList)
-  const placeOptions: any[] = makePlaceOptions(placesList)
+  const stateOptions: any[] = makeOptions(statesList)[0]
+  const countyOptions: any[] = makeOptions(countiesList)[0]
+  const placeOptions: any[] = makeOptions(placesList)[0]
 
   // TODO maybe fix this jank
   for (const item of stateOptions) {
@@ -292,11 +282,11 @@ function makeOptions(statesData, metrosList, countiesList, placesList) {
   return [
     {
       groupName: "Places",
-      items: addPrefixes(placeOptions, "Places"),
+      items: addPathPrefixes(placeOptions, "places_data"),
     },
     {
       groupName: "Counties",
-      items: addPrefixes(countyOptions, "Counties"),
+      items: addPathPrefixes(countyOptions, "counties_data"),
     },
     // I've filtered out the μSAs, so we can use MSA and CBSA interchangeably.
     // Most people know what an MSA is but not a CBSA, so we should use that name.
@@ -304,15 +294,15 @@ function makeOptions(statesData, metrosList, countiesList, placesList) {
     // data files.
     {
       groupName: "MSAs",
-      items: addPrefixes(msaOptions.items, "MSAs", true),
+      items: addPathPrefixes(msaOptions.items, "metros_data"),
     },
     {
       groupName: "CSAs",
-      items: addPrefixes(csaOptions.items, "CSAs", true),
+      items: addPathPrefixes(csaOptions.items, "metros_data"),
     },
     {
       groupName: "States",
-      items: addPrefixes(stateOptions, "States"),
+      items: addPathPrefixes(stateOptions, "states_data"),
     },
   ]
 }
@@ -360,7 +350,7 @@ const fuzzysortOptions = {
 }
 
 export default function Home(): JSX.Element {
-  const { data: statesResponse } = useFetch("/state_annual.json")
+  const { data: statesListResponse } = useFetch("/states_list.json")
   const { data: metrosListResponse } = useFetch("/metros_list.json")
   const { data: countiesListResponse } = useFetch("/counties_list.json")
   const { data: placesListResponse } = useFetch("/places_list.json")
@@ -371,14 +361,14 @@ export default function Home(): JSX.Element {
 
   const options = useMemo(
     () =>
-      makeOptions(
-        statesResponse || [],
+      makeAllOptions(
+        statesListResponse || [],
         metrosListResponse || [],
         countiesListResponse || [],
         placesListResponse || []
       ),
     [
-      statesResponse,
+      statesListResponse,
       metrosListResponse,
       countiesListResponse,
       placesListResponse,
@@ -391,7 +381,7 @@ export default function Home(): JSX.Element {
     .map((item) => {
       return {
         queryKey: [item.value],
-        queryFn: () => getData(item.path),
+        queryFn: () => getData(item.value + ".json"),
       }
     })
   const datas: any = useQueries(queries)
