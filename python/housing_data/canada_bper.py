@@ -153,6 +153,8 @@ def load_canada_bper(data_path: Path) -> pd.DataFrame:
     df["population"] = 1
 
     df["year"] = df["year"].astype(str)
-    df = df.drop(columns=["Province Name", "Province Abbreviation", "Municipality Name"])
+    df = df.drop(
+        columns=["Province Name", "Province Abbreviation", "Municipality Name"]
+    )
 
     return df
