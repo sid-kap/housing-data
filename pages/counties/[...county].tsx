@@ -1,29 +1,20 @@
-import { useRouter } from "next/router"
+import { useState } from "react"
 
-import us from "us"
+import { useRouter } from "next/router"
 
 import CountyPlots from "lib/CountyPlots"
 import { Page } from "lib/common_elements"
 
 export default function County(): JSX.Element {
+  const [title, setTitle] = useState("Housing Data")
   const router = useRouter()
-  const [stateAbbr, countyName] = router.query.county ?? [null, null]
-  const stateCode = stateAbbr ? getStateFips(stateAbbr) : null
+
+  // Remove /places prefix from path
+  const path = router.asPath.split("/").slice(2).join("/")
 
   return (
-    <Page
-      title={countyName ? countyName + ", " + stateAbbr : "Housing Data"}
-      navIndex={3}
-    >
-      <CountyPlots
-        countyName={countyName}
-        stateAbbr={stateAbbr}
-        stateCode={stateCode}
-      />
+    <Page title={title} navIndex={3}>
+      <CountyPlots path={path} setTitle={setTitle} />
     </Page>
   )
-}
-
-function getStateFips(stateStr: string): number {
-  return parseInt(us.lookup(stateStr).fips)
 }

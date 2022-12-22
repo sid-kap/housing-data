@@ -8,7 +8,7 @@ const unitsOptions = [
   { value: "value", name: "Property value" },
 ]
 
-export function makeUnitsSelect(): {
+export function useUnitsSelect(): {
   selectedUnits: string
   unitsSelect: JSX.Element
 } {

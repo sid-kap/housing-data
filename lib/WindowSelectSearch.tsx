@@ -6,14 +6,7 @@
  * hook so just building my own search from the hook wasn't easy. Or in any case, it would have
  * amounted to reimplementing a lot of things in this class.
  */
-import React, {
-  FunctionComponent,
-  forwardRef,
-  memo,
-  useCallback,
-  useEffect,
-  useRef,
-} from "react"
+import React, { forwardRef, memo, useCallback, useEffect, useRef } from "react"
 
 import Option from "react-select-search/dist/cjs/Components/Option"
 import isSelected from "react-select-search/dist/cjs/lib/isSelected"
@@ -40,7 +33,7 @@ type WindowSelectSearchProps = {
   renderOption?: any
   renderGroupHeader?: any
   getOptions?: any
-  emptyMessage?: any
+  // emptyMessage?: any
   fuzzysortOptions?: any
 }
 
@@ -64,7 +57,7 @@ const WindowSelectSearch = forwardRef<HTMLDivElement, WindowSelectSearchProps>(
       renderOption,
       renderGroupHeader,
       getOptions,
-      emptyMessage,
+      // emptyMessage,
       fuzzysortOptions,
     },
     ref
@@ -246,6 +239,7 @@ function flattenOptions(options) {
   const output = []
   for (const option of options) {
     if (option.type === "group") {
+      /*eslint @typescript-eslint/no-unused-vars: ["error", { "ignoreRestSiblings": true }]*/
       const { items, ...header } = option
       output.push(header)
       for (const item of option.items) {
@@ -283,9 +277,10 @@ WindowSelectSearch.defaultProps = {
     <input {...valueProps} className={className} />
   ),
   getOptions: null,
-  emptyMessage: null,
+  // emptyMessage: null,
   fuzzysortOptions: { keys: ["name"], threshold: -10000 },
 }
 /* eslint-enable */
 
+WindowSelectSearch.displayName = "WindowSelectSearch"
 export default memo(WindowSelectSearch)

@@ -10,7 +10,7 @@ from housing_data.data_loading_helpers import get_url_text
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import Any, List, Optional
 
 Region = Literal["west", "midwest", "south", "northeast"]
 
@@ -69,9 +69,9 @@ COLUMN_NAMES_MAPPING = {
 }
 
 
-def slugify(str):
+def slugify(s: str) -> str:
     # Technically slugify adds hyphens... maybe this should be called "unslugify"
-    return str.lower().replace("-", "_").strip()
+    return s.lower().replace("-", "_").strip()
 
 
 def _merge_column_names(header_row_0: List[str], header_row_1: List[str]) -> pd.Series:
@@ -273,7 +273,7 @@ def load_data(
     return df
 
 
-def fix_state(s):
+def fix_state(s: Any) -> Any:
     if isinstance(s, str):
         return (
             s.replace("Division", "")

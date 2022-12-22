@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from typing import Optional
 
 
-def get_county_populations_2010s(data_path: Optional[Path] = None):
+def get_county_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
     df = pd.read_csv(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/counties/totals/co-est2020-alldata.csv",
@@ -34,7 +34,7 @@ def get_county_populations_2010s(data_path: Optional[Path] = None):
     return df
 
 
-def get_county_populations_2000s(data_path: Optional[Path] = None) -> pd.DataFrame:
+def get_county_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
     urls = [
         (
             state.fips,
@@ -106,7 +106,7 @@ def get_county_populations_2000s(data_path: Optional[Path] = None) -> pd.DataFra
     return df
 
 
-def get_county_fips_crosswalk(data_path: Optional[Path] = None) -> pd.DataFrame:
+def get_county_fips_crosswalk(data_path: Optional[Path]) -> pd.DataFrame:
     df = pd.read_excel(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/geographies/2019/all-geocodes-v2019.xlsx",
@@ -126,7 +126,7 @@ def get_county_fips_crosswalk(data_path: Optional[Path] = None) -> pd.DataFrame:
     return df
 
 
-def get_county_populations_1990s(data_path: Optional[Path] = None) -> pd.DataFrame:
+def get_county_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
     table_text = get_url_text(
         "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/counties/totals/99c8_00.txt",
         data_path,
@@ -179,7 +179,7 @@ def get_county_populations_1990s(data_path: Optional[Path] = None) -> pd.DataFra
     return df
 
 
-def get_county_populations_1980s(data_path: Optional[Path] = None) -> pd.DataFrame:
+def get_county_populations_1980s(data_path: Optional[Path]) -> pd.DataFrame:
     dfs = []
     for year in range(1980, 1990):
         df = pd.read_excel(
@@ -223,7 +223,7 @@ def get_county_populations_1980s(data_path: Optional[Path] = None) -> pd.DataFra
     return combined_df
 
 
-def get_county_population_estimates(data_path: Optional[Path] = None):
+def get_county_population_estimates(data_path: Optional[Path]) -> pd.DataFrame:
     print("Loading 1980 populations...")
     df_1980s = get_county_populations_1980s(data_path)
     print("Loading 1990s populations...")

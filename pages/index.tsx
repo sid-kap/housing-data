@@ -3,16 +3,14 @@ import { useCallback, useMemo, useState } from "react"
 import { useMediaQuery } from "@react-hook/media-query"
 import { OrderedMap } from "immutable"
 import ContainerDimensions from "react-container-dimensions"
-import { QueryKey, UseQueryOptions, useQueries } from "react-query"
+import { useQueries } from "react-query"
 import { VegaLite } from "react-vega"
 import { expressionFunction } from "vega"
 import { TopLevelSpec } from "vega-lite"
 
-import { makeCountyOptions } from "lib/CountyPlots"
-import { makeOptions as makeMetroOptions } from "lib/MetroPlots"
+import { makeMetroOptions } from "lib/MetroPlots"
 import MultiSelect from "lib/MultiSelect"
-import { makePlaceOptions } from "lib/PlacePlots"
-import { makeStateOptions } from "lib/StatePlots"
+import { makeOptions } from "lib/PlotsTemplate"
 import { Page } from "lib/common_elements"
 import { useFetch } from "lib/queries"
 import { scoreFnWithPopulation } from "lib/utils"
@@ -64,48 +62,30 @@ function makeYearBuckets(
     for (let year = minYear; year <= maxYear; year++) {
       const middleYear = (minYear + maxYear) / 2
       yearBuckets.push({
-        year: Date.parse(`${year}`),
-        binned_year: Date.parse(`${middleYear}`),
+        year: year,
+        binned_year: middleYear,
       })
     }
   }
   for (let year = firstNonRangeYear; year <= 2021; year++) {
     yearBuckets.push({
-      year: Date.parse(`${year}`),
-      binned_year: Date.parse(`${year}`),
+      year: year,
+      binned_year: year,
     })
   }
 
   return yearBuckets
 }
 
-const midYearDatesThrough2010 = [
-  Date.parse("1982-01-01"),
-  Date.parse("1987-01-01"),
-  Date.parse("1992-01-01"),
-  Date.parse("1997-01-01"),
-  Date.parse("2002-01-01"),
-  Date.parse("2007-01-01"),
-]
+const midYearDatesThrough2010 = [1982, 1987, 1992, 1997, 2002, 2007]
 
 function getYearTickValues(grouping) {
   if (grouping === "none") {
     return null
   } else if (grouping === "five_years") {
-    return midYearDatesThrough2010.concat([
-      Date.parse("2012-01-01"),
-      Date.parse("2017-01-01"),
-      Date.parse("2020-01-01"),
-    ])
+    return midYearDatesThrough2010.concat([2012, 2017, 2020])
   } else if (grouping === "five_years_old") {
-    return midYearDatesThrough2010.concat([
-      Date.parse("2010"),
-      Date.parse("2012"),
-      Date.parse("2014"),
-      Date.parse("2016"),
-      Date.parse("2018"),
-      Date.parse("2020"),
-    ])
+    return midYearDatesThrough2010.concat([2010, 2012, 2014, 2016, 2018, 2020])
   }
 }
 
@@ -125,22 +105,19 @@ function makeYearToRangeStringMapping(grouping: string): Map<number, string> {
 const yearRangeAllMapping = makeYearToRangeStringMapping("five_years")
 const yearRangeOldMapping = makeYearToRangeStringMapping("five_years_old")
 
-expressionFunction("yearRangeAllFormat", function (datum, params) {
-  if (typeof datum === "number") {
-    // TODO figure out why the type is sometimes a number rather than a Date?
-    datum = new Date(datum)
-  }
-  const year = datum.getUTCFullYear()
-  return yearRangeAllMapping[year] || year.toString()
+/*eslint @typescript-eslint/no-unused-vars: ["error", { "argsIgnorePattern": "^_" }]*/
+expressionFunction("yearRangeAllFormat", function (datum, _) {
+  return yearRangeAllMapping[datum] || datum.toString()
 })
 
-expressionFunction("yearRangeOldFormat", function (datum, params) {
-  if (typeof datum === "number") {
-    // TODO figure out why the type is sometimes a number rather than a Date?
-    datum = new Date(datum)
-  }
-  const year = datum.getUTCFullYear()
-  return yearRangeOldMapping[year] || year.toString()
+/*eslint @typescript-eslint/no-unused-vars: ["error", { "argsIgnorePattern": "^_" }]*/
+expressionFunction("yearRangeOldFormat", function (datum, _) {
+  return yearRangeOldMapping[datum] || datum.toString()
+})
+
+/*eslint @typescript-eslint/no-unused-vars: ["error", { "argsIgnorePattern": "^_" }]*/
+expressionFunction("yearFormat", function (datum, _) {
+  return datum.toString()
 })
 
 function spec(
@@ -177,34 +154,34 @@ function spec(
             values: makeYearBuckets(grouping),
             format: {
               parse: {
-                year: "date",
-                binned_year: "date",
+                year: "number",
+                binned_year: "number",
               },
             },
           },
           key: "year",
           fields: ["binned_year"],
         },
-        default: Date.parse("2022-01-01 13:01"),
+        default: 2022,
       },
     ],
     encoding: {
       x: {
         field: "binned_year",
-        type: "temporal",
+        type: "quantitative",
         axis: {
           title: "Year",
           grid: false,
-          format: "%Y",
           formatType: {
             five_years: "yearRangeAllFormat",
             five_years_old: "yearRangeOldFormat",
-            none: null,
+            none: "yearFormat",
           }[grouping],
           values: getYearTickValues(grouping),
           labelOverlap: isWide ? "greedy" : false,
           labelAngle: isWide ? 0 : 45,
         },
+        scale: { nice: false },
       },
       y: {
         field: yField,
@@ -266,32 +243,24 @@ function spec(
   }
 }
 
-function addPrefixes(options, prefix, use_metro_name_suffix = false) {
-  const newOptions = []
-  for (const option of options) {
-    // IDK if we want name or value... let's just go with name for now.
-    const changes: { value: string; name?: string } = {
-      value: prefix + "/" + option.name,
-    }
-    if (use_metro_name_suffix) {
-      changes.name = option.name_with_suffix
-    }
-    newOptions.push(Object.assign(option, changes))
-  }
-  return newOptions
+function addPathPrefixes(options: any[], prefix: string): any[] {
+  return options.map(({ value, ...rest }) => ({
+    value: prefix + "/" + value,
+    ...rest,
+  }))
 }
 
-function makeOptions(statesData, metrosList, countiesList, placesList) {
-  const [msaOptions, csaOptions]: [any, any] = makeMetroOptions(metrosList)
+function makeAllOptions(statesList, metrosList, countiesList, placesList) {
+  const [msaOptions, csaOptions]: [any, any] = makeMetroOptions(metrosList)[0]
   if (!(typeof msaOptions === "object" && msaOptions.name === "MSAs")) {
     throw new Error("first element makeMetroOptions is not MSAs")
   }
   if (!(typeof csaOptions === "object" && csaOptions.name === "CSAs")) {
     throw new Error("second element makeMetroOptions is not CSAs")
   }
-  const stateOptions: any[] = makeStateOptions(statesData)
-  const countyOptions: any[] = makeCountyOptions(countiesList)
-  const placeOptions: any[] = makePlaceOptions(placesList)
+  const stateOptions: any[] = makeOptions(statesList)[0]
+  const countyOptions: any[] = makeOptions(countiesList)[0]
+  const placeOptions: any[] = makeOptions(placesList)[0]
 
   // TODO maybe fix this jank
   for (const item of stateOptions) {
@@ -313,11 +282,11 @@ function makeOptions(statesData, metrosList, countiesList, placesList) {
   return [
     {
       groupName: "Places",
-      items: addPrefixes(placeOptions, "Places"),
+      items: addPathPrefixes(placeOptions, "places_data"),
     },
     {
       groupName: "Counties",
-      items: addPrefixes(countyOptions, "Counties"),
+      items: addPathPrefixes(countyOptions, "counties_data"),
     },
     // I've filtered out the μSAs, so we can use MSA and CBSA interchangeably.
     // Most people know what an MSA is but not a CBSA, so we should use that name.
@@ -325,15 +294,15 @@ function makeOptions(statesData, metrosList, countiesList, placesList) {
     // data files.
     {
       groupName: "MSAs",
-      items: addPrefixes(msaOptions.items, "MSAs", true),
+      items: addPathPrefixes(msaOptions.items, "metros_data"),
     },
     {
       groupName: "CSAs",
-      items: addPrefixes(csaOptions.items, "CSAs", true),
+      items: addPathPrefixes(csaOptions.items, "metros_data"),
     },
     {
       groupName: "States",
-      items: addPrefixes(stateOptions, "States"),
+      items: addPathPrefixes(stateOptions, "states_data"),
     },
   ]
 }
@@ -366,14 +335,7 @@ function combineDatas(datas) {
     .flatMap((d) => d.data ?? [])
     .filter((d) => d.year != "2022")
 
-  const dataCopied = []
-  for (const row of data) {
-    const newRow = Object.assign({}, row)
-    newRow.year = Date.parse(newRow.year)
-    dataCopied.push(newRow)
-  }
-
-  return dataCopied
+  return data
 }
 
 type Option = {
@@ -388,7 +350,7 @@ const fuzzysortOptions = {
 }
 
 export default function Home(): JSX.Element {
-  const { data: statesResponse } = useFetch("/state_annual.json")
+  const { data: statesListResponse } = useFetch("/states_list.json")
   const { data: metrosListResponse } = useFetch("/metros_list.json")
   const { data: countiesListResponse } = useFetch("/counties_list.json")
   const { data: placesListResponse } = useFetch("/places_list.json")
@@ -399,14 +361,14 @@ export default function Home(): JSX.Element {
 
   const options = useMemo(
     () =>
-      makeOptions(
-        statesResponse || [],
+      makeAllOptions(
+        statesListResponse || [],
         metrosListResponse || [],
         countiesListResponse || [],
         placesListResponse || []
       ),
     [
-      statesResponse,
+      statesListResponse,
       metrosListResponse,
       countiesListResponse,
       placesListResponse,
@@ -419,7 +381,7 @@ export default function Home(): JSX.Element {
     .map((item) => {
       return {
         queryKey: [item.value],
-        queryFn: () => getData(item.path),
+        queryFn: () => getData(item.value + ".json"),
       }
     })
   const datas: any = useQueries(queries)

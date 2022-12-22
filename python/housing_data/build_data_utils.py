@@ -2,7 +2,6 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
-import numpy as np
 import pandas as pd
 import us
 from housing_data import building_permits_survey as bps
@@ -60,8 +59,6 @@ STATE_POPULATION_DIR = Path("data", "population", "state")
 COUNTY_POPULATION_DIR = Path("data", "population", "county")
 PLACE_POPULATION_DIR = Path("data", "population", "place")
 
-CANADA_BPER_DIR = Path("data", "canada-bper")
-
 # Last year and month for which monthly BPS data is available (and is cloned to housing-data-data).
 LATEST_MONTH = (2022, 9)
 LAST_YEAR_ANNUAL_DATA_RELEASED = True
@@ -72,10 +69,17 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
         shutil.rmtree(path)
     path.mkdir()
 
-    for path_name, group in tqdm(df.groupby("path")):
+    for (json_dir, json_name), group in tqdm(
+        df.groupby(["path_1", "path_2"], dropna=False)
+    ):
+        sub_path = path / json_dir if not pd.isnull(json_dir) else path
+        sub_path.mkdir(exist_ok=True)
         group.reset_index(drop=True).to_json(
-            path / f"{path_name}.json", orient="records"
+            sub_path / f"{json_name}.json", orient="records"
         )
+
+
+DEFAULT_COLUMNS = ["name", "path_1", "path_2"]
 
 
 def write_list_to_json(
@@ -89,8 +93,13 @@ def write_list_to_json(
     :param unhashable_columns: Columns to not include in calls to drop_duplicates, merge, etc. because
         they would cause "[type] is not hashable" errors.
     """
+    columns = DEFAULT_COLUMNS + columns
     hashable_columns = list(set(columns) - set(unhashable_columns or []))
-    subset_df = df[columns].drop_duplicates(subset=hashable_columns)
+    subset_df = df[columns].copy().drop_duplicates(subset=hashable_columns)
+
+    # Refers to both the path of the json file (https://housingdata.app/places_data/{path}.json)
+    # and the URL path (https://housingdata.app/places/{path})
+    subset_df["path"] = (subset_df["path_1"] + "/").fillna("") + subset_df["path_2"]
 
     if add_latest_population_column:
         latest_populations = df[df["year"] == "2020"][
@@ -100,7 +109,9 @@ def write_list_to_json(
         subset_df["population"] = subset_df["population"].fillna(0).astype(int)
         subset_df = subset_df.sort_values("name", ascending=False)
 
-    subset_df.sort_values(hashable_columns).to_json(output_path, orient="records")
+    subset_df = subset_df.sort_values(hashable_columns)
+    subset_df = subset_df.drop(columns=["path_1", "path_2"])
+    subset_df.to_json(output_path, orient="records")
 
 
 def add_per_capita_columns(df: pd.DataFrame) -> None:
@@ -188,6 +199,9 @@ def add_current_year_projections(year_to_date_df: pd.DataFrame) -> pd.DataFrame:
     Given a DataFrame with "monthly_year_to_date" data and a "month" column,
     adds columns for projected_{bldgs,units,value} for the remainder of the year
     (assuming a constant rate across all months).
+
+    The projected units for the remainder of the year will be stacked on top of
+    the already observed units in the bar chart, with a different shading pattern.
     """
     for value_type in ["bldgs", "units", "value"]:
         # number of remaining months in the year / number of observed months

@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import Head from "next/head"
 
 import { GitHubFooter, Nav } from "lib/common_elements"

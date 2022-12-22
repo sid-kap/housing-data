@@ -3,7 +3,7 @@ import { useCallback, useState } from "react"
 import Head from "next/head"
 import Link from "next/link"
 
-export function GitHubFooter(props): JSX.Element {
+export function GitHubFooter(): JSX.Element {
   const linkClasses = "text-blue-500 hover:text-blue-300"
 
   return (
@@ -134,15 +134,15 @@ const navItems = [
     name: "States",
   },
   {
-    url: "/metros/Bakersfield, CA",
+    url: "/metros/Bakersfield_CA",
     name: "Metros",
   },
   {
-    url: "/counties/TX/Harris County",
+    url: "/counties/TX/Harris_County",
     name: "Counties",
   },
   {
-    url: "/places/CA/Los Angeles",
+    url: "/places/CA/Los_Angeles",
     name: "Cities",
   },
   {

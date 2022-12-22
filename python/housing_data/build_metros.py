@@ -31,11 +31,12 @@ def load_crosswalk_df() -> pd.DataFrame:
                 "fipsstatecode": "fips_state",
                 "fipscountycode": "fips_county",
                 "csatitle": "csa_name",
-                "cbsatitle": "cbsa_name",
+                # This only includes MSAs now, so we can rename CBSA to MSA
+                "cbsatitle": "msa_name",
             }
         )
-        .dropna(subset=["cbsa_name"])[
-            ["fips_state", "fips_county", "csa_name", "cbsa_name"]
+        .dropna(subset=["msa_name"])[
+            ["fips_state", "fips_county", "csa_name", "msa_name"]
         ]
     )
 
@@ -48,17 +49,17 @@ def combine_metro_rows(
     df: pd.DataFrame, metro_type: str, crosswalk_df: pd.DataFrame
 ) -> pd.DataFrame:
     """
-    :param metro_type: 'cbsa' or 'csa'
+    :param metro_type: 'msa' or 'csa'
     """
-    assert metro_type in ["cbsa", "csa"]
+    assert metro_type in ["msa", "csa"]
 
     metro_col = f"{metro_type}_name"
 
-    if metro_type == "cbsa":
+    if metro_type == "msa":
         other_metro_col = "csa_name"
         metro_name_suffix = "MSA"
     elif metro_type == "csa":
-        other_metro_col = "cbsa_name"
+        other_metro_col = "msa_name"
         metro_name_suffix = "CSA"
     else:
         raise ValueError(f"Unknown metro_type: {metro_type}")
@@ -104,13 +105,13 @@ def get_aggregate_functions() -> Dict[str, pd.NamedAgg]:
         col: pd.NamedAgg(column=col, aggfunc="sum") for col in NUMERICAL_COLUMNS
     }
     aggregate_functions["county_names"] = pd.NamedAgg(
-        column="county_name", aggfunc=lambda counties: counties.tolist()
+        column="name", aggfunc=lambda counties: counties.tolist()
     )
     aggregate_functions["population"] = pd.NamedAgg(column="population", aggfunc="sum")
 
     # So that we can check if all the counties in a metro were observed in that year
     aggregate_functions["num_observed_counties"] = pd.NamedAgg(
-        column="county_name", aggfunc="count"
+        column="name", aggfunc="count"
     )
 
     return aggregate_functions
@@ -135,18 +136,26 @@ def load_metros(counties_df: pd.DataFrame) -> pd.DataFrame:
         ]
     )
 
-    cbsas_df = combine_metro_rows(merged_df, "cbsa", crosswalk_df)
+    msas_df = combine_metro_rows(merged_df, "msa", crosswalk_df)
     csas_df = combine_metro_rows(merged_df, "csa", crosswalk_df)
 
-    metros_df = pd.concat([cbsas_df, csas_df])
+    metros_df = pd.concat([msas_df, csas_df])
 
     add_per_capita_columns(metros_df)
 
-    metros_df["path"] = metros_df["metro_name"].str.replace("/", "-")
+    metros_df["path_1"] = None
+    metros_df["path_2"] = (
+        metros_df["metro_name"]
+        .str.replace("/", "_")
+        .str.replace("-", "_")
+        .str.replace(" ", "_")
+        .str.replace(",", "")
+    )
 
     # This field is only used in comparison plots in the plotting code.
     # For the plot labels, would like to use the full metro name with the "MSA" or "CSA" suffix.
     metros_df["name"] = metros_df["metro_name_with_suffix"]
+    metros_df = metros_df.drop(columns=["metro_name_with_suffix", "metro_name"])
 
     metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
 
