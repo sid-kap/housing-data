@@ -3,7 +3,7 @@ import { useCallback, useState } from "react"
 import Head from "next/head"
 import Link from "next/link"
 
-export function GitHubFooter(props): JSX.Element {
+export function GitHubFooter(): JSX.Element {
   const linkClasses = "text-blue-500 hover:text-blue-300"
 
   return (

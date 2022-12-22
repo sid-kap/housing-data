@@ -16,6 +16,7 @@ const months = {
   12: "December",
 }
 
+// eslint-disable-next-line @typescript-eslint/no-inferrable-types
 const latestMonth: number = 9
 const glueWord = latestMonth == 2 ? "and" : "through"
 const observedMonths =
@@ -23,7 +24,7 @@ const observedMonths =
     ? months[latestMonth]
     : `${months[1]} ${glueWord} ${months[latestMonth]}`
 
-export function CurrentYearExtrapolationInfo(props): JSX.Element {
+export function CurrentYearExtrapolationInfo(): JSX.Element {
   return (
     <div>
       <div className="text-xs mt-3 text-left">

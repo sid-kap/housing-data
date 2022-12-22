@@ -99,11 +99,8 @@ export default function BarPlot({
         </defs>
       </svg>
       <ContainerDimensions>
-        {({ width, height }) => (
-          <VegaLite
-            spec={makeSpec(units, perCapita, width, height)}
-            data={data}
-          />
+        {({ width }) => (
+          <VegaLite spec={makeSpec(units, perCapita, width)} data={data} />
         )}
       </ContainerDimensions>
     </>
@@ -153,8 +150,7 @@ function makeTransforms(
 function makeSpec(
   units: string,
   perCapita: boolean,
-  width: number,
-  height: number
+  width: number
 ): TopLevelSpec {
   const perThousand = perCapita && units === "units"
   const perCapitaSuffix = perCapita ? "_per_capita" : ""
