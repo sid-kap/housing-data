@@ -245,6 +245,7 @@ def load_data(
     month: Optional[int] = None,
     region: Optional[Region] = None,
     data_path: Optional[Path] = None,
+    drop_useless_fields: bool = True,
 ) -> pd.DataFrame:
     """
     :param region: Only required if scale is 'place'
@@ -269,6 +270,23 @@ def load_data(
 
     if scale == "county":
         df = county_cleanup(df)
+
+    if drop_useless_fields:
+        cols_to_drop = set(df.columns) & {
+            "survey_date",
+            "msa/cmsa",
+            "pmsa_code",
+            "region_code",
+            "division_code",
+            "central_city",
+            "zip_code",
+            "csa_csa",
+            "cbsa_code",
+            "csa_code",
+            "footnote_code",
+            "fips mcd_code",
+        }
+        df = df.drop(columns=list(cols_to_drop))
 
     return df
 
