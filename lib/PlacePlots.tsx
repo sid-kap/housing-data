@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { useRouter } from "next/router"
 
-import BarPlot from "lib/BarPlot"
 import PlotsTemplate from "lib/PlotsTemplate"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { getStateAbbreviation, getStateFips } from "lib/geo_helpers"
@@ -11,6 +10,14 @@ import { useFetch } from "lib/queries"
 import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
 import { PathMapping, scoreFnWithPopulation } from "lib/utils"
 
+// The schema for /places_list.json
+type RawOption = {
+  name: string
+  path: string
+  population: number
+  alt_name: string
+}
+
 type Option = {
   value: string // the path
   name: string
@@ -18,17 +25,12 @@ type Option = {
   population: number
 }
 
-export function makePlaceOptions(
-  placesList: Array<{
-    name: string
-    path: string
-    population: number
-    alt_name: string
-  }>
+export function makeOptions(
+  placesList: RawOption[]
 ): [Option[], Map<string, Option>] {
   const options = []
   const optionsMap = new Map()
-  for (const [i, place] of placesList.entries()) {
+  for (const place of placesList) {
     const option = {
       value: place.path,
       name: place.name,
@@ -56,11 +58,11 @@ export default function PlacePlots({
   setTitle: (string) => void
 }): JSX.Element {
   const router = useRouter()
-  const { status, data: placesList } = useFetch("/places_list.json")
+  const { data: placesList } = useFetch("/places_list.json")
   const [place, setPlace] = useState<Option | null>(null)
 
   const [options, optionsMap] = useMemo(
-    () => makePlaceOptions(placesList ?? []),
+    () => makeOptions(placesList ?? []),
     [placesList]
   )
 
@@ -73,12 +75,10 @@ export default function PlacePlots({
         setTitle(place.name)
       }
     }
-  }, [optionsMap, path, setTitle])
+  }, [optionsMap, path, setPlace, setTitle])
 
   const onChange = useCallback(
-    (newPath) => {
-      router.push("/places/" + newPath)
-    },
+    (newPath) => router.push("/places/" + newPath),
     [router]
   )
   const select = (
@@ -91,5 +91,5 @@ export default function PlacePlots({
     />
   )
 
-  return PlotsTemplate({ place, select })
+  return PlotsTemplate({ selected: place, select, jsonRoot: "/places_data/" })
 }

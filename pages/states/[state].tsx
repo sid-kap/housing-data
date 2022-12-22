@@ -1,15 +1,19 @@
 import { useRouter } from "next/router"
+import { useState } from "react"
 
 import StatePlots from "lib/StatePlots"
 import { Page } from "lib/common_elements"
 
 export default function State(): JSX.Element {
+  const [title, setTitle] = useState("Housing Data")
   const router = useRouter()
-  const { state } = router.query as { state: string }
+
+  // Remove /states prefix from path
+  const path = router.asPath.split("/").slice(2).join("/")
 
   return (
-    <Page title={state} navIndex={1}>
-      <StatePlots stateName={state} />
+    <Page title={title} navIndex={1}>
+      <StatePlots path={path} setTitle={setTitle} />
     </Page>
   )
 }

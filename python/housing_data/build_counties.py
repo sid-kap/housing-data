@@ -67,7 +67,7 @@ def load_counties(
     state_abbrs = get_state_abbrs(counties_df["fips_state"])
     counties_df["name"] = counties_df["county_name"] + ", " + state_abbrs
     counties_df["path_1"] = state_abbrs
-    counties_df["path_2"] = counties_df["county_name"]
+    counties_df["path_2"] = counties_df["county_name"].str.replace(" ", "_")
     counties_df = counties_df.drop(columns=["county_name"])
 
     counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")

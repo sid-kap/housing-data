@@ -9,14 +9,18 @@ interface Option {
 }
 
 export default function PlotsTemplate({
-  place,
+  selected,
   select,
+  jsonRoot,
+  countyList,
 }: {
-  place: Option | null
+  selected: Option | null
   select: JSX.Element
+  jsonRoot: string
+  countyList?: JSX.Element
 }): JSX.Element {
   const { data } = useFetch(
-    place !== null ? "/places_data/" + place.value + ".json" : null
+    selected != null ? jsonRoot + selected.value + ".json" : null
   )
 
   const { selectedUnits, unitsSelect } = useUnitsSelect()
@@ -29,7 +33,7 @@ export default function PlotsTemplate({
       <div className="lg:grid lg:grid-cols-3 flex flex-col">
         <div className="m-4 col-span-1">{select}</div>
         <div className="mt-4 mb-1 col-span-1 text-center">
-          <h1 className="text-4xl">{place?.name}</h1>
+          <h1 className="text-4xl">{selected?.name}</h1>
         </div>
         <div className="col-span-1 m-4">{unitsSelect}</div>
       </div>
@@ -42,6 +46,7 @@ export default function PlotsTemplate({
         />
       </div>
       {populationInput}
+      {countyList ?? ""}
       <CurrentYearExtrapolationInfo />
     </div>
   )

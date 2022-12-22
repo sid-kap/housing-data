@@ -59,7 +59,7 @@ def generate_json(
         ["alt_name"],
         add_latest_population_column=True,
     )
-    write_to_json_directory(places_df, PUBLIC_DIR / "places_data")
+    # write_to_json_directory(places_df, PUBLIC_DIR / "places_data")
 
     # Metros
     write_list_to_json(

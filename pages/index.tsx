@@ -8,11 +8,11 @@ import { VegaLite } from "react-vega"
 import { expressionFunction } from "vega"
 import { TopLevelSpec } from "vega-lite"
 
-import { makeCountyOptions } from "lib/CountyPlots"
+import { makeOptions as makeCountyOptions } from "lib/CountyPlots"
 import { makeOptions as makeMetroOptions } from "lib/MetroPlots"
 import MultiSelect from "lib/MultiSelect"
-import { makePlaceOptions } from "lib/PlacePlots"
-import { makeStateOptions } from "lib/StatePlots"
+import { makeOptions as makePlaceOptions } from "lib/PlacePlots"
+import { makeOptions as makeStateOptions } from "lib/StatePlots"
 import { Page } from "lib/common_elements"
 import { useFetch } from "lib/queries"
 import { scoreFnWithPopulation } from "lib/utils"
@@ -258,7 +258,7 @@ function addPrefixes(options, prefix, use_metro_name_suffix = false) {
 }
 
 function makeOptions(statesData, metrosList, countiesList, placesList) {
-  const [msaOptions, csaOptions]: [any, any] = makeMetroOptions(metrosList)
+  const [msaOptions, csaOptions]: [any, any] = makeMetroOptions(metrosList)[0]
   if (!(typeof msaOptions === "object" && msaOptions.name === "MSAs")) {
     throw new Error("first element makeMetroOptions is not MSAs")
   }
@@ -266,8 +266,8 @@ function makeOptions(statesData, metrosList, countiesList, placesList) {
     throw new Error("second element makeMetroOptions is not CSAs")
   }
   const stateOptions: any[] = makeStateOptions(statesData)
-  const countyOptions: any[] = makeCountyOptions(countiesList)
-  const placeOptions: any[] = makePlaceOptions(placesList)
+  const countyOptions: any[] = makeCountyOptions(countiesList)[0]
+  const placeOptions: any[] = makePlaceOptions(placesList)[0]
 
   // TODO maybe fix this jank
   for (const item of stateOptions) {

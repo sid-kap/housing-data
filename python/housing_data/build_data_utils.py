@@ -69,8 +69,10 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
         shutil.rmtree(path)
     path.mkdir()
 
-    for (json_dir, json_name), group in tqdm(df.groupby(["path_1", "path_2"])):
-        sub_path = path / json_dir if json_dir is not None else path
+    for (json_dir, json_name), group in tqdm(
+        df.groupby(["path_1", "path_2"], dropna=False)
+    ):
+        sub_path = path / json_dir if not pd.isnull(json_dir) else path
         sub_path.mkdir(exist_ok=True)
         group.reset_index(drop=True).to_json(
             sub_path / f"{json_name}.json", orient="records"

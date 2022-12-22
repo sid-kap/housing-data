@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useState, useEffect, useCallback } from "react"
 
 import { useRouter } from "next/router"
 
@@ -6,100 +6,74 @@ import SelectSearch from "react-select-search/dist/cjs"
 import { PlainObject } from "react-vega/src/types"
 
 import BarPlot from "lib/BarPlot"
+import PlotsTemplate from "lib/PlotsTemplate"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
 import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
 
 type RawOption = {
+  name: string
+  path: string
+  population: string
   type: string
-  state_name: string
 }
 
 type Option = {
-  value: string
+  value: string // the path
   name: string
+}
+
+export function makeOptions(statesList: RawOption[]): [Option[], Map<string, Option>] {
+  const options = statesList.map((state) => ({value: state.path, name: state.name}))
+
+  const optionsMap = new Map(options.map((option) => [option.value, option]))
+
+  return [options, optionsMap]
+}
+
+
+export default function StatePlots({
+  path,
+  setTitle,
+}: {
   path: string
-}
+  setTitle: (string) => void
+}): JSX.Element {
+  const router = useRouter()
+  const { status, data: statesList } = useFetch("/states_list.json")
+  const [state, setState] = useState<Option | null>(null)
 
-export function makeStateOptions(statesList: RawOption[]): Option[] {
-  let stateNames = statesList
-    .filter((row) => row.type === "state")
-    .map((row) => row.state_name)
-    .filter((row) => row !== null) // TODO remove null row from data file
-  stateNames = Array.from(new Set(stateNames))
+  const [options, optionsMap] = useMemo(
+    () => makeOptions(statesList ?? []),
+    [statesList]
+  )
+  console.log(statesList, options, optionsMap)
 
-  return stateNames.map((state) => ({
-    value: state,
-    name: state,
-    path: `/states_data/${state}.json`,
-  }))
-}
+  // When the page first loads, figure out which state we're at
+  useEffect(() => {
+    if (optionsMap != null && path != null) {
+      const place = optionsMap.get(path)
+      if (place) {
+        setState(place)
+        setTitle(place.name)
+      }
+    }
+  }, [optionsMap, path, setState, setTitle])
+  console.log(path, state)
 
-function prepareData(stateData: RawOption[], stateName: string): PlainObject {
-  const filteredData = stateData.filter((row) => row.state_name === stateName)
-
-  return { table: filteredData }
-}
-
-function makeStateSelect(
-  stateOptions: Option[],
-  stateName: string,
-  router
-): JSX.Element {
-  return (
+  const onChange = useCallback(
+    (newPath) => router.push("/states/" + newPath),
+    [router]
+  )
+  const select = (
     <SelectSearch
       search
-      value={stateName}
-      onChange={(newState) =>
-        newState !== stateName ? router.push("/states/" + newState) : null
-      }
-      options={stateOptions}
+      onChange={onChange}
+      options={options}
+      value={state?.value}
       placeholder="Change state..."
     />
   )
-}
 
-export default function StatePlots({
-  stateName,
-}: {
-  stateName: string
-}): JSX.Element {
-  const router = useRouter()
-
-  const { status, data: stateData } = useFetch("/state_annual.json")
-
-  const data = useMemo(
-    () => prepareData(stateData ?? [], stateName),
-    [status, stateName]
-  )
-
-  const stateOptions = useMemo(
-    () => makeStateOptions(stateData ?? []),
-    [status]
-  )
-
-  const stateSelect = useMemo(
-    () => makeStateSelect(stateOptions, stateName, router),
-    [stateOptions, stateName, router]
-  )
-  const { selectedUnits, unitsSelect } = useUnitsSelect()
-
-  const { denom, populationInput } = usePerCapitaInput()
-  const perCapita = denom === "per_capita"
-
-  return (
-    <div className="flex flex-col justify-center items-center mx-auto mb-10">
-      <div className="flex flex-col lg:grid lg:grid-cols-3">
-        <div className="m-4 col-span-1">{stateSelect}</div>
-        <h1 className="mt-4 text-4xl col-span-1 text-center">{stateName}</h1>
-        <div className="col-span-1 m-4">{unitsSelect}</div>
-      </div>
-
-      <div className="w-full flex flex-row">
-        <BarPlot data={data} units={selectedUnits} perCapita={perCapita} />
-      </div>
-      {populationInput}
-      <CurrentYearExtrapolationInfo />
-    </div>
-  )
+  return PlotsTemplate({ selected: state, select, jsonRoot: "/states_data/" })
 }

@@ -1,148 +1,93 @@
-import { useCallback, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { useRouter } from "next/router"
 
 import us from "us"
 
 import BarPlot from "lib/BarPlot"
+import PlotsTemplate from "lib/PlotsTemplate"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
 import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
 import { PathMapping } from "lib/utils"
 
-function getStateAbbreviation(stateCode: number): string {
-  const twoDigitStringCode = String(stateCode).padStart(2, "0")
-  const state = us.lookup(twoDigitStringCode)
-  if (typeof state === "undefined") {
-    return ""
-  } else {
-    return state.abbr
-  }
-}
-
-function getJsonUrl(county: string, stateCode: number): string {
-  county = county.replace("#", "%23")
-  return "/counties_data/" + stateCode.toString() + "/" + county + ".json"
-}
-
+// The schema for /counties_list.json
 type RawOption = {
-  county_name: string
-  state_code: number
+  name: string
+  path: string
   population: number
 }
 
 type Option = {
-  value: number
-  abbr: string
-  county_name: string
+  value: string // the path
   name: string
-  path: string
 }
 
-export function makeCountyOptions(countiesList: RawOption[]): Option[] {
+export function makeOptions(
+  countiesList: RawOption[]
+): [Option[], Map<string, Option>] {
   const options = []
-  for (let i = 0; i < countiesList.length; i++) {
-    const county = countiesList[i]
-    const abbr = getStateAbbreviation(county.state_code)
-    options.push({
-      value: i,
-      abbr: abbr,
-      county_name: county.county_name,
-      name: county.county_name + ", " + abbr,
-      path: getJsonUrl(county.county_name, county.state_code),
+  const optionsMap = new Map()
+  for (const county of countiesList) {
+    const option = {
+      value: county.path,
+      name: county.name,
       population: county.population,
-    })
+    }
+    options.push(option)
+    optionsMap.set(county.path, option)
   }
 
-  return options
+  return [options, optionsMap]
 }
 
 export default function CountyPlots({
-  countyName,
-  stateAbbr,
-  stateCode,
+  path,
+  setTitle,
 }: {
-  countyName: string
-  stateAbbr: string
-  stateCode: number
+  path: string
+  setTitle: (string) => void
 }): JSX.Element {
   const router = useRouter()
-
   const { status, data: countiesList } = useFetch("/counties_list.json")
+  const [county, setCounty] = useState<Option | null>(null)
 
-  const countyOptions = useMemo(
-    () => makeCountyOptions(countiesList ?? []),
-    [status]
-  )
-  const pathMapping = useMemo(
-    () =>
-      new PathMapping<Option>(
-        countyOptions || [],
-        (row) => row.county_name + "/" + row.state_code
-      ),
-    [countyOptions]
+  console.log(path)
+
+  const [options, optionsMap] = useMemo(
+    () => makeOptions(countiesList ?? []),
+    [countiesList]
   )
 
-  const optionVal: Option = useMemo(
-    () => pathMapping.getEntryForPath(countyName + "/" + stateCode),
-    [countyName, stateCode, pathMapping]
-  )
-
-  const url = countyName ? getJsonUrl(countyName, stateCode) : null
-  const { data } = useFetch(url)
+  // When the page first loads, figure out which county we're at
+  useEffect(() => {
+    if (optionsMap != null && path != null) {
+      const county = optionsMap.get(path)
+      if (county) {
+        setCounty(county)
+        setTitle(county.name)
+        console.log(county)
+      }
+    }
+  }, [optionsMap, path, setCounty, setTitle])
 
   const onChange = useCallback(
-    (newCounty) => {
-      const chosenOption = countyOptions[newCounty]
-      if (
-        chosenOption.county_name !== countyName ||
-        chosenOption.abbr !== stateAbbr
-      ) {
-        router.push(
-          "/counties/" +
-            chosenOption.abbr +
-            "/" +
-            chosenOption.county_name.replace("#", "%23")
-        )
-      }
-    },
-    [countyName, stateAbbr, status]
+    (newPath) => router.push("/counties/" + newPath),
+    [router]
+  )
+  const select = (
+    <WindowSelectSearch
+      search
+      onChange={onChange}
+      options={options}
+      value={county?.value}
+    />
   )
 
-  const { selectedUnits, unitsSelect } = useUnitsSelect()
-
-  const { denom, populationInput } = usePerCapitaInput()
-  const perCapita = denom === "per_capita"
-
-  return (
-    <div className="mx-auto mb-10 align-center items-center flex flex-col justify-center">
-      <div className="lg:grid lg:grid-cols-3 flex flex-col">
-        <div className="m-4 col-span-1">
-          <WindowSelectSearch
-            search
-            onChange={onChange}
-            options={countyOptions}
-            value={optionVal?.value}
-          />
-        </div>
-        <div className="mt-4 mb-1 col-span-1 text-center">
-          <h1 className="text-4xl">
-            {countyName}, {stateAbbr}
-          </h1>
-        </div>
-        <div className="col-span-1 m-4">{unitsSelect}</div>
-      </div>
-
-      <div className="w-full flex flex-row">
-        <BarPlot
-          data={{ table: data }}
-          units={selectedUnits}
-          perCapita={perCapita}
-        />
-      </div>
-      {populationInput}
-      <CurrentYearExtrapolationInfo />
-    </div>
-  )
+  return PlotsTemplate({
+    selected: county,
+    select,
+    jsonRoot: "/counties_data/",
+  })
 }
