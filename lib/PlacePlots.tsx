@@ -61,23 +61,8 @@ export default function PlacePlots({
   const { data: placesList } = useFetch("/places_list.json")
   const [place, setPlace] = useState<Option | null>(null)
 
-<<<<<<< HEAD
   const [options, optionsMap] = useMemo(
     () => makeOptions(placesList ?? []),
-=======
-  const { data: placesList } = useFetch("/places_list.json")
-
-  const placeOptions = useMemo(
-    () => makePlaceOptions(placesList ?? []),
-    [placesList]
-  )
-  const pathMapping = useMemo(
-    () =>
-      new PathMapping(
-        placesList || [],
-        (row) => row.place_name + "/" + row.state_code
-      ),
->>>>>>> main
     [placesList]
   )
 
