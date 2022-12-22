@@ -97,7 +97,7 @@ export default function PlacePlots({
 }): JSX.Element {
   const router = useRouter()
 
-  const { status, data: placesList } = useFetch("/places_list.json")
+  const { data: placesList } = useFetch("/places_list.json")
 
   const placeOptions = useMemo(
     () => makePlaceOptions(placesList ?? []),

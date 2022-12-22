@@ -16,14 +16,14 @@ const months = {
   12: "December",
 }
 
-const latestMonth: number = 9
+const latestMonth = 9
 const glueWord = latestMonth == 2 ? "and" : "through"
 const observedMonths =
   latestMonth == 1
     ? months[latestMonth]
     : `${months[1]} ${glueWord} ${months[latestMonth]}`
 
-export function CurrentYearExtrapolationInfo(props): JSX.Element {
+export function CurrentYearExtrapolationInfo(): JSX.Element {
   return (
     <div>
       <div className="text-xs mt-3 text-left">

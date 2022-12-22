@@ -63,7 +63,7 @@ export default function MultiSelect<T extends Option>({
   const ensureItemInView = useCallback(
     (index) => {
       // There should be a better way to get around this TypeScript error...
-      ;(listRef.current as any).scrollToItem(index)
+      (listRef.current as any).scrollToItem(index)
     },
     [listRef]
   )
@@ -97,7 +97,7 @@ export default function MultiSelect<T extends Option>({
           }
         })
       } else if (e.key === "Escape") {
-        ;(inputRef.current as any).blur()
+        (inputRef.current as any).blur()
       } else if (e.key === "Enter") {
         e.preventDefault()
         // Clear the input when someone presses enter

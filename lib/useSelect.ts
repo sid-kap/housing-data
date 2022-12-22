@@ -65,7 +65,7 @@ export default function useSelect({
   search: canSearch = false,
   options: defaultOptions,
   fuzzysortOptions = { keys: ["name"], threshold: -10000 },
-  onChange = () => {},
+  onChange = function () { /* do nothing */ },
   getOptions = null,
   allowEmpty = true,
   closeOnSelect = true,
@@ -94,7 +94,7 @@ export default function useSelect({
     let newOption = getOption(value, [...flatDefaultOptions, ...addedOptions])
 
     if (!newOption && !allowEmpty && !multiple) {
-      ;[newOption] = flatDefaultOptions
+      [newOption] = flatDefaultOptions
     }
 
     return newOption
@@ -269,7 +269,7 @@ export default function useSelect({
     if (state.changed !== false) {
       // No idea why I'm getting type errors here, TODO fix it
       setState((oldState) => ({ ...oldState, changed: false }))
-      onChange.apply(null, state.changed)
+      onChange(state.changed)
     }
   }, [state.changed, onChange])
 
