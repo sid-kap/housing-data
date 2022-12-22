@@ -49,6 +49,9 @@ jobs:
         with:
           node-version: 18
 
+      - name: Installing dev dependencies for linters
+        run: yarn install --dev
+
       ################################
       # Run Linter against code base #
       ################################
