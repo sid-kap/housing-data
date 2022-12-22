@@ -47,8 +47,6 @@ export default function CountyPlots({
   const { data: countiesList } = useFetch("/counties_list.json")
   const [county, setCounty] = useState<Option | null>(null)
 
-  console.log(path)
-
   const [options, optionsMap] = useMemo(
     () => makeOptions(countiesList ?? []),
     [countiesList]
@@ -61,7 +59,6 @@ export default function CountyPlots({
       if (county) {
         setCounty(county)
         setTitle(county.name)
-        console.log(county)
       }
     }
   }, [optionsMap, path, setCounty, setTitle])

@@ -47,7 +47,6 @@ export default function StatePlots({
     () => makeOptions(statesList ?? []),
     [statesList]
   )
-  console.log(statesList, options, optionsMap)
 
   // When the page first loads, figure out which state we're at
   useEffect(() => {
@@ -59,7 +58,6 @@ export default function StatePlots({
       }
     }
   }, [optionsMap, path, setState, setTitle])
-  console.log(path, state)
 
   const onChange = useCallback(
     (newPath) => router.push("/states/" + newPath),
