@@ -31,15 +31,15 @@ def _get_places_crosswalk_df(data_path: Optional[Path] = None) -> pd.DataFrame:
 
 def get_unincorporated_places_populations_1980() -> pd.DataFrame:
     """
-    Manually computes the unincorporated population of each couty, by subtracting all
+    Manually computes the unincorporated population of each county, by subtracting all
     incorporated jurisdictions from the 1980 county population total.
 
     We need to do this because sadly nhgis_ds104_1980_place_02398.csv, which has rows for
     "remainder of X county", only includes 31 of 50-something states.
 
-    Anyways this is super easy to do, and probably ends up being less work than using/documenting how to use
-    the place_02398 dataset.
-    I verified that this method gives the same numbers as using that other dataset in the 31 states that are present.
+    This is super easy, probably less work than learning how to use the place_02398 dataset.
+    I verified that this method gives the same numbers as that other dataset in the
+    31 states that are present.
     """
     # TODO download programmatically, add header=1
     counties_df = pd.read_csv("../raw_data/nhgis0015_ds104_1980_county.csv", header=1)
@@ -339,10 +339,10 @@ def get_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
 
     combined_df = remove_dupe_cities(combined_df)
 
-    combined_df = combined_df.drop(columns=["state_abbr"])
+    combined_df = combined_df.drop(columns=["state_abbr", "place_fips"])
 
     return combined_df.melt(
-        id_vars=["place_name", "state_code", "place_fips", "place_or_county_code"],
+        id_vars=["place_name", "state_code", "place_or_county_code"],
         var_name="year",
         value_name="population",
     )
@@ -467,6 +467,17 @@ def interpolate_1980s_populations(
 
 
 def get_place_population_estimates(data_path: Optional[Path] = None) -> pd.DataFrame:
+    """
+    Returns a DataFrame with the columns:
+    - state_code (int)
+    - place_or_county_code (str): either a place code (e.g. 12345) or a county code (e.g. 12345_county)
+    - place_name (str)
+    - year (str)
+    - population (float)
+
+    Note that county rows (e.g. "Los Angeles County", with state_code 6, place_or_county_code 37_county)
+    refers to the unincorporated county area population.
+    """
     print("Loading 1980 populations...")
     df_1980 = get_place_populations_1980(data_path)
     print("Loading 1990s populations...")

@@ -10,7 +10,7 @@ from housing_data.data_loading_helpers import get_url_text
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
-    from typing import Any, List, Optional
+    from typing import Any, List, Optional, Tuple
 
 Region = Literal["west", "midwest", "south", "northeast"]
 
@@ -245,6 +245,7 @@ def load_data(
     month: Optional[int] = None,
     region: Optional[Region] = None,
     data_path: Optional[Path] = None,
+    drop_useless_fields: bool = True,
 ) -> pd.DataFrame:
     """
     :param region: Only required if scale is 'place'
@@ -269,6 +270,24 @@ def load_data(
 
     if scale == "county":
         df = county_cleanup(df)
+
+    if drop_useless_fields:
+        cols_to_drop = set(df.columns) & {
+            "survey_date",
+            "msa/cmsa",
+            "pmsa_code",
+            "region_code",
+            "division_code",
+            "central_city",
+            "zip_code",
+            "csa_csa",
+            "cbsa_code",
+            "csa_code",
+            "footnote_code",
+            "fips mcd_code",
+            "census place_code",
+        }
+        df = df.drop(columns=list(cols_to_drop))
 
     return df
 
@@ -426,7 +445,7 @@ def place_cleanup(df: pd.DataFrame, year: int) -> pd.DataFrame:
         df["central_city"] = df["central_city"].astype(str)
 
     df["uncleaned_place_name"] = df["place_name"]
-    df["place_name"] = clean_place_names(df["place_name"], year)
+    df["place_name"], df["place_type"] = split_place_type(df["place_name"], year)
 
     df = df[
         df["place_name"].notnull() & ~df["place_name"].isin(PLACES_TO_REMOVE)
@@ -450,7 +469,7 @@ def place_cleanup(df: pd.DataFrame, year: int) -> pd.DataFrame:
     return df
 
 
-def clean_place_names(place_names: pd.Series, year: int) -> pd.Series:
+def split_place_type(place_names: pd.Series, year: int) -> Tuple[pd.Series, pd.Series]:
     if year <= 1988:
         # Mostly only an issue from 1980 to 1987, but there are like 11 places that
         # still have the weird trailing dots in 1988 too.
@@ -463,12 +482,25 @@ def clean_place_names(place_names: pd.Series, year: int) -> pd.Series:
 
     place_names = place_names.str.strip()
 
-    place_types = ["township", "town", "city", "village", "borough"]
-    for place_type in place_types:
-        place_names = place_names.str.replace(f" {place_type.title()}$", "", regex=True)
-        place_names = place_names.str.replace(f" {place_type}$", "", regex=True)
+    place_types = [" " + s for s in ["township", "town", "city", "village", "borough"]]
+    title_place_types = [s.title() for s in place_types]
 
-    return place_names
+    new_place_names = []
+    extracted_place_types: List[Optional[str]] = []
+    for name in place_names:
+        for place_type, title_place_type in zip(place_types, title_place_types):
+            if isinstance(name, str):
+                if name.endswith(place_type) or name.endswith(title_place_type):
+                    new_place_names.append(name[: -len(place_type)])
+                    extracted_place_types.append(place_type[1:])
+                    break
+        else:
+            new_place_names.append(name)
+            extracted_place_types.append(None)
+
+    return pd.Series(new_place_names, index=place_names.index), pd.Series(
+        extracted_place_types, index=place_names.index
+    )
 
 
 def county_cleanup(df: pd.DataFrame) -> pd.DataFrame:
