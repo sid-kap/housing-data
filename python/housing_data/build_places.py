@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 from housing_data import place_population
@@ -220,6 +220,33 @@ def add_alt_names(raw_places_df: pd.DataFrame) -> None:
     ] = "Manhattan Bronx Brooklyn Queens Staten Island"
 
 
+def get_place_name_spellings(df: pd.DataFrame) -> Dict[Tuple[str, Optional[str]], str]:
+    """
+    :param df: A DataFrame with columns place_name, place_type, and state_code.
+
+    Returns a dict that specifies how we want to spell each place name.
+
+    If the (place_name, state) tuple appears with only one place_type,
+    we just use "{place_name}, {state_abbr}".
+    Otherwise, we use "{place_name} {place_type}, {state_abbr}".
+    Returns a mapping from (place name, place type)
+    """
+    mapping = {}
+    for (place_name, state_code), group in df.groupby(["place_name", "state_code"]):
+        place_types = group["place_type"].unique()
+        if len(place_types) == 1:
+            mapping[(place_name, place_types[0], state_code)] = place_name
+        else:
+            for place_type in place_types:
+                mapping[(place_name, place_type, state_code)] = (
+                    f"{place_name} {place_type}"
+                    if place_type is not None
+                    else place_name
+                )
+
+    return mapping
+
+
 def load_places(
     data_repo_path: Optional[str], counties_population_df: pd.DataFrame = None
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -256,16 +283,25 @@ def load_places(
 
     places_df = add_place_population_data(raw_places_df, place_populations_df)
 
+    name_spelling = get_place_name_spellings(places_df)
+    name = pd.Series(
+        [
+            name_spelling[tuple(tup)]
+            for tup in places_df[["place_name", "place_type", "state_code"]].itertuples(
+                index=False
+            )
+        ],
+        index=places_df.index,
+    )
+
     # Add name for comparison plots
     is_unincorporated = places_df["place_name"].str.contains("County") | places_df[
         "place_name"
     ].str.contains("Parish")
 
-    name = (
-        is_unincorporated.map({True: "Unincorporated ", False: ""})
-        + places_df["place_name"]
-    )
+    name = is_unincorporated.map({True: "Unincorporated ", False: ""}) + name
     state_abbrs = get_state_abbrs(places_df["state_code"])
+
     places_df["name"] = name + ", " + state_abbrs
     places_df["path_1"] = state_abbrs
     places_df["path_2"] = name.str.replace("/", "-").str.replace(" ", "_")
