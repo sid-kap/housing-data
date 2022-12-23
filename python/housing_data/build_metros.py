@@ -126,15 +126,7 @@ def load_metros(counties_df: pd.DataFrame) -> pd.DataFrame:
 
     merged_df = crosswalk_df.merge(
         counties_df, on=["fips_state", "fips_county"], how="left"
-    ).drop(
-        columns=[
-            "fips_state",
-            "fips_county",
-            "region_code",
-            "division_code",
-            "survey_date",
-        ]
-    )
+    ).drop(columns=["fips_state", "fips_county"])
 
     msas_df = combine_metro_rows(merged_df, "msa", crosswalk_df)
     csas_df = combine_metro_rows(merged_df, "csa", crosswalk_df)
