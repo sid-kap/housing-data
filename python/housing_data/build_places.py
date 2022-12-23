@@ -269,14 +269,11 @@ def fix_nyc_boroughs_population(
 def get_name_spelling(places_df: pd.DataFrame) -> pd.Series:
     name_spelling = get_place_name_spellings(places_df)
     name = pd.Series(
-        [
-            name_spelling[tuple(tup)]
-            for tup in places_df[["place_name", "place_type", "state_code"]].itertuples(
-                index=False
-            )
-        ],
+        places_df[["place_name", "place_type", "state_code"]].itertuples(
+            index=False, name=None
+        ),
         index=places_df.index,
-    )
+    ).map(name_spelling)
 
     # Add name for comparison plots
     is_unincorporated = places_df["place_name"].str.contains("County") | places_df[
