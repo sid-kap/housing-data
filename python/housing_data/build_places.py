@@ -247,6 +247,46 @@ def get_place_name_spellings(df: pd.DataFrame) -> Dict[Tuple[str, Optional[str]]
     return mapping
 
 
+def fix_nyc_boroughs_population(
+    place_populations_df: pd.DataFrame, counties_population_df: pd.DataFrame
+) -> pd.DataFrame:
+    if counties_population_df is not None:
+        nyc_counties = [61, 47, 5, 81, 85]
+
+        nyc_counties_df = counties_population_df[
+            counties_population_df["county_code"].isin(nyc_counties)
+            & (counties_population_df["state_code"] == 36)  # NY
+        ].copy()
+        nyc_counties_df["place_or_county_code"] = (
+            nyc_counties_df["county_code"].astype(str) + "_county"
+        )
+
+        return pd.concat([place_populations_df, nyc_counties_df])
+    else:
+        return place_populations_df
+
+
+def get_name_spelling(places_df: pd.DataFrame) -> pd.Series:
+    name_spelling = get_place_name_spellings(places_df)
+    name = pd.Series(
+        [
+            name_spelling[tuple(tup)]
+            for tup in places_df[["place_name", "place_type", "state_code"]].itertuples(
+                index=False
+            )
+        ],
+        index=places_df.index,
+    )
+
+    # Add name for comparison plots
+    is_unincorporated = places_df["place_name"].str.contains("County") | places_df[
+        "place_name"
+    ].str.contains("Parish")
+    name = is_unincorporated.map({True: "Unincorporated ", False: ""}) + name
+
+    return name
+
+
 def load_places(
     data_repo_path: Optional[str], counties_population_df: pd.DataFrame = None
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -267,46 +307,18 @@ def load_places(
     place_populations_df = place_population.get_place_population_estimates(
         data_path=Path(data_repo_path, PLACE_POPULATION_DIR) if data_repo_path else None
     )
-
-    if counties_population_df is not None:
-        nyc_counties = [61, 47, 5, 81, 85]
-
-        nyc_counties_df = counties_population_df[
-            counties_population_df["county_code"].isin(nyc_counties)
-            & (counties_population_df["state_code"] == 36)  # NY
-        ].copy()
-        nyc_counties_df["place_or_county_code"] = (
-            nyc_counties_df["county_code"].astype(str) + "_county"
-        )
-
-        place_populations_df = pd.concat([place_populations_df, nyc_counties_df])
+    place_populations_df = fix_nyc_boroughs_population(
+        place_populations_df, counties_population_df
+    )
 
     places_df = add_place_population_data(raw_places_df, place_populations_df)
 
-    name_spelling = get_place_name_spellings(places_df)
-    name = pd.Series(
-        [
-            name_spelling[tuple(tup)]
-            for tup in places_df[["place_name", "place_type", "state_code"]].itertuples(
-                index=False
-            )
-        ],
-        index=places_df.index,
-    )
-
-    # Add name for comparison plots
-    is_unincorporated = places_df["place_name"].str.contains("County") | places_df[
-        "place_name"
-    ].str.contains("Parish")
-
-    name = is_unincorporated.map({True: "Unincorporated ", False: ""}) + name
+    name = get_name_spelling(places_df)
     state_abbrs = get_state_abbrs(places_df["state_code"])
-
     places_df["name"] = name + ", " + state_abbrs
     places_df["path_1"] = state_abbrs
     places_df["path_2"] = name.str.replace("/", "-").str.replace(" ", "_")
-
-    places_df = places_df.drop(columns=["place_name"])
+    places_df = places_df.drop(columns=["place_name", "place_type"])
 
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 

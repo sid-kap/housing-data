@@ -13,7 +13,6 @@ from housing_data.build_data_utils import (
 
 def load_states(data_repo_path: Optional[str]) -> pd.DataFrame:
     states_df = load_bps_all_years_plus_monthly(data_repo_path, "state")
-    # states_df = states_df.astype({"survey_date": str})
 
     population_df = state_population.get_state_population_estimates(
         Path(data_repo_path, STATE_POPULATION_DIR) if data_repo_path else None
