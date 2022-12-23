@@ -486,7 +486,7 @@ def split_place_type(place_names: pd.Series, year: int) -> Tuple[pd.Series, pd.S
     title_place_types = [s.title() for s in place_types]
 
     new_place_names = []
-    extracted_place_types = []
+    extracted_place_types: List[Optional[str]] = []
     for name in place_names:
         for place_type, title_place_type in zip(place_types, title_place_types):
             if isinstance(name, str):

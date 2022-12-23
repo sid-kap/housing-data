@@ -220,7 +220,9 @@ def add_alt_names(raw_places_df: pd.DataFrame) -> None:
     ] = "Manhattan Bronx Brooklyn Queens Staten Island"
 
 
-def get_place_name_spellings(df: pd.DataFrame) -> Dict[Tuple[str, Optional[str]], str]:
+def get_place_name_spellings(
+    df: pd.DataFrame,
+) -> Dict[Tuple[str, Optional[str], int], str]:
     """
     :param df: A DataFrame with columns place_name, place_type, and state_code.
 
