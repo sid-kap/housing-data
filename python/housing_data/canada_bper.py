@@ -1,38 +1,10 @@
 from pathlib import Path
+from typing import Dict, Optional, Tuple
 
 import pandas as pd
+from housing_data.canada_crosswalk import load_crosswalk
 
-PROVINCE_ABBREVIATIONS = {
-    10: "NL",
-    11: "PE",
-    12: "NS",
-    13: "NB",
-    24: "QC",
-    35: "ON",
-    46: "MB",
-    47: "SK",
-    48: "AB",
-    59: "BC",
-    60: "YT",
-    61: "NT",
-    62: "NU",
-}
-
-PROVINCE_NAMES = {
-    10: "Newfoundland and Labrador",
-    11: "Prince Edward Island",
-    12: "Nova Scotia",
-    13: "New Brunswick",
-    24: "Quebec",
-    35: "Ontario",
-    46: "Manitoba",
-    47: "Saskatchewan",
-    48: "Alberta",
-    59: "British Columbia",
-    60: "Yukon",
-    61: "Northwest Territories",
-    62: "Nunavut",
-}
+PROVINCE_NAMES = {}
 
 _UNITS_CATEGORIES = {
     1: "1_unit",
@@ -66,7 +38,12 @@ BUILDING_TYPES = {
 }
 
 
-def fix_sgc(sgc: str) -> str:
+def _fix_old_sgc(sgc: str) -> str:
+    """
+    The older BPER data I got has incorrect SGC codes. They added an extra leading 0 in the CD.
+    (The code is supposed to be XX YY ZZZ, where X is the province/territory,
+    Y is the census division, and Z is the census subdivision. They did XX YYY ZZZ.)
+    """
     # Drop the zero at index 2
     assert sgc[2] == "0", sgc
     return sgc[:2] + sgc[3:]
@@ -99,25 +76,35 @@ def load_canada_bper(data_path: Path) -> pd.DataFrame:
     old_df = old_df.rename(
         columns={"SGC": "Municipality Name", "Municipality Name": "SGC"}
     )
-    old_df["SGC"] = old_df["SGC"].astype(str).apply(fix_sgc)
+    old_df["SGC"] = old_df["SGC"].astype(str).apply(_fix_old_sgc)
 
     recent_df = pd.read_excel(file_path, sheet_name=1, skiprows=2)
     recent_df["SGC"] = recent_df["SGC"].astype(str)
 
     df = pd.concat([old_df, recent_df])
+    df.to_parquet("../public/canada_bper_raw.parquet")
 
-    df["Province Name"] = df["SGC"].str[:2].astype(int).map(PROVINCE_NAMES)
-    df["Province Abbreviation"] = (
-        df["SGC"].str[:2].astype(int).map(PROVINCE_ABBREVIATIONS)
-    )
+    return load_places(df)
+
+
+def load_places(
+    df: pd.DataFrame, old_df: pd.DataFrame, recent_df: pd.DataFrame
+) -> pd.DataFrame:
+    # df["Province Name"] = df["SGC"].str[:2].astype(int).map(PROVINCE_NAMES)
+
+    df = df.merge(load_crosswalk(), how="left", on="SGC")
+
+    # df["Province Abbreviation"] = (
+    #     df["SGC"].str[:2].astype(int).map(PROVINCE_ABBREVIATIONS)
+    # )
 
     df["units"] = df["UnitsCategory"].map(UNITS_CATEGORIES)
     df = df.drop(columns=["UnitsCategory"])
 
     # Ignore building type and work type for now
-    # Later we might want to break out rowhouses or condos
-    df = df.drop(columns=["BuildingType", "WorkType"])
-    df = df.drop(columns=["value ($)"])
+    # TODO: maybe break out rowhouses or condos
+    # TODO: maybe add value in CAD
+    df = df.drop(columns=["BuildingType", "WorkType", "value ($)"])
 
     standardize_municipality_names(df, old_df, recent_df)
 
@@ -135,11 +122,7 @@ def load_canada_bper(data_path: Path) -> pd.DataFrame:
 
     df = (
         pd.pivot_table(
-            df.astype({"units": str}),
-            index=ids,
-            columns="units",
-            values="UnitsCreated",
-            aggfunc="sum",
+            df, index=ids, columns="units", values="UnitsCreated", aggfunc="sum"
         )
         .fillna(0)
         .reset_index()
@@ -150,7 +133,7 @@ def load_canada_bper(data_path: Path) -> pd.DataFrame:
     df["path_1"] = df["Province Abbreviation"]
     df["path_2"] = df["Municipality Name"].str.replace("/", "–").str.replace(" ", "_")
 
-    df["population"] = 1
+    df["population"] = df["population"].fillna(1)
 
     df["year"] = df["year"].astype(str)
     df = df.drop(
@@ -158,3 +141,32 @@ def load_canada_bper(data_path: Path) -> pd.DataFrame:
     )
 
     return df
+
+
+def get_place_name_spellings(
+    df: pd.DataFrame,
+) -> Dict[Tuple[str, Optional[str], int], str]:
+    """
+    :param df: A DataFrame with columns place_name, place_type, and state_code.
+
+    Returns a dict that specifies how we want to spell each place name.
+
+    If the (place_name, state) tuple appears with only one place_type,
+    we just use "{place_name}, {state_abbr}".
+    Otherwise, we use "{place_name} {place_type}, {state_abbr}".
+    Returns a mapping from (place name, place type)
+    """
+    mapping = {}
+    for (place_name, state_code), group in df.groupby(["place_name", "state_code"]):
+        place_types = group["place_type"].unique()
+        if len(place_types) == 1:
+            mapping[(place_name, place_types[0], state_code)] = place_name
+        else:
+            for place_type in place_types:
+                mapping[(place_name, place_type, state_code)] = (
+                    f"{place_name} {place_type}"
+                    if place_type is not None
+                    else place_name
+                )
+
+    return mapping
