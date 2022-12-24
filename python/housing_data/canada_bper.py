@@ -1,10 +1,8 @@
 from pathlib import Path
-from typing import Dict, Optional, Tuple
 
 import pandas as pd
+from housing_data.build_data_utils import CANADA_BPER_DIR, CANADA_CROSSWALK_DIR
 from housing_data.canada_crosswalk import load_crosswalk
-
-PROVINCE_NAMES = {}
 
 _UNITS_CATEGORIES = {
     1: "1_unit",
@@ -49,28 +47,25 @@ def _fix_old_sgc(sgc: str) -> str:
     return sgc[:2] + sgc[3:]
 
 
-def standardize_municipality_names(
-    df: pd.DataFrame, old_df: pd.DataFrame, recent_df: pd.DataFrame
-) -> None:
-    # The earlier years are properly title-cased, while the later years (2018-2021)
-    # are all upper-case. Title-case is better
-    old_df = old_df[["SGC", "Municipality Name", "year"]]
-    recent_df = recent_df[["SGC", "Municipality Name", "year"]].copy()
-    recent_df["Municipality Name"] = recent_df["Municipality Name"].str.title()
+def load_canada_bper(data_repo_path: Path) -> pd.DataFrame:
+    df = load_raw_bper(data_repo_path)
+    df = pivot_and_add_geos(df, data_repo_path)
 
-    name_mapping = (
-        pd.concat([old_df, recent_df])
-        .drop_duplicates()
-        .sort_values("year")
-        .groupby("SGC")
-        .first()["Municipality Name"]
-        .to_dict()
-    )
-    df["Municipality Name"] = df["SGC"].map(name_mapping)
+    places_df = load_places(df)
+    counties_df = aggregate_to_counties(df)
+    metros_df = aggregate_to_metros(df)
+    states_df = aggregate_to_states(df)
+
+    places_df.to_parquet("../public/canada_places_annual.parquet")
+    counties_df.to_parquet("../public/canada_counties_annual.parquet")
+    metros_df.to_parquet("../public/canada_metros_annual.parquet")
+    states_df.to_parquet("../public/canada_states_annual.parquet")
+
+    return places_df, counties_df, metros_df, states_df
 
 
-def load_canada_bper(data_path: Path) -> pd.DataFrame:
-    file_path = data_path / "Case1091138_revised.xlsx"
+def load_raw_bper(data_repo_path: Path) -> pd.DataFrame:
+    file_path = data_repo_path / CANADA_BPER_DIR / "Case1091138_revised.xlsx"
 
     old_df = pd.read_excel(file_path, sheet_name=0, skiprows=2)
     old_df = old_df.rename(
@@ -84,19 +79,13 @@ def load_canada_bper(data_path: Path) -> pd.DataFrame:
     df = pd.concat([old_df, recent_df])
     df.to_parquet("../public/canada_bper_raw.parquet")
 
-    return load_places(df)
+    return df
 
 
-def load_places(
-    df: pd.DataFrame, old_df: pd.DataFrame, recent_df: pd.DataFrame
-) -> pd.DataFrame:
-    # df["Province Name"] = df["SGC"].str[:2].astype(int).map(PROVINCE_NAMES)
-
-    df = df.merge(load_crosswalk(), how="left", on="SGC")
-
-    # df["Province Abbreviation"] = (
-    #     df["SGC"].str[:2].astype(int).map(PROVINCE_ABBREVIATIONS)
-    # )
+def pivot_and_add_geos(df: pd.DataFrame, data_repo_path: Path) -> pd.DataFrame:
+    df = df.merge(
+        load_crosswalk(data_repo_path / CANADA_CROSSWALK_DIR), how="left", on="SGC"
+    )
 
     df["units"] = df["UnitsCategory"].map(UNITS_CATEGORIES)
     df = df.drop(columns=["UnitsCategory"])
@@ -106,18 +95,18 @@ def load_places(
     # TODO: maybe add value in CAD
     df = df.drop(columns=["BuildingType", "WorkType", "value ($)"])
 
-    standardize_municipality_names(df, old_df, recent_df)
-
     # 92 duplicate rows
     df = df.drop_duplicates()
 
     ids = [
+        "place_name",
+        "province",
+        "province_abbr",
         "year",
-        "Province",
-        "Municipality Name",
-        "SGC",
-        "Province Name",
-        "Province Abbreviation",
+        "census_division",
+        "metro",
+        "metro_province_abbr",
+        "population",
     ]
 
     df = (
@@ -129,44 +118,71 @@ def load_places(
     )
     df["total_units"] = sum(df[col] for col in UNITS_CATEGORIES.values())
 
-    df["name"] = df["Municipality Name"] + ", " + df["Province Abbreviation"]
-    df["path_1"] = df["Province Abbreviation"]
-    df["path_2"] = df["Municipality Name"].str.replace("/", "–").str.replace(" ", "_")
+    return df
+
+
+def load_places(df: pd.DataFrame) -> pd.DataFrame:
+    df["path_1"] = df["province_abbr"]
+    df["path_2"] = (
+        df["place_name"]
+        .str.replace("/", "–")
+        .str.replace(" ", "_")
+        .str.replace("(", "", regex=False)
+        .str.replace(")", "", regex=False)
+    )
+    df["name"] = df["place_name"] + ", " + df["province_abbr"]
+    df = df.drop(columns=["place_name"])
 
     df["population"] = df["population"].fillna(1)
 
     df["year"] = df["year"].astype(str)
-    df = df.drop(
-        columns=["Province Name", "Province Abbreviation", "Municipality Name"]
-    )
+    df = df.drop(columns=["province"])
 
     return df
 
 
-def get_place_name_spellings(
-    df: pd.DataFrame,
-) -> Dict[Tuple[str, Optional[str], int], str]:
-    """
-    :param df: A DataFrame with columns place_name, place_type, and state_code.
+def aggregate_to_counties(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.groupby(["census_division", "year", "province_abbr"], as_index=False).sum()
+    df["path_1"] = df["province_abbr"]
+    df["path_2"] = df["census_division"].str.replace(r"[ /\-\.]+", "_", regex=True)
+    df["name"] = df["census_division"] + ", " + df["province_abbr"]
+    df["year"] = df["year"].astype(str)
 
-    Returns a dict that specifies how we want to spell each place name.
+    return df
 
-    If the (place_name, state) tuple appears with only one place_type,
-    we just use "{place_name}, {state_abbr}".
-    Otherwise, we use "{place_name} {place_type}, {state_abbr}".
-    Returns a mapping from (place name, place type)
-    """
-    mapping = {}
-    for (place_name, state_code), group in df.groupby(["place_name", "state_code"]):
-        place_types = group["place_type"].unique()
-        if len(place_types) == 1:
-            mapping[(place_name, place_types[0], state_code)] = place_name
-        else:
-            for place_type in place_types:
-                mapping[(place_name, place_type, state_code)] = (
-                    f"{place_name} {place_type}"
-                    if place_type is not None
-                    else place_name
-                )
 
-    return mapping
+def aggregate_to_metros(df: pd.DataFrame) -> pd.DataFrame:
+    df = (
+        df.drop(columns=["place_name", "province_abbr", "province"])
+        .groupby(["metro", "year", "metro_province_abbr"], as_index=False)
+        .sum()
+    )
+    metro = df["metro"].str.replace(" - ", "–")
+    df["path_1"] = None
+    df["path_2"] = (
+        metro.str.replace("–", "_").str.replace("/", "_").str.replace(" ", "_")
+        + "_"
+        + df["metro_province_abbr"]
+    )
+    df["name"] = metro + " CMA, " + df["metro_province_abbr"]
+    df["year"] = df["year"].astype(str)
+    df = df.drop(columns=["metro_province_abbr"])
+
+    df["metro_type"] = "cma"
+    df["county_names"] = pd.Series([[]] * len(df), index=df.index)
+
+    return df
+
+
+def aggregate_to_states(df: pd.DataFrame) -> pd.DataFrame:
+    df = (
+        df.drop(columns=["path_1", "path_2"])
+        .groupby(["province", "year"], as_index=False)
+        .sum()
+    )
+    df["path_1"] = None
+    df["path_2"] = df["province"]
+    df["name"] = df["province"]
+    df["year"] = df["year"].astype(str)
+
+    return df

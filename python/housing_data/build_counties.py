@@ -14,7 +14,7 @@ from housing_data.build_data_utils import (
 
 
 def load_counties(
-    data_repo_path: Optional[str],
+    data_repo_path: Optional[Path],
     places_df: pd.DataFrame = None,
     population_df: pd.DataFrame = None,
 ) -> pd.DataFrame:
@@ -50,7 +50,7 @@ def load_counties(
 
     if population_df is None:
         population_df = county_population.get_county_population_estimates(
-            Path(data_repo_path, COUNTY_POPULATION_DIR) if data_repo_path else None
+            data_repo_path / COUNTY_POPULATION_DIR if data_repo_path else None
         )
 
     counties_df = counties_df.merge(
