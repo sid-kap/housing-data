@@ -251,7 +251,8 @@ function addPathPrefixes(options: any[], prefix: string): any[] {
 }
 
 function makeAllOptions(statesList, metrosList, countiesList, placesList) {
-  const [msaOptions, csaOptions, cmaOptions]: [any, any, any] = makeMetroOptions(metrosList)[0]
+  const [msaOptions, csaOptions, cmaOptions]: [any, any, any] =
+    makeMetroOptions(metrosList)[0]
   if (!(typeof msaOptions === "object" && msaOptions.name === "MSAs")) {
     throw new Error("first element makeMetroOptions is not MSAs")
   }
