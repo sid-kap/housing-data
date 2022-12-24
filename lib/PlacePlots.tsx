@@ -48,7 +48,7 @@ export default function PlacePlots({
   // When the page first loads, figure out which place we're at
   useEffect(() => {
     if (optionsMap != null && path != null) {
-      const place = optionsMap.get(path)
+      const place = optionsMap.get(decodeURIComponent(path))
       if (place) {
         setPlace(place)
         setTitle(place.name)

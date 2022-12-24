@@ -40,10 +40,10 @@ export default function StatePlots({
   // When the page first loads, figure out which state we're at
   useEffect(() => {
     if (optionsMap != null && path != null) {
-      const place = optionsMap.get(path)
-      if (place) {
-        setState(place)
-        setTitle(place.name)
+      const state = optionsMap.get(decodeURIComponent(path))
+      if (state) {
+        setState(state)
+        setTitle(state.name)
       }
     }
   }, [optionsMap, path, setState, setTitle])

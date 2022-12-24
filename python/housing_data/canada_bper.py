@@ -181,7 +181,7 @@ def aggregate_to_states(df: pd.DataFrame) -> pd.DataFrame:
         .sum()
     )
     df["path_1"] = None
-    df["path_2"] = df["province"]
+    df["path_2"] = df["province"].str.replace(" ", "_")
     df["name"] = df["province"]
     df["year"] = df["year"].astype(str)
 

@@ -92,8 +92,7 @@ export default function MetroPlots({
   // When the page first loads, figure out which place we're at
   useEffect(() => {
     if (optionsMap != null && path != null) {
-      const decodedPath = decodeURIComponent(path)
-      const place = optionsMap.get(decodedPath)
+      const place = optionsMap.get(decodeURIComponent(path))
       if (place) {
         setMetro(place)
         setTitle(place.name)
