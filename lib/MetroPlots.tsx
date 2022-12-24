@@ -88,8 +88,6 @@ export default function MetroPlots({
     () => makeMetroOptions(metrosList ?? []),
     [metrosList]
   )
-  console.log(path)
-  console.log(optionsMap)
 
   // When the page first loads, figure out which place we're at
   useEffect(() => {
