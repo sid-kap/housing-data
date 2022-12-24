@@ -31,7 +31,7 @@ type OptionGroup = {
 
 export function makeMetroOptions(
   metrosList: RawOption[]
-): [[OptionGroup, OptionGroup], Map<string, Option>] {
+): [[OptionGroup, OptionGroup, OptionGroup], Map<string, Option>] {
   const [msaOptions, msaOptionsMap] = makeOptions<RawOption, Option>(
     metrosList.filter((m) => m.metro_type === "msa")
   )
@@ -42,7 +42,7 @@ export function makeMetroOptions(
     metrosList.filter((m) => m.metro_type === "cma")
   )
 
-  const options: [OptionGroup, OptionGroup] = [
+  const options: [OptionGroup, OptionGroup, OptionGroup] = [
     { name: "MSAs", type: "group", items: msaOptions },
     { name: "CSAs", type: "group", items: csaOptions },
     { name: "Canada metros", type: "group", items: cmaOptions },
