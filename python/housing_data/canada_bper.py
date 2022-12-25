@@ -49,6 +49,7 @@ def _fix_old_sgc(sgc: str) -> str:
 
 def load_canada_bper(data_repo_path: Path) -> pd.DataFrame:
     df = load_raw_bper(data_repo_path)
+    fix_montreal(df)
     df = pivot_and_add_geos(df, data_repo_path)
 
     places_df = load_places(df)
@@ -80,6 +81,13 @@ def load_raw_bper(data_repo_path: Path) -> pd.DataFrame:
     df.to_parquet("../public/canada_bper_raw.parquet")
 
     return df
+
+
+def fix_montreal(df: pd.DataFrame) -> None:
+    # Map arrondissements/boroughs of Montreal to the city SGC code
+    df.loc[
+        df["SGC"].str.startswith("2466A") | df["SGC"].str.startswith("2466a"), "SGC"
+    ] = "2466023"
 
 
 def pivot_and_add_geos(df: pd.DataFrame, data_repo_path: Path) -> pd.DataFrame:
