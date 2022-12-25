@@ -31,19 +31,26 @@ type OptionGroup = {
 
 export function makeMetroOptions(
   metrosList: RawOption[]
-): [[OptionGroup, OptionGroup], Map<string, Option>] {
+): [[OptionGroup, OptionGroup, OptionGroup], Map<string, Option>] {
   const [msaOptions, msaOptionsMap] = makeOptions<RawOption, Option>(
     metrosList.filter((m) => m.metro_type === "msa")
   )
   const [csaOptions, csaOptionsMap] = makeOptions<RawOption, Option>(
     metrosList.filter((m) => m.metro_type === "csa")
   )
+  const [cmaOptions, cmaOptionsMap] = makeOptions<RawOption, Option>(
+    metrosList.filter((m) => m.metro_type === "cma")
+  )
 
-  const options: [OptionGroup, OptionGroup] = [
+  const options: [OptionGroup, OptionGroup, OptionGroup] = [
     { name: "MSAs", type: "group", items: msaOptions },
     { name: "CSAs", type: "group", items: csaOptions },
+    { name: "Canada metros", type: "group", items: cmaOptions },
   ]
-  return [options, new Map([...msaOptionsMap, ...csaOptionsMap])]
+  return [
+    options,
+    new Map([...msaOptionsMap, ...csaOptionsMap, ...cmaOptionsMap]),
+  ]
 }
 
 function renderOption(
@@ -85,7 +92,7 @@ export default function MetroPlots({
   // When the page first loads, figure out which place we're at
   useEffect(() => {
     if (optionsMap != null && path != null) {
-      const place = optionsMap.get(path)
+      const place = optionsMap.get(decodeURIComponent(path))
       if (place) {
         setMetro(place)
         setTitle(place.name)

@@ -251,7 +251,8 @@ function addPathPrefixes(options: any[], prefix: string): any[] {
 }
 
 function makeAllOptions(statesList, metrosList, countiesList, placesList) {
-  const [msaOptions, csaOptions]: [any, any] = makeMetroOptions(metrosList)[0]
+  const [msaOptions, csaOptions, cmaOptions]: [any, any, any] =
+    makeMetroOptions(metrosList)[0]
   if (!(typeof msaOptions === "object" && msaOptions.name === "MSAs")) {
     throw new Error("first element makeMetroOptions is not MSAs")
   }
@@ -277,6 +278,11 @@ function makeAllOptions(statesList, metrosList, countiesList, placesList) {
   }
   for (const item of csaOptions.items) {
     item.type = "csa"
+  }
+  for (const item of cmaOptions.items) {
+    // For now color CMAs the same as MSAs, since they're basically
+    // the same thing. TODO maybe make this less hacky
+    item.type = "msa"
   }
 
   return [

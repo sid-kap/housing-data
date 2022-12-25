@@ -38,7 +38,7 @@ export default function CountyPlots({
   // When the page first loads, figure out which county we're at
   useEffect(() => {
     if (optionsMap != null && path != null) {
-      const county = optionsMap.get(path)
+      const county = optionsMap.get(decodeURIComponent(path))
       if (county) {
         setCounty(county)
         setTitle(county.name)

@@ -59,6 +59,9 @@ STATE_POPULATION_DIR = Path("data", "population", "state")
 COUNTY_POPULATION_DIR = Path("data", "population", "county")
 PLACE_POPULATION_DIR = Path("data", "population", "place")
 
+CANADA_BPER_DIR = Path("manual_data", "canada-bper")
+CANADA_CROSSWALK_DIR = Path("data", "canada-crosswalk")
+
 # Last year and month for which monthly BPS data is available (and is cloned to housing-data-data).
 LATEST_MONTH = (2022, 9)
 LAST_YEAR_ANNUAL_DATA_RELEASED = True
@@ -131,7 +134,7 @@ def get_state_abbrs(state_codes: pd.Series) -> pd.Series:
 
 
 def load_bps_all_years_plus_monthly(
-    data_repo_path: Optional[str],
+    data_repo_path: Optional[Path],
     scale: bps.Scale,
     region: Optional[bps.Region] = None,
     start_year: int = 1980,
@@ -144,7 +147,7 @@ def load_bps_all_years_plus_monthly(
     Adds columns "year" and "month" to identify when the data came from.
     ("month" will only be present for the final (incomplete) year.)
     """
-    data_path = Path(data_repo_path, BPS_DIR) if data_repo_path else None
+    data_path = data_repo_path / BPS_DIR if data_repo_path else None
 
     dfs = []
 
