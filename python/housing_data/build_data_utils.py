@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Literal, Optional, Tuple
 
 import pandas as pd
 import us
@@ -14,41 +14,21 @@ UNITS_COLUMNS = [
     "5_plus_units_units",
 ]
 
-NUMERICAL_COLUMNS = [
-    "1_unit_bldgs",
-    "1_unit_units",
-    "1_unit_value",
-    "2_units_bldgs",
-    "2_units_units",
-    "2_units_value",
-    "3_to_4_units_bldgs",
-    "3_to_4_units_units",
-    "3_to_4_units_value",
-    "5_plus_units_bldgs",
-    "5_plus_units_units",
-    "5_plus_units_value",
-    "1_unit_bldgs_reported",
-    "1_unit_units_reported",
-    "1_unit_value_reported",
-    "2_units_bldgs_reported",
-    "2_units_units_reported",
-    "2_units_value_reported",
-    "3_to_4_units_bldgs_reported",
-    "3_to_4_units_units_reported",
-    "3_to_4_units_value_reported",
-    "5_plus_units_bldgs_reported",
-    "5_plus_units_units_reported",
-    "5_plus_units_value_reported",
-    "total_bldgs",
-    "total_units",
-    "total_value",
-    "projected_bldgs",
-    "projected_units",
-    "projected_value",
+PREFIXES = [
+    "1_unit",
+    "2_units",
+    "3_to_4_units",
+    "5_plus_units",
+    "total",
+    "projected",
 ]
-
-NUMERICAL_NON_REPORTED_COLUMNS = [
-    col for col in NUMERICAL_COLUMNS if "reported" not in col
+Suffix = Literal[
+    "_bldgs",
+    "_units",
+    "_value",
+    "_bldgs_reported",
+    "_units_reported",
+    "_value_reported",
 ]
 
 PUBLIC_DIR = Path("../public")
@@ -61,6 +41,7 @@ PLACE_POPULATION_DIR = Path("data", "population", "place")
 
 CANADA_BPER_DIR = Path("manual_data", "canada-bper")
 CANADA_CROSSWALK_DIR = Path("data", "canada-crosswalk")
+CANADA_POPULATION_DIR = Path("data", "canada-population")
 
 # Last year and month for which monthly BPS data is available (and is cloned to housing-data-data).
 LATEST_MONTH = (2022, 9)
@@ -117,12 +98,15 @@ def write_list_to_json(
     subset_df.to_json(output_path, orient="records")
 
 
-def add_per_capita_columns(df: pd.DataFrame) -> None:
+def add_per_capita_columns(
+    df: pd.DataFrame, suffixes: Tuple[Suffix, ...] = ("_bldgs", "_units", "_value")
+) -> None:
     # There are three cities (Sitka, Weeki Wachee, and Carlton Landing) that had population 0 in some years
     population = df["population"].where(df["population"] != 0, pd.NA)
 
-    for col in NUMERICAL_NON_REPORTED_COLUMNS:
-        df[col + "_per_capita"] = df[col] / population
+    for prefix in PREFIXES:
+        for suffix in suffixes:
+            df[prefix + suffix + "_per_capita"] = df[prefix + suffix] / population
 
 
 def get_state_abbrs(state_codes: pd.Series) -> pd.Series:

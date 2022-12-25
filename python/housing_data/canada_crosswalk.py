@@ -105,7 +105,6 @@ def load_crosswalk(data_path: Path) -> pd.DataFrame:
     Will have the columns:
     - place_name
     - SGC (7-digit SGC: 2 for province, 2 for census division, 3 for place)
-    - population (2021)
     - census_division
     - province
     - province_abbr
@@ -125,9 +124,7 @@ def load_crosswalk(data_path: Path) -> pd.DataFrame:
     cma_df = pd.read_csv(data_path / "CMA_CA.csv", encoding="latin1")
 
     df = (
-        csd_df[
-            ["CSDname", "CSDtype", "CSDuid", "CSDpop_2021", "PRuid", "CDcode", "CMAuid"]
-        ]
+        csd_df[["CSDname", "CSDtype", "CSDuid", "PRuid", "CDcode", "CMAuid"]]
         .merge(cd_df[["CDname", "CDtype", "CDcode", "PRuid"]], on=["CDcode", "PRuid"])
         .merge(
             province_df[["PRname", "PRcode"]].rename(columns={"PRcode": "PRuid"}),
@@ -152,7 +149,6 @@ def load_crosswalk(data_path: Path) -> pd.DataFrame:
                 "CSDname": "place_name",
                 "CSDtype": "place_type",
                 "CSDuid": "SGC",
-                "CSDpop_2021": "population",
                 "PRname": "province",
                 "CMAname": "metro",
             }

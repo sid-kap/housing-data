@@ -1,8 +1,13 @@
 from pathlib import Path
 
 import pandas as pd
-from housing_data.build_data_utils import CANADA_BPER_DIR, CANADA_CROSSWALK_DIR
+from housing_data.build_data_utils import (
+    CANADA_BPER_DIR,
+    CANADA_CROSSWALK_DIR,
+    add_per_capita_columns,
+)
 from housing_data.canada_crosswalk import load_crosswalk
+from housing_data.canada_population import load_populations
 
 _UNITS_CATEGORIES = {
     1: "1_unit",
@@ -50,7 +55,12 @@ def _fix_old_sgc(sgc: str) -> str:
 def load_canada_bper(data_repo_path: Path) -> pd.DataFrame:
     df = load_raw_bper(data_repo_path)
     fix_montreal(df)
+
     df = pivot_and_add_geos(df, data_repo_path)
+    df = df.merge(load_populations(data_repo_path), how="left", on=["year", "SGC"])
+    df = df.drop(columns=["SGC"])
+
+    add_per_capita_columns(df)
 
     places_df = load_places(df)
     counties_df = aggregate_to_counties(df)
@@ -107,6 +117,7 @@ def pivot_and_add_geos(df: pd.DataFrame, data_repo_path: Path) -> pd.DataFrame:
     df = df.drop_duplicates()
 
     ids = [
+        "SGC",
         "place_name",
         "province",
         "province_abbr",
@@ -114,7 +125,6 @@ def pivot_and_add_geos(df: pd.DataFrame, data_repo_path: Path) -> pd.DataFrame:
         "census_division",
         "metro",
         "metro_province_abbr",
-        "population",
     ]
 
     df = (
