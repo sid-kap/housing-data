@@ -294,13 +294,12 @@ function makeAllOptions(statesList, metrosList, countiesList, placesList) {
       groupName: "Counties",
       items: addPathPrefixes(countyOptions, "counties_data"),
     },
-    // I've filtered out the μSAs, so we can use MSA and CBSA interchangeably.
-    // Most people know what an MSA is but not a CBSA, so we should use that name.
-    // TODO: replace "CBSA" with "MSA" throughout the code base and the published
-    // data files.
     {
       groupName: "MSAs",
-      items: addPathPrefixes(msaOptions.items, "metros_data"),
+      items: addPathPrefixes(
+        msaOptions.items.concat(cmaOptions.items),
+        "metros_data"
+      ),
     },
     {
       groupName: "CSAs",
