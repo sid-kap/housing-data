@@ -185,6 +185,7 @@ function makeSpec(
       x: {
         field: "year",
         type: "temporal",
+        timeUnit: "utcyear",
         axis: {
           title: "Year",
           titleFontSize: 13,
@@ -224,6 +225,7 @@ function makeSpec(
         mark: {
           type: "bar",
           tooltip: { content: "data" },
+          width: { band: 0.7 },
         },
         encoding: {
           x: { field: "year" },
@@ -274,7 +276,7 @@ function makeSpec(
     ],
     config: {
       bar: {
-        continuousBandSize: continuousBandSize,
+        /* continuousBandSize: continuousBandSize, */
       },
     },
   }
