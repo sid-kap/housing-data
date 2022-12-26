@@ -286,6 +286,28 @@ def load_data(
             "footnote_code",
             "fips mcd_code",
             "census place_code",
+            # We don't use these
+            "1_unit_bldgs_reported",
+            "1_unit_units_reported",
+            "1_unit_value_reported",
+            "2_units_bldgs_reported",
+            "2_units_units_reported",
+            "2_units_value_reported",
+            "3_to_4_units_bldgs_reported",
+            "3_to_4_units_units_reported",
+            "3_to_4_units_value_reported",
+            "5_plus_units_bldgs_reported",
+            "5_plus_units_units_reported",
+            "5_plus_units_value_reported",
+            # different spellings in the county data for some reason
+            "5+units rep_bldgs",
+            "5+units rep_units",
+            "5+units rep_value",
+            "34_unit rep_bldgs",
+            "34_unit rep_value",
+            "34_unit rep_units",
+            "5_unit rep_bldgs",
+            "5_unit rep_units",
         }
         df = df.drop(columns=list(cols_to_drop))
 
@@ -513,18 +535,5 @@ def county_cleanup(df: pd.DataFrame) -> pd.DataFrame:
     df.loc[dade_county_rows, "fips_county"] = 86
 
     add_totals_columns(df)
-
-    df = df.rename(
-        columns={
-            "5+units rep_bldgs": "5_plus_units_bldgs_reported",
-            "5+units rep_units": "5_plus_units_units_reported",
-            "5+units rep_value": "5_plus_units_value_reported",
-            "34_unit rep_bldgs": "3_to_4_units_bldgs_reported",
-            "34_unit rep_value": "3_to_4_units_value_reported",
-            "34_unit rep_units": "3_to_4_units_units_reported",
-            "5_unit rep_bldgs": "5_plus_units_bldgs_reported",
-            "5_unit rep_units": "5_plus_units_units_reported",
-        }
-    )
 
     return df

@@ -60,8 +60,6 @@ def load_canada_bper(data_repo_path: Path) -> pd.DataFrame:
     df = df.merge(load_populations(data_repo_path), how="left", on=["year", "SGC"])
     df = df.drop(columns=["SGC"])
 
-    add_per_capita_columns(df)
-
     places_df = load_places(df)
     counties_df = aggregate_to_counties(df)
     metros_df = aggregate_to_metros(df)
@@ -73,6 +71,16 @@ def load_canada_bper(data_repo_path: Path) -> pd.DataFrame:
     states_df.to_parquet("../public/canada_states_annual.parquet")
 
     return places_df, counties_df, metros_df, states_df
+
+
+def _add_per_capita_columns(df) -> None:
+    add_per_capita_columns(
+        df,
+        # No projected units
+        prefixes=("1_unit", "2_units", "3_to_4_units", "5_plus_units", "total"),
+        # No buildings/value (for now)
+        suffixes=("_units",),
+    )
 
 
 def load_raw_bper(data_repo_path: Path) -> pd.DataFrame:
@@ -134,7 +142,7 @@ def pivot_and_add_geos(df: pd.DataFrame, data_repo_path: Path) -> pd.DataFrame:
         .fillna(0)
         .reset_index()
     )
-    df["total_units"] = sum(df[col] for col in UNITS_CATEGORIES.values())
+    df["total_units"] = sum(df[col] for col in set(UNITS_CATEGORIES.values()))
 
     return df
 
@@ -151,16 +159,18 @@ def load_places(df: pd.DataFrame) -> pd.DataFrame:
     df["name"] = df["place_name"] + ", " + df["province_abbr"]
     df = df.drop(columns=["place_name"])
 
-    df["population"] = df["population"].fillna(1)
-
     df["year"] = df["year"].astype(str)
     df = df.drop(columns=["province"])
+
+    _add_per_capita_columns(df)
 
     return df
 
 
 def aggregate_to_counties(df: pd.DataFrame) -> pd.DataFrame:
     df = df.groupby(["census_division", "year", "province_abbr"], as_index=False).sum()
+    _add_per_capita_columns(df)
+
     df["path_1"] = df["province_abbr"]
     df["path_2"] = df["census_division"].str.replace(r"[ /\-\.]+", "_", regex=True)
     df["name"] = df["census_division"] + ", " + df["province_abbr"]
@@ -175,6 +185,8 @@ def aggregate_to_metros(df: pd.DataFrame) -> pd.DataFrame:
         .groupby(["metro", "year", "metro_province_abbr"], as_index=False)
         .sum()
     )
+    _add_per_capita_columns(df)
+
     metro = df["metro"].str.replace(" - ", "–")
     df["path_1"] = None
     df["path_2"] = (
@@ -198,6 +210,8 @@ def aggregate_to_states(df: pd.DataFrame) -> pd.DataFrame:
         .groupby(["province", "year"], as_index=False)
         .sum()
     )
+    _add_per_capita_columns(df)
+
     df["path_1"] = None
     df["path_2"] = df["province"].str.replace(" ", "_")
     df["name"] = df["province"]

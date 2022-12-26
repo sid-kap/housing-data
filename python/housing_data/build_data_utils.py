@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import List, Literal, Optional, Tuple
+from typing import List, Literal, Optional, Tuple, get_args
 
 import pandas as pd
 import us
@@ -14,7 +14,7 @@ UNITS_COLUMNS = [
     "5_plus_units_units",
 ]
 
-PREFIXES = [
+Prefix = Literal[
     "1_unit",
     "2_units",
     "3_to_4_units",
@@ -22,14 +22,11 @@ PREFIXES = [
     "total",
     "projected",
 ]
-Suffix = Literal[
-    "_bldgs",
-    "_units",
-    "_value",
-    "_bldgs_reported",
-    "_units_reported",
-    "_value_reported",
-]
+PREFIXES: Tuple[Prefix, ...] = tuple(get_args(Prefix))
+Suffix = Literal["_bldgs", "_units", "_value"]
+SUFFIXES: Tuple[Suffix, ...] = tuple(get_args(Suffix))
+
+NUMERICAL_COLUMNS = [prefix + suffix for prefix in PREFIXES for suffix in SUFFIXES]
 
 PUBLIC_DIR = Path("../public")
 
@@ -99,12 +96,14 @@ def write_list_to_json(
 
 
 def add_per_capita_columns(
-    df: pd.DataFrame, suffixes: Tuple[Suffix, ...] = ("_bldgs", "_units", "_value")
+    df: pd.DataFrame,
+    prefixes: Tuple[Prefix, ...] = PREFIXES,
+    suffixes: Tuple[Suffix, ...] = SUFFIXES,
 ) -> None:
     # There are three cities (Sitka, Weeki Wachee, and Carlton Landing) that had population 0 in some years
-    population = df["population"].where(df["population"] != 0, pd.NA)
+    population = df["population"].where(df["population"] != 0, 1)
 
-    for prefix in PREFIXES:
+    for prefix in prefixes:
         for suffix in suffixes:
             df[prefix + suffix + "_per_capita"] = df[prefix + suffix] / population
 

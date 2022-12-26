@@ -19,6 +19,9 @@ def load_populations(data_root_path: Path) -> pd.DataFrame:
         )
     )
 
-    df["SGC"] = df["SGC"].str.removeprefix("2016A000")
+    df["SGC"] = df["SGC"].str.removeprefix("2016A0005")
+
+    # We don't have 2000 data, let's just use 2001 data for 2000
+    df = pd.concat([df, df[df["year"] == 2001].assign(year=2000)])
 
     return df
