@@ -98,7 +98,7 @@ def load_canada_bper(data_repo_path: Path) -> pd.DataFrame:
     return places_df, counties_df, metros_df, states_df
 
 
-def _add_per_capita_columns(df) -> None:
+def _add_per_capita_columns(df: pd.DataFrame) -> None:
     add_per_capita_columns(
         df,
         # No projected units

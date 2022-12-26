@@ -68,7 +68,7 @@ def write_list_to_json(
     output_path: Path,
     add_latest_population_column: bool = False,
     unhashable_columns: Optional[List[str]] = None,
-    extra_columns: List[str] = None,
+    extra_columns: Optional[List[str]] = None,
 ) -> None:
     """
     :param unhashable_columns: Columns to not include in calls to drop_duplicates, merge, etc. because
