@@ -5,18 +5,27 @@ import { useRouter } from "next/router"
 import PlotsTemplate, { makeOptions } from "lib/PlotsTemplate"
 import WindowSelectSearch from "lib/WindowSelectSearch"
 import { useFetch } from "lib/queries"
+import { scoreFnWithPopulation } from "lib/utils"
 
 // The schema for /counties_list.json
 type RawOption = {
   name: string
   path: string
   population: number
+  alt_name: string
 }
 
 type Option = {
   name: string
   value: string // the path
   population: number
+  alt_name: string
+}
+
+const fuzzysortOptions = {
+  keys: ["name", "alt_name"],
+  threshold: -10000,
+  scoreFn: scoreFnWithPopulation,
 }
 
 export default function CountyPlots({
@@ -56,6 +65,7 @@ export default function CountyPlots({
       onChange={onChange}
       options={options}
       value={county?.value}
+      fuzzysortOptions={fuzzysortOptions}
     />
   )
 

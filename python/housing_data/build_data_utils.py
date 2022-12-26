@@ -60,21 +60,21 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
         )
 
 
-DEFAULT_COLUMNS = ["name", "path_1", "path_2"]
+DEFAULT_COLUMNS = ["name", "path_1", "path_2", "alt_name"]
 
 
 def write_list_to_json(
     df: pd.DataFrame,
     output_path: Path,
-    columns: List[str],
     add_latest_population_column: bool = False,
     unhashable_columns: Optional[List[str]] = None,
+    extra_columns: Optional[List[str]] = None,
 ) -> None:
     """
     :param unhashable_columns: Columns to not include in calls to drop_duplicates, merge, etc. because
         they would cause "[type] is not hashable" errors.
     """
-    columns = DEFAULT_COLUMNS + columns
+    columns = DEFAULT_COLUMNS + (extra_columns or [])
     hashable_columns = list(set(columns) - set(unhashable_columns or []))
     subset_df = df[columns].copy().drop_duplicates(subset=hashable_columns)
 

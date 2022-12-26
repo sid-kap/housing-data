@@ -349,7 +349,7 @@ type Option = {
 }
 
 const fuzzysortOptions = {
-  keys: ["name"],
+  keys: ["name", "alt_name"],
   threshold: -10000,
   scoreFn: scoreFnWithPopulation,
 }

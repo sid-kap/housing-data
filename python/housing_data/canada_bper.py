@@ -52,6 +52,31 @@ def _fix_old_sgc(sgc: str) -> str:
     return sgc[:2] + sgc[3:]
 
 
+SPECIAL_CHARACTERS = {
+    "É": "E",
+    "Î": "I",
+    "à": "a",
+    "á": "a",
+    "â": "a",
+    "ç": "c",
+    "è": "e",
+    "é": "e",
+    "ê": "e",
+    "ô": "o",
+}
+
+
+def _add_alt_names(df: pd.DataFrame) -> None:
+    alt_names = df["name"]
+    for char, ascii_char in SPECIAL_CHARACTERS.items():
+        alt_names = alt_names.str.replace(char, ascii_char)
+
+    # Only include alt name if some chars were swapped
+    alt_names = alt_names.mask(alt_names == df["name"], None)
+
+    df["alt_name"] = alt_names
+
+
 def load_canada_bper(data_repo_path: Path) -> pd.DataFrame:
     df = load_raw_bper(data_repo_path)
     fix_montreal(df)
@@ -73,7 +98,7 @@ def load_canada_bper(data_repo_path: Path) -> pd.DataFrame:
     return places_df, counties_df, metros_df, states_df
 
 
-def _add_per_capita_columns(df) -> None:
+def _add_per_capita_columns(df: pd.DataFrame) -> None:
     add_per_capita_columns(
         df,
         # No projected units
@@ -163,7 +188,7 @@ def load_places(df: pd.DataFrame) -> pd.DataFrame:
     df = df.drop(columns=["province"])
 
     _add_per_capita_columns(df)
-
+    _add_alt_names(df)
     return df
 
 
@@ -176,6 +201,7 @@ def aggregate_to_counties(df: pd.DataFrame) -> pd.DataFrame:
     df["name"] = df["census_division"] + ", " + df["province_abbr"]
     df["year"] = df["year"].astype(str)
 
+    _add_alt_names(df)
     return df
 
 
@@ -201,6 +227,7 @@ def aggregate_to_metros(df: pd.DataFrame) -> pd.DataFrame:
     df["metro_type"] = "cma"
     df["county_names"] = pd.Series([[]] * len(df), index=df.index)
 
+    _add_alt_names(df)
     return df
 
 
@@ -217,4 +244,5 @@ def aggregate_to_states(df: pd.DataFrame) -> pd.DataFrame:
     df["name"] = df["province"]
     df["year"] = df["year"].astype(str)
 
+    _add_alt_names(df)
     return df

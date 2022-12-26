@@ -10,17 +10,19 @@ import { scoreFnWithPopulation } from "lib/utils"
 type RawOption = {
   name: string
   path: string
+  population: number
+  alt_name: string
   metro_type: string
   county_names: string[]
-  population: number
 }
 
 type Option = {
   name: string
   value: string // the path
+  population: number
+  alt_name: string
   metro_type: string
   county_names: string[]
-  population: number
 }
 
 type OptionGroup = {
@@ -68,7 +70,7 @@ function renderOption(
 }
 
 const fuzzysortOptions = {
-  keys: ["name"],
+  keys: ["name", "alt_name"],
   threshold: -10000,
   scoreFn: scoreFnWithPopulation,
 }
