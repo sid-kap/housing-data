@@ -47,6 +47,31 @@ def _fix_old_sgc(sgc: str) -> str:
     return sgc[:2] + sgc[3:]
 
 
+SPECIAL_CHARACTERS = {
+    "É": "E",
+    "Î": "I",
+    "à": "a",
+    "á": "a",
+    "â": "a",
+    "ç": "c",
+    "è": "e",
+    "é": "e",
+    "ê": "e",
+    "ô": "o",
+}
+
+
+def _add_alt_names(df: pd.DataFrame) -> None:
+    alt_names = df["name"]
+    for char, ascii_char in SPECIAL_CHARACTERS.items():
+        alt_names = alt_names.str.replace(char, ascii_char)
+
+    # Only include alt name if some chars were swapped
+    alt_names = alt_names.mask(alt_names == df["name"], None)
+
+    df["alt_name"] = alt_names
+
+
 def load_canada_bper(data_repo_path: Path) -> pd.DataFrame:
     df = load_raw_bper(data_repo_path)
     fix_montreal(df)
@@ -141,6 +166,8 @@ def load_places(df: pd.DataFrame) -> pd.DataFrame:
     df["name"] = df["place_name"] + ", " + df["province_abbr"]
     df = df.drop(columns=["place_name"])
 
+    _add_alt_names(df)
+
     df["population"] = df["population"].fillna(1)
 
     df["year"] = df["year"].astype(str)
@@ -155,6 +182,8 @@ def aggregate_to_counties(df: pd.DataFrame) -> pd.DataFrame:
     df["path_2"] = df["census_division"].str.replace(r"[ /\-\.]+", "_", regex=True)
     df["name"] = df["census_division"] + ", " + df["province_abbr"]
     df["year"] = df["year"].astype(str)
+
+    _add_alt_names(df)
 
     return df
 
@@ -179,6 +208,8 @@ def aggregate_to_metros(df: pd.DataFrame) -> pd.DataFrame:
     df["metro_type"] = "cma"
     df["county_names"] = pd.Series([[]] * len(df), index=df.index)
 
+    _add_alt_names(df)
+
     return df
 
 
@@ -192,5 +223,7 @@ def aggregate_to_states(df: pd.DataFrame) -> pd.DataFrame:
     df["path_2"] = df["province"].str.replace(" ", "_")
     df["name"] = df["province"]
     df["year"] = df["year"].astype(str)
+
+    _add_alt_names(df)
 
     return df

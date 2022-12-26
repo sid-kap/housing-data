@@ -68,7 +68,6 @@ def generate_json(
     write_list_to_json(
         places_df,
         PUBLIC_DIR / "places_list.json",
-        ["alt_name"],
         add_latest_population_column=True,
     )
     write_to_json_directory(places_df, PUBLIC_DIR / "places_data")
@@ -77,9 +76,9 @@ def generate_json(
     write_list_to_json(
         metros_df,
         PUBLIC_DIR / "metros_list.json",
-        ["metro_type", "county_names"],
         add_latest_population_column=True,
         unhashable_columns=["county_names"],  # can't merge on a list-valued column
+        extra_columns=["metro_type", "county_names"],
     )
     write_to_json_directory(
         metros_df.drop(columns=["county_names"]), PUBLIC_DIR / "metros_data"
@@ -91,7 +90,6 @@ def generate_json(
             columns={"fips_state": "state_code"}
         ),
         PUBLIC_DIR / "counties_list.json",
-        [],
         add_latest_population_column=True,
     )
     write_to_json_directory(counties_df, PUBLIC_DIR / "counties_data")
@@ -100,7 +98,6 @@ def generate_json(
     write_list_to_json(
         states_df,
         PUBLIC_DIR / "states_list.json",
-        [],
         add_latest_population_column=True,
     )
     write_to_json_directory(states_df, PUBLIC_DIR / "states_data")
