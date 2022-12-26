@@ -160,7 +160,6 @@ function makeSpec(
   const filterFields = Array.from(fieldsGenerator([units], [""], [suffix]))
 
   const plotWidth = Math.min(width * 0.92, 936)
-  const continuousBandSize = (plotWidth * 10) / 936
 
   const yLabel = unitsLabels[units]
   const yTitleSuffix = perCapita
@@ -185,6 +184,7 @@ function makeSpec(
       x: {
         field: "year",
         type: "temporal",
+        timeUnit: "utcyear",
         axis: {
           title: "Year",
           titleFontSize: 13,
@@ -224,6 +224,7 @@ function makeSpec(
         mark: {
           type: "bar",
           tooltip: { content: "data" },
+          width: { band: 0.7 },
         },
         encoding: {
           x: { field: "year" },
@@ -272,10 +273,5 @@ function makeSpec(
         },
       },
     ],
-    config: {
-      bar: {
-        continuousBandSize: continuousBandSize,
-      },
-    },
   }
 }
