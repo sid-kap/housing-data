@@ -160,7 +160,6 @@ function makeSpec(
   const filterFields = Array.from(fieldsGenerator([units], [""], [suffix]))
 
   const plotWidth = Math.min(width * 0.92, 936)
-  const continuousBandSize = (plotWidth * 10) / 936
 
   const yLabel = unitsLabels[units]
   const yTitleSuffix = perCapita
@@ -274,10 +273,5 @@ function makeSpec(
         },
       },
     ],
-    config: {
-      bar: {
-        /* continuousBandSize: continuousBandSize, */
-      },
-    },
   }
 }
