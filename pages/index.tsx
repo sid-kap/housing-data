@@ -67,7 +67,7 @@ function makeYearBuckets(
       })
     }
   }
-  for (let year = firstNonRangeYear; year <= 2021; year++) {
+  for (let year = firstNonRangeYear; year <= 2022; year++) {
     yearBuckets.push({
       year: year,
       binned_year: year,
@@ -215,12 +215,8 @@ function spec(
           tooltip: true,
         },
         encoding: {
-          x: {
-            field: "binned_year",
-          },
-          y: {
-            field: yField,
-          },
+          x: { field: "binned_year" },
+          y: { field: yField },
         },
       },
       {
@@ -338,7 +334,7 @@ function getData(path: string): object {
 function combineDatas(datas) {
   const data = datas
     .flatMap((d) => d.data ?? [])
-    .filter((d) => d.year != "2022")
+    .filter((d) => d.year != "2023")
 
   return data
 }
