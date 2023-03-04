@@ -26,30 +26,30 @@ export function useUnitsSelect(): {
   }
 }
 
+type Denom = "total" | "per_capita"
+
 export function usePerCapitaInput(): {
   denom: string
   populationInput: JSX.Element
 } {
-  const [denom, setDenom] = useState("total")
+  const [denom, setDenom] = useState<Denom>("total")
   const populationInput = (
     <div>
-      <input
-        type="radio"
-        checked={denom === "total"}
-        value="total"
-        onChange={() => setDenom("total")}
-      />
-      <label htmlFor="total" className="ml-1 mr-3">
-        Total
+      <label className="mr-3">
+        <input
+          type="radio"
+          checked={denom === "total"}
+          onChange={() => setDenom("total")}
+        />
+        <span className="ml-1">Total</span>
       </label>
-      <input
-        type="radio"
-        checked={denom === "per_capita"}
-        value="per_capita"
-        onChange={() => setDenom("per_capita")}
-      />
-      <label htmlFor="per_capita" className="ml-1 mr-3">
-        Per capita
+      <label className="mr-3">
+        <input
+          type="radio"
+          checked={denom === "per_capita"}
+          onChange={() => setDenom("per_capita")}
+        />
+        <span className="ml-1">Per capita</span>
       </label>
     </div>
   )
