@@ -392,32 +392,26 @@ export default function Home(): JSX.Element {
     [datas.map((res) => res.status)]
   )
 
-  const [denom, setDenom] = useState("total")
+  type Denom = "total" | "per_capita"
+
+  const [denom, setDenom] = useState<Denom>("total")
   const setTotal = useCallback(() => setDenom("total"), [])
   const setPerCapita = useCallback(() => setDenom("per_capita"), [])
 
-  const radioButtonLabelCss = "ml-1 mr-3"
-
   const populationInput = (
     <div>
-      <input
-        type="radio"
-        checked={denom === "total"}
-        id="total"
-        onChange={setTotal}
-      />
-      <label htmlFor="total" className={radioButtonLabelCss}>
-        Total units
+      <label className="mr-3">
+        <input type="radio" checked={denom === "total"} onChange={setTotal} />
+        <span className="ml-1">Total units</span>
       </label>
 
-      <input
-        type="radio"
-        checked={denom === "per_capita"}
-        id="per_capita"
-        onChange={setPerCapita}
-      />
-      <label htmlFor="per_capita" className={radioButtonLabelCss}>
-        Units per capita
+      <label className="mr-3">
+        <input
+          type="radio"
+          checked={denom === "per_capita"}
+          onChange={setPerCapita}
+        />
+        <span className="ml-1">Units per capita</span>
       </label>
     </div>
   )
@@ -432,28 +426,28 @@ export default function Home(): JSX.Element {
   //   </div>
   // )
 
-  const [grouping, setGrouping] = useState("five_years")
+  type Grouping = "five_years" | "none"
+
+  const [grouping, setGrouping] = useState<Grouping>("five_years")
 
   const groupingInput = (
     <div>
-      <input
-        type="radio"
-        checked={grouping === "five_years"}
-        id="five_years"
-        onChange={() => setGrouping("five_years")}
-      />
-      <label htmlFor="five_years" className={radioButtonLabelCss}>
-        5-year averages
+      <label className="mr-3">
+        <input
+          type="radio"
+          checked={grouping === "five_years"}
+          onChange={() => setGrouping("five_years")}
+        />
+        <span className="ml-1">5-year averages</span>
       </label>
 
-      <input
-        type="radio"
-        checked={grouping === "none"}
-        id="none"
-        onChange={() => setGrouping("none")}
-      />
-      <label htmlFor="none" className={radioButtonLabelCss}>
-        No averaging
+      <label className="mr-3">
+        <input
+          type="radio"
+          checked={grouping === "none"}
+          onChange={() => setGrouping("none")}
+        />
+        <span className="ml-1">No averaging</span>
       </label>
     </div>
   )
