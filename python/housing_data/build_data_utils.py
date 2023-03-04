@@ -208,9 +208,12 @@ def impute_2020s_population(df_2010s: pd.DataFrame) -> pd.DataFrame:
     (I guess we could use the overall US population growth rate, but that's a little sketchy for
     slow-growing metros...)
     """
+    # TODO switch to the 2020-21 intercensal dataset
+    # (https://www2.census.gov/programs-surveys/popest/datasets/2020-2021/cities/totals/)
     return pd.concat(
         [
             df_2010s[df_2010s["year"] == "2020"].assign(year="2021"),
             df_2010s[df_2010s["year"] == "2020"].assign(year="2022"),
+            df_2010s[df_2010s["year"] == "2020"].assign(year="2023"),
         ]
     )
