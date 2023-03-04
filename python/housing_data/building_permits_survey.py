@@ -456,8 +456,13 @@ def place_cleanup(df: pd.DataFrame, year: int) -> pd.DataFrame:
         "survey_date",
         "zip_code",
     ]
+
     for col in NUMBER_COLS_TO_PARSE:
         if col in df.columns:
+            if col == "zip_code" and df[col].dtype == object:
+                # Sometimes there are spaces between the first 5 and next 3-4 digits (e.g. "83650 012")
+                df[col] = df[col].str.replace(" ", "")
+
             df[col] = parse_number_column(df[col])
 
     # Can take the values '0', '1', and 'C', though some sub-files might only see 0 and 1, which leads to parsing
