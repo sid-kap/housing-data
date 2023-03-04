@@ -6,7 +6,7 @@ The data comes from the US Census's monthly [Building Permits Survey](https://ww
 
 ## Code structure
 
-The raw data is stored as a combination of fixed-width, CSV, and Excel files at https://github.com/sid-kap/housing-data-data. I try to update the raw data files in that repo when BPS releases new data every month.
+The raw data is stored as a combination of fixed-width, CSV, and Excel files at [https://github.com/sid-kap/housing-data-data](https://github.com/sid-kap/housing-data-data). I try to update the raw data files in that repo when BPS releases new data every month.
 
 The raw data is converted to JSON files usable by the web front-end by python/pandas code that lives in `python/`. That code runs in every Vercel deploy, which runs after new commits in `main`. The JSON files are hosted as static assets by Vercel.
 
