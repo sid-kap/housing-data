@@ -41,8 +41,8 @@ CANADA_CROSSWALK_DIR = Path("data", "canada-crosswalk")
 CANADA_POPULATION_DIR = Path("data", "canada-population")
 
 # Last year and month for which monthly BPS data is available (and is cloned to housing-data-data).
-LATEST_MONTH = (2023, 1)
-LAST_YEAR_ANNUAL_DATA_RELEASED = False
+LATEST_MONTH = (2023, 4)
+LAST_YEAR_ANNUAL_DATA_RELEASED = True
 
 
 def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:

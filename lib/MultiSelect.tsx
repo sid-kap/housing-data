@@ -230,7 +230,7 @@ export default function MultiSelect<T extends Option>({
           className="w-96 p-2 border rounded-sm"
           placeholder="Add place..."
           onChange={onInputChange}
-          onClick={() => setIsTyping(true)}
+          onFocus={() => setIsTyping(true)}
           ref={inputRef}
           onKeyDown={onKeyDown}
           onBlur={(e) => {
