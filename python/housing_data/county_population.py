@@ -6,11 +6,32 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 import us
-from housing_data.build_data_utils import impute_2020s_population
+from housing_data.build_data_utils import impute_2023_population
 from housing_data.data_loading_helpers import get_path, get_url_text
 
 if TYPE_CHECKING:
     from typing import Optional
+
+
+def get_county_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
+    df = pd.read_csv(
+        get_path(
+            "https://www2.census.gov/programs-surveys/popest/datasets/2020-2022/counties/totals/co-est2022-alldata.csv",
+            data_path,
+        ),
+    )
+
+    rename_cols = {"POPESTIMATE" + str(year): str(year) for year in range(2020, 2023)}
+    rename_cols.update({"STATE": "state_code", "COUNTY": "county_code"})
+
+    df = df[rename_cols.keys()].rename(columns=rename_cols)
+
+    df = df.melt(
+        id_vars=["county_code", "state_code"], var_name="year", value_name="population"
+    )
+    df = impute_2023_population(df)
+
+    return df
 
 
 def get_county_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
@@ -22,7 +43,7 @@ def get_county_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
         encoding="latin_1",
     )
 
-    rename_cols = {"POPESTIMATE" + str(year): str(year) for year in range(2010, 2021)}
+    rename_cols = {"POPESTIMATE" + str(year): str(year) for year in range(2010, 2020)}
     rename_cols.update({"STATE": "state_code", "COUNTY": "county_code"})
 
     df = df[rename_cols.keys()].rename(columns=rename_cols)
@@ -109,7 +130,7 @@ def get_county_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
 def get_county_fips_crosswalk(data_path: Optional[Path]) -> pd.DataFrame:
     df = pd.read_excel(
         get_path(
-            "https://www2.census.gov/programs-surveys/popest/geographies/2019/all-geocodes-v2019.xlsx",
+            "https://www2.census.gov/programs-surveys/popest/geographies/2021/all-geocodes-v2021.xlsx",
             data_path,
         ),
         skiprows=4,
@@ -232,8 +253,8 @@ def get_county_population_estimates(data_path: Optional[Path]) -> pd.DataFrame:
     df_2000s = get_county_populations_2000s(data_path)
     print("Loading 2010s populations...")
     df_2010s = get_county_populations_2010s(data_path)
-
-    df_2020s = impute_2020s_population(df_2010s)
+    print("Loading 2020s populations...")
+    df_2020s = get_county_populations_2020s(data_path)
 
     df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s, df_2020s])
 

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from housing_data.build_data_utils import impute_2020s_population
+from housing_data.build_data_utils import impute_2023_population
 from housing_data.data_loading_helpers import get_path, get_url_text
 
 if TYPE_CHECKING:
@@ -349,7 +349,10 @@ def get_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
 
 
 def _get_recent_decades_df(
-        url: str, years: List[int], encoding: str = "latin_1", has_consolidated_cities: bool = True
+    url: str,
+    years: List[int],
+    encoding: Optional[str] = None,
+    has_consolidated_cities: bool = True,
 ) -> pd.DataFrame:
     """
     For 2000s, 2010s, and 2020s
@@ -366,7 +369,7 @@ def _get_recent_decades_df(
             | (df["PLACE"] == 99990)  # indicates a "Balance of county" record
         )
         & (df["COUSUB"] == 0)  # remove townships and shit (county subdivisions)
-        & ~((df["COUNTY"] == 0) & (df["PLACE"] == 0)) # remove states
+        & ~((df["COUNTY"] == 0) & (df["PLACE"] == 0))  # remove states
     )
 
     if has_consolidated_cities:
@@ -408,8 +411,9 @@ def get_place_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
             "https://www2.census.gov/programs-surveys/popest/datasets/2000-2010/intercensal/cities/sub-est00int.csv",
             data_path,
         ),
-        has_consolidated_cities=False,
         years=list(range(2000, 2011)),
+        encoding="latin_1",
+        has_consolidated_cities=False,
     )
 
 
@@ -420,22 +424,22 @@ def get_place_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
             "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/cities/SUB-EST2020_ALL.csv",
             data_path,
         ),
-        has_consolidated_cities=True,
         years=list(range(2010, 2021)),
+        encoding="latin_1",
     )
 
 
 def get_place_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
     # This one has consolidated cities that need to be removed
-    return _get_recent_decades_df(
+    df = _get_recent_decades_df(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/cities/sub-est2022.csv",
             data_path,
         ),
-        has_consolidated_cities=True,
         years=list(range(2020, 2023)),
-        encoding="utf-8",
     )
+    df = impute_2023_population(df)
+    return df
 
 
 def interpolate_1980s_populations(
