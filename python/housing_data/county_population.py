@@ -9,8 +9,9 @@ from housing_data.data_loading_helpers import get_path, get_url_text
 
 
 def _melt_df(df: pd.DataFrame, years: List[int]) -> pd.DataFrame:
-    rename_cols = {"POPESTIMATE" + str(year): str(year) for year in years}
-    rename_cols.update({"STATE": "state_code", "COUNTY": "county_code"})
+    rename_cols = {"STATE": "state_code", "COUNTY": "county_code"} | {
+        "POPESTIMATE" + str(year): str(year) for year in years
+    }
 
     df = df[rename_cols.keys()].rename(columns=rename_cols)
 

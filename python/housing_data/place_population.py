@@ -317,9 +317,10 @@ def get_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
         .reset_index()
     )
 
-    rename_dict = {"place": "place_name", "state_fips": "state_code"}
-    rename_dict.update({f"{year}-07-01": f"{year}" for year in range(1990, 2001)})
-    combined_df = combined_df.rename(columns=rename_dict)
+    combined_df = combined_df.rename(
+        columns={"place": "place_name", "state_fips": "state_code"}
+        | {f"{year}-07-01": f"{year}" for year in range(1990, 2001)}
+    )
 
     # First confirm that the only dupes (same place and state) is if they have different fips
     assert (
