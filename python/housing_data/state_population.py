@@ -234,8 +234,7 @@ def get_state_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
     )
 
     df = _melt_df(df, list(range(2020, 2023)))
-    df = impute_2023_population(df)
-    return df
+    return impute_2023_population(df)
 
 
 def get_state_population_estimates(data_path: Optional[Path]) -> pd.DataFrame:
