@@ -1,16 +1,11 @@
-from __future__ import annotations
-
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import List, Optional
 
 import pandas as pd
 import us
-from housing_data.build_data_utils import impute_2020s_population
+from housing_data.build_data_utils import impute_2023_population
 from housing_data.data_loading_helpers import get_path, get_url_text
-
-if TYPE_CHECKING:
-    from typing import List, Optional
 
 DIVISIONS = {
     "New England": [
@@ -207,33 +202,13 @@ def get_state_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
     return df.melt(id_vars="state", var_name="year", value_name="population")
 
 
-def get_state_populations_2010_through_2019(
-    data_path: Optional[Path],
-) -> pd.DataFrame:
-    """
-    This function is not used anymore
-    """
-    df = pd.read_excel(
-        get_path(
-            "https://www2.census.gov/programs-surveys/popest/tables/2010-2019/state/totals/nst-est2019-01.xlsx",
-            data_path,
-        ),
-        skiprows=3,
-        skipfooter=5,
+def _melt_df(df: pd.DataFrame, years: List[int]) -> pd.DataFrame:
+    return (
+        df[["NAME"] + [f"POPESTIMATE{year}" for year in years]]
+        .rename(columns={f"POPESTIMATE{year}": str(year) for year in years})
+        .rename(columns={"NAME": "state"})
+        .melt(id_vars=["state"], var_name="year", value_name="population")
     )
-    df = df.rename(columns={"Unnamed: 0": "state"}).dropna(subset=["state"])
-
-    df.columns = df.columns.astype(str)
-
-    # IDK what to do with this
-    # (also not sure what the difference is between the "Census", "Estimates Base", and "2010" columns
-    df = df.drop(columns=["Census", "Estimates Base"])
-
-    df["state"] = df["state"].str.lstrip(".")
-
-    df = df.astype({col: int for col in df.columns if col != "state"})
-
-    return df.melt(id_vars="state", var_name="year", value_name="population")
 
 
 def get_state_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
@@ -247,12 +222,19 @@ def get_state_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
         )
     )
 
-    return (
-        df[["NAME"] + [f"POPESTIMATE{year}" for year in range(2010, 2021)]]
-        .rename(columns={f"POPESTIMATE{year}": str(year) for year in range(2010, 2021)})
-        .rename(columns={"NAME": "state"})
-        .melt(id_vars=["state"], var_name="year", value_name="population")
+    return _melt_df(df, list(range(2010, 2021)))
+
+
+def get_state_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
+    df = pd.read_csv(
+        get_path(
+            "https://www2.census.gov/programs-surveys/popest/datasets/2020-2022/state/totals/NST-EST2022-ALLDATA.csv",
+            data_path,
+        )
     )
+
+    df = _melt_df(df, list(range(2020, 2023)))
+    return impute_2023_population(df)
 
 
 def get_state_population_estimates(data_path: Optional[Path]) -> pd.DataFrame:
@@ -268,7 +250,8 @@ def get_state_population_estimates(data_path: Optional[Path]) -> pd.DataFrame:
     print("Loading 2010s data...")
     df_2010s = get_state_populations_2010s(data_path)
 
-    df_2020s = impute_2020s_population(df_2010s)
+    print("Loading 2020s data...")
+    df_2020s = get_state_populations_2020s(data_path)
 
     states_df = pd.concat([df_1980s, df_1990s, df_2000s, df_2010s, df_2020s])
 

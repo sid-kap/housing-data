@@ -1,16 +1,11 @@
-from __future__ import annotations
-
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-from housing_data.build_data_utils import impute_2020s_population
+from housing_data.build_data_utils import impute_2023_population
 from housing_data.data_loading_helpers import get_path, get_url_text
-
-if TYPE_CHECKING:
-    from typing import List, Optional
 
 
 def _get_places_crosswalk_df(data_path: Optional[Path] = None) -> pd.DataFrame:
@@ -261,7 +256,7 @@ def _fix_place_names(place_names: pd.Series) -> pd.Series:
     return place_names
 
 
-def remove_dupe_cities(df: pd.DataFrame) -> pd.DataFrame:
+def remove_duplicate_cities(df: pd.DataFrame) -> pd.DataFrame:
     """
     If there are two places in the same state with different place_fips codes, then fuck it I have no idea which city
     s which (recall that BPS before 2000 doesn't have place FIPS codes---they may not have existed back then).
@@ -322,9 +317,10 @@ def get_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
         .reset_index()
     )
 
-    rename_dict = {"place": "place_name", "state_fips": "state_code"}
-    rename_dict.update({f"{year}-07-01": f"{year}" for year in range(1990, 2001)})
-    combined_df = combined_df.rename(columns=rename_dict)
+    combined_df = combined_df.rename(
+        columns={"place": "place_name", "state_fips": "state_code"}
+        | {f"{year}-07-01": f"{year}" for year in range(1990, 2001)}
+    )
 
     # First confirm that the only dupes (same place and state) is if they have different fips
     assert (
@@ -337,7 +333,7 @@ def get_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
         == 0
     )
 
-    combined_df = remove_dupe_cities(combined_df)
+    combined_df = remove_duplicate_cities(combined_df)
 
     combined_df = combined_df.drop(columns=["state_abbr", "place_fips"])
 
@@ -348,28 +344,33 @@ def get_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
     )
 
 
-def _get_recent_decades_df(
-    url: str, has_consolidated_cities: bool, years: List[int]
+def _melt_df(
+    df: pd.DataFrame,
+    years: List[int],
+    encoding: Optional[str] = None,
+    has_consolidated_cities: bool = True,
 ) -> pd.DataFrame:
-    df = pd.read_csv(url, encoding="latin_1")
+    """
+    For 2000s, 2010s, and 2020s
+    """
+    if f"POPESTIMATE{years[0]}" not in df.columns:
+        # POPESTIMATE2020 isn't present in the 2020s file
+        df = df.rename(columns={f"ESTIMATESBASE{years[0]}": f"POPESTIMATE{years[0]}"})
 
-    state_rows = (df["COUNTY"] == 0) & (df["PLACE"] == 0)
-
-    if has_consolidated_cities:
-        not_consolidated_city_rows = df["CONCIT"] == 0
-    else:
-        not_consolidated_city_rows = pd.Series(True, index=df.index)
-
-    # WOWWWW the format is so nice!!! makes things so easy!!
-    df = df[
+    mask = (
         (
             (df["COUNTY"] == 0)  # indicates total of a city across all counties it's in
             | (df["PLACE"] == 99990)  # indicates a "Balance of county" record
         )
         & (df["COUSUB"] == 0)  # remove townships and shit (county subdivisions)
-        & not_consolidated_city_rows
-        & ~state_rows  # remove states
-    ].copy()
+        & ~((df["COUNTY"] == 0) & (df["PLACE"] == 0))  # remove states
+    )
+
+    if has_consolidated_cities:
+        # Needed for 2010s and 2020s
+        mask &= df["CONCIT"] == 0
+
+    df = df[mask].copy()
 
     df["place_or_county_code"] = (
         df["PLACE"]
@@ -377,16 +378,14 @@ def _get_recent_decades_df(
         .where(df["PLACE"] != 99990, df["COUNTY"].astype(str) + "_county")
     )
 
-    df = df[
-        ["NAME", "STATE", "place_or_county_code"]
-        + [f"POPESTIMATE{year}" for year in years]
-    ]
+    cols = {
+        "NAME": "place_name",
+        "STATE": "state_code",
+        "place_or_county_code": "place_or_county_code",
+    } | {f"POPESTIMATE{year}": f"{year}" for year in years}
+    df = df[cols.keys()].rename(columns=cols)
 
-    rename_dict = {"NAME": "place_name", "STATE": "state_code"}
-    rename_dict.update({f"POPESTIMATE{year}": f"{year}" for year in years})
-    df = df.rename(columns=rename_dict)
-
-    df = remove_dupe_cities(df)
+    df = remove_duplicate_cities(df)
 
     df["place_name"] = df["place_name"].str.replace("^Balance of ", "", regex=True)
 
@@ -398,27 +397,43 @@ def _get_recent_decades_df(
 
 
 def get_place_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
-    # This one doesn't include consolidated cities, so no need to remove those rows
-    return _get_recent_decades_df(
+    df = pd.read_csv(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/datasets/2000-2010/intercensal/cities/sub-est00int.csv",
             data_path,
         ),
-        has_consolidated_cities=False,
+        encoding="latin_1",
+    )
+    return _melt_df(
+        df,
         years=list(range(2000, 2011)),
+        # This one doesn't include consolidated cities, so no need to remove those rows
+        has_consolidated_cities=False,
     )
 
 
 def get_place_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
-    # This one has consolidated cities that need to be removed
-    return _get_recent_decades_df(
+    df = pd.read_csv(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/cities/SUB-EST2020_ALL.csv",
             data_path,
         ),
-        has_consolidated_cities=True,
-        years=list(range(2010, 2021)),
+        encoding="latin_1",
     )
+
+    return _melt_df(df, years=list(range(2010, 2021)))
+
+
+def get_place_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
+    df = pd.read_csv(
+        get_path(
+            "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/cities/sub-est2022.csv",
+            data_path,
+        ),
+    )
+    df = _melt_df(df, years=list(range(2020, 2023)))
+    df = impute_2023_population(df)
+    return df
 
 
 def interpolate_1980s_populations(
@@ -486,6 +501,8 @@ def get_place_population_estimates(data_path: Optional[Path] = None) -> pd.DataF
     df_2000s = get_place_populations_2000s(data_path)
     print("Loading 2010s populations...")
     df_2010s = get_place_populations_2010s(data_path)
+    print("Loading 2020s populations...")
+    df_2020s = get_place_populations_2020s(data_path)
 
     # Remove the dupes by only taking [1990, 2000) from the 90s dataset,
     # [2000, 2010) from the 2000s dataset, etc. since these decade ones have both the start and end year.
@@ -498,12 +515,9 @@ def get_place_population_estimates(data_path: Optional[Path] = None) -> pd.DataF
     # This would help with the jumps we see from 1999 to 2000, and from 2009 to 2010 (you can see this in Google too)
     df_1990s = df_1990s[df_1990s["year"] != "2000"]
     df_2000s = df_2000s[df_2000s["year"] != "2010"]
+    df_2010s = df_2010s[df_2010s["year"] != "2020"]
 
     print("Interpolating 1980s populations...")
     interp_df = interpolate_1980s_populations(df_1980, df_1990s)
 
-    df_2020s = impute_2020s_population(df_2010s)
-
-    combined_df = pd.concat([interp_df, df_1990s, df_2000s, df_2010s, df_2020s])
-
-    return combined_df
+    return pd.concat([interp_df, df_1990s, df_2000s, df_2010s, df_2020s])
