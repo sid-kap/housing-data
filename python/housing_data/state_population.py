@@ -1,16 +1,11 @@
-from __future__ import annotations
-
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import List, Optional
 
 import pandas as pd
 import us
 from housing_data.build_data_utils import impute_2023_population
 from housing_data.data_loading_helpers import get_path, get_url_text
-
-if TYPE_CHECKING:
-    from typing import List, Optional
 
 DIVISIONS = {
     "New England": [
@@ -207,6 +202,15 @@ def get_state_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
     return df.melt(id_vars="state", var_name="year", value_name="population")
 
 
+def _melt_df(df: pd.DataFrame, years: List[int]) -> pd.DataFrame:
+    return (
+        df[["NAME"] + [f"POPESTIMATE{year}" for year in years]]
+        .rename(columns={f"POPESTIMATE{year}": str(year) for year in years})
+        .rename(columns={"NAME": "state"})
+        .melt(id_vars=["state"], var_name="year", value_name="population")
+    )
+
+
 def get_state_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
     """
     This one goes through 2020
@@ -218,12 +222,7 @@ def get_state_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
         )
     )
 
-    return (
-        df[["NAME"] + [f"POPESTIMATE{year}" for year in range(2010, 2021)]]
-        .rename(columns={f"POPESTIMATE{year}": str(year) for year in range(2010, 2021)})
-        .rename(columns={"NAME": "state"})
-        .melt(id_vars=["state"], var_name="year", value_name="population")
-    )
+    return _melt_df(df, list(range(2010, 2021)))
 
 
 def get_state_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
@@ -234,12 +233,7 @@ def get_state_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
         )
     )
 
-    df = (
-        df[["NAME"] + [f"POPESTIMATE{year}" for year in range(2020, 2023)]]
-        .rename(columns={f"POPESTIMATE{year}": str(year) for year in range(2020, 2023)})
-        .rename(columns={"NAME": "state"})
-        .melt(id_vars=["state"], var_name="year", value_name="population")
-    )
+    df = _melt_df(df, list(range(2020, 2023)))
     df = impute_2023_population(df)
     return df
 

@@ -1,16 +1,11 @@
-from __future__ import annotations
-
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
 from housing_data.build_data_utils import impute_2023_population
 from housing_data.data_loading_helpers import get_path, get_url_text
-
-if TYPE_CHECKING:
-    from typing import List, Optional
 
 
 def _get_places_crosswalk_df(data_path: Optional[Path] = None) -> pd.DataFrame:
@@ -348,8 +343,8 @@ def get_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
     )
 
 
-def _get_recent_decades_df(
-    url: str,
+def _melt_df(
+    df: pd.DataFrame,
     years: List[int],
     encoding: Optional[str] = None,
     has_consolidated_cities: bool = True,
@@ -357,8 +352,6 @@ def _get_recent_decades_df(
     """
     For 2000s, 2010s, and 2020s
     """
-    df = pd.read_csv(url, encoding=encoding)
-
     if f"POPESTIMATE{years[0]}" not in df.columns:
         # POPESTIMATE2020 isn't present in the 2020s file
         df = df.rename(columns={f"ESTIMATESBASE{years[0]}": f"POPESTIMATE{years[0]}"})
@@ -405,39 +398,41 @@ def _get_recent_decades_df(
 
 
 def get_place_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
-    # This one doesn't include consolidated cities, so no need to remove those rows
-    return _get_recent_decades_df(
+    df = pd.read_csv(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/datasets/2000-2010/intercensal/cities/sub-est00int.csv",
             data_path,
         ),
-        years=list(range(2000, 2011)),
         encoding="latin_1",
+    )
+    return _melt_df(
+        df,
+        years=list(range(2000, 2011)),
+        # This one doesn't include consolidated cities, so no need to remove those rows
         has_consolidated_cities=False,
     )
 
 
 def get_place_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
-    # This one has consolidated cities that need to be removed
-    return _get_recent_decades_df(
+    df = pd.read_csv(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/cities/SUB-EST2020_ALL.csv",
             data_path,
         ),
-        years=list(range(2010, 2021)),
         encoding="latin_1",
     )
 
+    return _melt_df(df, years=list(range(2010, 2021)))
+
 
 def get_place_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
-    # This one has consolidated cities that need to be removed
-    df = _get_recent_decades_df(
+    df = pd.read_csv(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/cities/sub-est2022.csv",
             data_path,
         ),
-        years=list(range(2020, 2023)),
     )
+    df = _melt_df(df, years=list(range(2020, 2023)))
     df = impute_2023_population(df)
     return df
 

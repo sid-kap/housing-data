@@ -1,16 +1,23 @@
-from __future__ import annotations
-
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import List, Optional
 
 import pandas as pd
 import us
 from housing_data.build_data_utils import impute_2023_population
 from housing_data.data_loading_helpers import get_path, get_url_text
 
-if TYPE_CHECKING:
-    from typing import Optional
+
+def _melt_df(df: pd.DataFrame, years: List[int]) -> pd.DataFrame:
+    rename_cols = {"POPESTIMATE" + str(year): str(year) for year in years}
+    rename_cols.update({"STATE": "state_code", "COUNTY": "county_code"})
+
+    df = df[rename_cols.keys()].rename(columns=rename_cols)
+
+    df = df.melt(
+        id_vars=["county_code", "state_code"], var_name="year", value_name="population"
+    )
+    return df
 
 
 def get_county_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
@@ -21,14 +28,7 @@ def get_county_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
         ),
     )
 
-    rename_cols = {"POPESTIMATE" + str(year): str(year) for year in range(2020, 2023)}
-    rename_cols.update({"STATE": "state_code", "COUNTY": "county_code"})
-
-    df = df[rename_cols.keys()].rename(columns=rename_cols)
-
-    df = df.melt(
-        id_vars=["county_code", "state_code"], var_name="year", value_name="population"
-    )
+    df = _melt_df(df, list(range(2020, 2023)))
     df = impute_2023_population(df)
 
     return df
@@ -43,16 +43,7 @@ def get_county_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
         encoding="latin_1",
     )
 
-    rename_cols = {"POPESTIMATE" + str(year): str(year) for year in range(2010, 2020)}
-    rename_cols.update({"STATE": "state_code", "COUNTY": "county_code"})
-
-    df = df[rename_cols.keys()].rename(columns=rename_cols)
-
-    df = df.melt(
-        id_vars=["county_code", "state_code"], var_name="year", value_name="population"
-    )
-
-    return df
+    return _melt_df(df, list(range(2010, 2020)))
 
 
 def get_county_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
