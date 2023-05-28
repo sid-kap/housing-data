@@ -3,11 +3,13 @@
 # amazon-linux-extras install python3.10
 # python3.10
 
+yum install wget
+
 wget https://www.python.org/ftp/python/3.10.11/Python-3.10.11.tgz
 tar xzf Python-3.10.11.tgz
 cd Python-3.10.11
-sudo ./configure --enable-optimizations
-sudo make altinstall
+./configure --enable-optimizations
+make altinstall
 rm -rf Python-3.10.11.tgz
 
 pip3 install --user poetry
