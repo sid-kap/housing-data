@@ -6,6 +6,7 @@ import pandas as pd
 import us
 from housing_data.build_data_utils import impute_2023_population
 from housing_data.data_loading_helpers import get_path, get_url_text
+from housing_data.fips_crosswalk import load_fips_crosswalk
 
 
 def _melt_df(df: pd.DataFrame, years: List[int]) -> pd.DataFrame:
@@ -116,13 +117,7 @@ def get_county_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
 
 
 def get_county_fips_crosswalk(data_path: Optional[Path]) -> pd.DataFrame:
-    df = pd.read_excel(
-        get_path(
-            "https://www2.census.gov/programs-surveys/popest/geographies/2021/all-geocodes-v2021.xlsx",
-            data_path,
-        ),
-        skiprows=4,
-    )
+    df = load_fips_crosswalk(data_path)
     df = df[df["County Code (FIPS)"] != 0]
 
     rename_cols = {
