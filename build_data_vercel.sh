@@ -1,6 +1,7 @@
 #! /usr/bin/env bash
 
 amazon-linux-extras install python3.10
+python3.10
 
 pip3 install --user poetry
 cd python || exit
