@@ -14,11 +14,9 @@ def _melt_df(df: pd.DataFrame, years: List[int]) -> pd.DataFrame:
     }
 
     df = df[rename_cols.keys()].rename(columns=rename_cols)
-
-    df = df.melt(
+    return df.melt(
         id_vars=["county_code", "state_code"], var_name="year", value_name="population"
     )
-    return df
 
 
 def get_county_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
