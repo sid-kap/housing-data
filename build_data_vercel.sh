@@ -3,6 +3,8 @@
 # Python 3.9, last time I checked
 yum install -y python3
 
+python3 --version
+
 pip3 install --user poetry
 cd python || exit
 export PATH=$PATH:$HOME/.local/bin
