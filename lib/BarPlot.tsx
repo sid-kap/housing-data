@@ -112,7 +112,7 @@ function makeTransforms(
   filterFields: Array<string>,
   perThousand: boolean
 ): Transform[] {
-  let transforms: Transform[] = [
+  let endTransforms: Transform[] = [
     { fold: fields },
     {
       filter: {
@@ -130,6 +130,8 @@ function makeTransforms(
     },
   ]
 
+  let transforms: Transform[] = []
+
   if (perThousand) {
     const baseFields = Array.from(
       fieldsGenerator([units], [""], ["_per_capita"])
@@ -141,10 +143,27 @@ function makeTransforms(
       }
     })
 
-    transforms = perThousandTransforms.concat(transforms)
+    transforms = transforms.concat(perThousandTransforms)
   }
 
-  return transforms
+  if (preferAprData) {
+    const aprTransforms: Transform[] = Array.from(fieldsGenerator()).map(
+      (field) => {
+        // Assumes we didn't include the "_apr" field in rows where it is not known,
+        // rather then included it but set it to null.
+        //
+        return {
+          // calculate: `isDefined(${field}_apr) ? ${field}_apr : ${field}`,
+          calculate: `${field}_apr || ${field}`,
+          as: field,
+        }
+      }
+    )
+
+    transforms = transforms.concat(aprTransforms)
+  }
+
+  return transforms.concat(endTransforms)
 }
 
 function makeSpec(
