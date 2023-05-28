@@ -1,9 +1,6 @@
 #! /usr/bin/env bash
 
-# Python 3.9, last time I checked
-yum install -y python3
-
-python3 --version
+amazon-linux-extras install python3.10
 
 pip3 install --user poetry
 cd python || exit
