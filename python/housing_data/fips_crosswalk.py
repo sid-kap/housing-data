@@ -1,6 +1,9 @@
-import pandas as pd
+from pathlib import Path
 from typing import Optional
-from housing_data.data_loading_helpers import get_path, get_url_text
+
+import pandas as pd
+from housing_data.data_loading_helpers import get_path
+
 
 def load_fips_crosswalk(data_path: Optional[Path]) -> pd.DataFrame:
     return pd.read_excel(
