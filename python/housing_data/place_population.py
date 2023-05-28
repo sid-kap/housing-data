@@ -256,7 +256,7 @@ def _fix_place_names(place_names: pd.Series) -> pd.Series:
     return place_names
 
 
-def remove_dupe_cities(df: pd.DataFrame) -> pd.DataFrame:
+def remove_duplicate_cities(df: pd.DataFrame) -> pd.DataFrame:
     """
     If there are two places in the same state with different place_fips codes, then fuck it I have no idea which city
     s which (recall that BPS before 2000 doesn't have place FIPS codes---they may not have existed back then).
@@ -333,7 +333,7 @@ def get_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
         == 0
     )
 
-    combined_df = remove_dupe_cities(combined_df)
+    combined_df = remove_duplicate_cities(combined_df)
 
     combined_df = combined_df.drop(columns=["state_abbr", "place_fips"])
 
@@ -378,16 +378,14 @@ def _melt_df(
         .where(df["PLACE"] != 99990, df["COUNTY"].astype(str) + "_county")
     )
 
-    df = df[
-        ["NAME", "STATE", "place_or_county_code"]
-        + [f"POPESTIMATE{year}" for year in years]
-    ]
+    cols = {
+        "NAME": "place_name",
+        "STATE": "state_code",
+        "place_or_county_code": "place_or_county_code",
+    } | {f"POPESTIMATE{year}": f"{year}" for year in years}
+    df = df[cols.keys()].rename(columns=cols)
 
-    rename_dict = {"NAME": "place_name", "STATE": "state_code"}
-    rename_dict.update({f"POPESTIMATE{year}": f"{year}" for year in years})
-    df = df.rename(columns=rename_dict)
-
-    df = remove_dupe_cities(df)
+    df = remove_duplicate_cities(df)
 
     df["place_name"] = df["place_name"].str.replace("^Balance of ", "", regex=True)
 
