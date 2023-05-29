@@ -1,11 +1,16 @@
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 from housing_data import state_population
 from housing_data.build_data_utils import (
+    OPTIONAL_PREFIXES,
+    OPTIONAL_SUFFIXES,
+    PREFIXES,
     PUBLIC_DIR,
     STATE_POPULATION_DIR,
+    SUFFIXES,
     add_per_capita_columns,
     load_bps_all_years_plus_monthly,
 )
@@ -25,7 +30,17 @@ def load_states(data_repo_path: Optional[Path]) -> pd.DataFrame:
         right_on=["state", "year"],
     )
 
-    add_per_capita_columns(states_df)
+    # TODO actually add the data
+    for prefix in OPTIONAL_PREFIXES + PREFIXES:
+        for suffix in OPTIONAL_SUFFIXES:
+            states_df[prefix + suffix] = np.nan
+
+    add_per_capita_columns(
+        states_df, prefixes=PREFIXES, suffixes=SUFFIXES + OPTIONAL_SUFFIXES
+    )
+    add_per_capita_columns(
+        states_df, prefixes=OPTIONAL_PREFIXES, suffixes=OPTIONAL_SUFFIXES
+    )
 
     states_df["name"] = states_df["state_name"]
     states_df["path_1"] = None
@@ -33,8 +48,5 @@ def load_states(data_repo_path: Optional[Path]) -> pd.DataFrame:
     states_df = states_df.drop(columns=["state_name", "state"])
 
     states_df.to_parquet(PUBLIC_DIR / "states_annual.parquet")
-
-    # Old format (all states in one file) - might get rid of this at some point
-    states_df.to_json(PUBLIC_DIR / "state_annual.json", orient="records")
 
     return states_df

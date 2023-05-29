@@ -3,7 +3,11 @@ from typing import Dict
 import pandas as pd
 from housing_data.build_data_utils import (
     NUMERICAL_COLUMNS,
+    OPTIONAL_PREFIXES,
+    OPTIONAL_SUFFIXES,
+    PREFIXES,
     PUBLIC_DIR,
+    SUFFIXES,
     add_per_capita_columns,
 )
 
@@ -133,7 +137,12 @@ def load_metros(counties_df: pd.DataFrame) -> pd.DataFrame:
 
     metros_df = pd.concat([msas_df, csas_df])
 
-    add_per_capita_columns(metros_df)
+    add_per_capita_columns(
+        metros_df, prefixes=PREFIXES, suffixes=SUFFIXES + OPTIONAL_SUFFIXES
+    )
+    add_per_capita_columns(
+        metros_df, prefixes=OPTIONAL_PREFIXES, suffixes=OPTIONAL_SUFFIXES
+    )
 
     metros_df["path_1"] = None
     metros_df["path_2"] = (
