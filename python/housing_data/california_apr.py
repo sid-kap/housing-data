@@ -13,6 +13,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from housing_data.build_data_utils import BASE_PREFIXES
 from housing_data.fips_crosswalk import load_fips_crosswalk
 
 BUILDING_PERMIT_COLUMNS = [
@@ -26,7 +27,7 @@ BUILDING_PERMIT_COLUMNS = [
 ]
 
 
-def load_california_apr(data_path: Optional[str]) -> pd.DataFrame:
+def load_california_apr_data(data_path: Optional[str]) -> pd.DataFrame:
     df = pd.read_csv(data_path / "data/apr/table-a2-2018-2022.csv.gz")
 
     # BPS doesn't include mobile homes, so we shouldn't include them here either
@@ -62,12 +63,15 @@ def load_california_apr(data_path: Optional[str]) -> pd.DataFrame:
     )
     assert df["building_type"].isnull().sum() == 0
 
-    df["buildings"] = 1
+    # Sum 1 for every row in the APRs dataset, since we have 1 row per project/building.
+    # (Technically this might not be true if a project has multiple buildings, e.g. a townhouse
+    # subdivision or something. But no one looks at the buildings charts anyways 🤷‍♂️)
+    df["bldgs"] = 1
 
     wide_df = df.pivot_table(
         index=["JURS_NAME", "CNTY_NAME", "YEAR"],
         columns="building_type",
-        values=["units", "buildings"],
+        values=["units", "bldgs"],
         fill_value=0,
         aggfunc="sum",
     ).reset_index()
@@ -77,13 +81,34 @@ def load_california_apr(data_path: Optional[str]) -> pd.DataFrame:
         for level_0, level_1 in wide_df.columns
     ]
 
+    wide_df["total_units_apr"] = wide_df[
+        [prefix + "_units_apr" for prefix in BASE_PREFIXES]
+    ].sum(axis="columns")
+    wide_df["total_bldgs_apr"] = wide_df[
+        [prefix + "_bldgs_apr" for prefix in BASE_PREFIXES]
+    ].sum(axis="columns")
+
+    # APR data has only past (completed) years, so no projections in those years
+    wide_df["projected_units_apr"] = None
+    wide_df["projected_bldgs_apr"] = None
+
+    # Confirm that we can drop county because in California, a city can't span multiple counties
+    assert (wide_df[["JURS_NAME", "YEAR"]].value_counts() == 1).all()
+    wide_df = wide_df.drop(columns=["CNTY_NAME"])
+
     # Add place_or_county_code
     old_rows = len(wide_df)
     wide_df = wide_df.merge(_load_fips_crosswalk(data_path), on=["JURS_NAME"])
     new_rows = len(wide_df)
     assert old_rows == new_rows
 
-    return wide_df.drop(columns=["JURS_NAME"])
+    print(wide_df.columns)
+
+    return (
+        wide_df.drop(columns=["JURS_NAME"])
+        .rename(columns={"YEAR": "year"})
+        .astype({"year": str})
+    )
 
 
 def _load_fips_crosswalk(data_path: Optional[Path]) -> pd.DataFrame:
@@ -94,7 +119,7 @@ def _load_fips_crosswalk(data_path: Optional[Path]) -> pd.DataFrame:
             (crosswalk_df["Place Code (FIPS)"] != 0)
             | (crosswalk_df["County Code (FIPS)"] != 0)
         )
-    ].copy()
+    ].rename(columns={"State Code (FIPS)": "state_code"})
 
     crosswalk_df["JURS_NAME"] = (
         crosswalk_df["Area Name (including legal/statistical area description)"]
@@ -117,6 +142,6 @@ def _load_fips_crosswalk(data_path: Optional[Path]) -> pd.DataFrame:
     crosswalk_df["place_or_county_code"] = np.where(
         crosswalk_df["County Code (FIPS)"] != 0,
         crosswalk_df["County Code (FIPS)"].astype(str) + "_county",
-        crosswalk_df["Place Code (FIPS)"],
+        crosswalk_df["Place Code (FIPS)"].astype(str),
     )
-    return crosswalk_df[["JURS_NAME", "place_or_county_code"]]
+    return crosswalk_df[["JURS_NAME", "place_or_county_code", "state_code"]]

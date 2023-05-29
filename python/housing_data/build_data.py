@@ -35,7 +35,8 @@ def main() -> None:
     county_population_df = get_county_population_estimates(
         data_path=data_repo_path / COUNTY_POPULATION_DIR
         if args.data_repo_path
-        else None
+        else None,
+        data_repo_path=data_repo_path if args.data_repo_path else None,
     )
     county_population_df.to_parquet(PUBLIC_DIR / "county_populations.parquet")
 

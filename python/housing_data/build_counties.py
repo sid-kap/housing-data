@@ -4,9 +4,13 @@ from typing import Optional
 import pandas as pd
 from housing_data import county_population
 from housing_data.build_data_utils import (
+    BPS_NUMERICAL_COLUMNS,
     COUNTY_POPULATION_DIR,
-    NUMERICAL_COLUMNS,
+    OPTIONAL_PREFIXES,
+    OPTIONAL_SUFFIXES,
+    PREFIXES,
     PUBLIC_DIR,
+    SUFFIXES,
     add_per_capita_columns,
     get_state_abbrs,
     load_bps_all_years_plus_monthly,
@@ -59,7 +63,18 @@ def load_counties(
         left_on=["fips_county", "fips_state", "year"],
         right_on=["county_code", "state_code", "year"],
     )
-    add_per_capita_columns(counties_df)
+
+    # TODO actually add the data
+    for prefix in OPTIONAL_PREFIXES + PREFIXES:
+        for suffix in OPTIONAL_SUFFIXES:
+            counties_df[prefix + suffix] = None
+
+    add_per_capita_columns(
+        places_df, prefixes=PREFIXES, suffixes=SUFFIXES + OPTIONAL_SUFFIXES
+    )
+    add_per_capita_columns(
+        places_df, prefixes=OPTIONAL_PREFIXES, suffixes=OPTIONAL_SUFFIXES
+    )
 
     # TODO figure out why some are null/which ones are getting dropped
     counties_df = counties_df[counties_df["county_name"].notnull()]
@@ -79,7 +94,7 @@ def impute_pre_1990_counties(
     counties_df: pd.DataFrame, places_df: pd.DataFrame
 ) -> pd.DataFrame:
     summed_places_df = (
-        places_df.groupby(["county_code", "state_code", "year"])[NUMERICAL_COLUMNS]
+        places_df.groupby(["county_code", "state_code", "year"])[BPS_NUMERICAL_COLUMNS]
         .sum()
         .reset_index()
     )

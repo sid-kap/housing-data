@@ -5,11 +5,11 @@ import pandas as pd
 from housing_data.data_loading_helpers import get_path
 
 
-def load_fips_crosswalk(data_path: Optional[Path]) -> pd.DataFrame:
+def load_fips_crosswalk(data_repo_path: Optional[Path]) -> pd.DataFrame:
     return pd.read_excel(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/geographies/2021/all-geocodes-v2021.xlsx",
-            data_path,
+            data_repo_path / "data/crosswalk",
         ),
         skiprows=4,
     )

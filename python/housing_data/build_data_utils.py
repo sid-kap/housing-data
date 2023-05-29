@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import List, Literal, Optional, Tuple, get_args
+from typing import List, Literal, Optional, Tuple
 
 import pandas as pd
 import us
@@ -21,12 +21,24 @@ Prefix = Literal[
     "5_plus_units",
     "total",
     "projected",
+    "adu",
 ]
-PREFIXES: Tuple[Prefix, ...] = tuple(get_args(Prefix))
-Suffix = Literal["_bldgs", "_units", "_value"]
-SUFFIXES: Tuple[Suffix, ...] = tuple(get_args(Suffix))
 
-NUMERICAL_COLUMNS = [prefix + suffix for prefix in PREFIXES for suffix in SUFFIXES]
+# TODO use "CA_APR" or something instead of "OPTIONAL"
+BASE_PREFIXES = ("1_unit", "2_units", "3_to_4_units", "5_plus_units")
+PREFIXES = ("1_unit", "2_units", "3_to_4_units", "5_plus_units", "total", "projected")
+OPTIONAL_PREFIXES = ("adu",)
+
+Suffix = Literal["_bldgs", "_units", "_value", "_bldgs_apr", "_units_apr"]
+
+SUFFIXES: Tuple[Suffix, ...] = ("_bldgs", "_units", "_value")
+OPTIONAL_SUFFIXES: Tuple[Suffix, ...] = ("_bldgs_apr", "_units_apr")
+
+BPS_NUMERICAL_COLUMNS = [prefix + suffix for prefix in PREFIXES for suffix in SUFFIXES]
+
+NUMERICAL_COLUMNS = [
+    prefix + suffix for prefix in PREFIXES for suffix in SUFFIXES + OPTIONAL_SUFFIXES
+] + [prefix + suffix for prefix in OPTIONAL_PREFIXES for suffix in OPTIONAL_SUFFIXES]
 
 PUBLIC_DIR = Path("../public")
 
@@ -55,6 +67,18 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
     ):
         sub_path = path / json_dir if not pd.isnull(json_dir) else path
         sub_path.mkdir(exist_ok=True)
+
+        # Don't bloat non-California JSON files with null "*_apr" columns
+        empty_cols = [
+            prefix + suffix + suffix_2
+            for prefix in PREFIXES + OPTIONAL_PREFIXES
+            for suffix in OPTIONAL_SUFFIXES
+            for suffix_2 in ["", "_per_capita"]
+            if group[prefix + suffix + suffix_2].isnull().all()
+        ]
+        if empty_cols:
+            group = group.drop(columns=empty_cols)
+
         group.reset_index(drop=True).to_json(
             sub_path / f"{json_name}.json", orient="records"
         )

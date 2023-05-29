@@ -1,17 +1,21 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import pandas as pd
 from housing_data import place_population
 from housing_data.build_data_utils import (
-    NUMERICAL_COLUMNS,
+    BPS_NUMERICAL_COLUMNS,
+    OPTIONAL_PREFIXES,
+    OPTIONAL_SUFFIXES,
     PLACE_POPULATION_DIR,
+    PREFIXES,
     PUBLIC_DIR,
+    SUFFIXES,
     add_per_capita_columns,
     get_state_abbrs,
     load_bps_all_years_plus_monthly,
 )
-from housing_data.building_permits_survey import Region
+from housing_data.california_apr import load_california_apr_data
 
 
 def make_bps_fips_mapping(
@@ -26,7 +30,7 @@ def make_bps_fips_mapping(
     # The most recent years have fips code in BPS, so we'll use those to join.
     # Some years will have the same BPS 6-digit ID, so we can join roughly 1992 to present using that.
     # From 1980-1991 BPS has different FIPS codes, so it becomes a little trickier.
-    mapping = places_df[(places_df["year"] == "2019")][
+    mapping = places_df[places_df["year"] == "2019"][
         ["place_name", "fips place_code", "county_code", "state_code", "6_digit_id"]
     ].copy()
 
@@ -176,8 +180,6 @@ def add_place_population_data(
         )
     )
 
-    add_per_capita_columns(final_places_df)
-
     return final_places_df
 
 
@@ -189,7 +191,7 @@ def _make_nyc_rows(raw_places_df: pd.DataFrame) -> pd.DataFrame:
         & (raw_places_df["state_code"] == 36)
     ]
     # TODO might need to add "month" to the groupby?
-    nyc_rows = nyc_df.groupby("year")[NUMERICAL_COLUMNS].sum().reset_index()
+    nyc_rows = nyc_df.groupby("year")[BPS_NUMERICAL_COLUMNS].sum().reset_index()
 
     nyc_rows["fips place_code"] = 51000
     nyc_rows["state_code"] = 36
@@ -289,12 +291,12 @@ def get_name_spelling(places_df: pd.DataFrame) -> pd.Series:
 def load_places(
     data_repo_path: Optional[Path], counties_population_df: pd.DataFrame = None
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    dfs = []
-    regions: List[Region] = ["west", "midwest", "south", "northeast"]
-    for region in regions:
-        data = load_bps_all_years_plus_monthly(data_repo_path, "place", region=region)
-        dfs.append(data)
-    raw_places_df = pd.concat(dfs)
+    raw_places_df = pd.concat(
+        [
+            load_bps_all_years_plus_monthly(data_repo_path, "place", region=region)
+            for region in ["west", "midwest", "south", "northeast"]
+        ]
+    )
 
     nyc_rows = _make_nyc_rows(raw_places_df)
     raw_places_df = pd.concat([raw_places_df, nyc_rows])
@@ -311,6 +313,22 @@ def load_places(
     )
 
     places_df = add_place_population_data(raw_places_df, place_populations_df)
+
+    # For California rows, add APR columns for units and buildings (not available for value)
+    places_df = places_df.merge(
+        load_california_apr_data(data_repo_path),
+        on=["place_or_county_code", "state_code", "year"],
+        how="left",
+    )
+
+    # There's an asymmetry here: PREFIXES exists for SUFFIXES and OPTIONAL_SUFFIXES,
+    # but OPTIONAL_PREFIXES only exists for california rows
+    add_per_capita_columns(
+        places_df, prefixes=PREFIXES, suffixes=SUFFIXES + OPTIONAL_SUFFIXES
+    )
+    add_per_capita_columns(
+        places_df, prefixes=OPTIONAL_PREFIXES, suffixes=OPTIONAL_SUFFIXES
+    )
 
     name = get_name_spelling(places_df)
     state_abbrs = get_state_abbrs(places_df["state_code"])
