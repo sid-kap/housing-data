@@ -49,9 +49,6 @@ def load_counties(
         left_on=["fips_county", "fips_state", "year"],
         right_on=["county_code", "state_code", "year"],
     )
-    print("counties:")
-    print(population_df.columns)
-    print(counties_df.columns)
 
     # TODO figure out why some are null/which ones are getting dropped
     counties_df = counties_df[counties_df["county_name"].notnull()]

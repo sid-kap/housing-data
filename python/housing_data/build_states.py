@@ -44,7 +44,6 @@ def load_states(data_repo_path: Optional[Path]) -> pd.DataFrame:
     states_df["path_1"] = None
     states_df["path_2"] = states_df["state_name"]
 
-    print(list(states_df["fips_state"].drop_duplicates()))
     states_df = states_df.drop(columns=["state_name", "state"])
 
     states_df["fips_state"] = (

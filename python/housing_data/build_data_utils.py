@@ -132,7 +132,6 @@ def add_per_capita_columns(df: pd.DataFrame) -> None:
     ]
 
     for prefix, suffix in prefixes_and_suffixes:
-        print(prefix + suffix, df[prefix + suffix].dtype)
         df[prefix + suffix + "_per_capita"] = df[prefix + suffix] / population
 
 
