@@ -2,15 +2,20 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
+from housing_data.build_counties import load_counties
 from housing_data.build_data_utils import (
+    COUNTY_POPULATION_DIR,
     PUBLIC_DIR,
     add_per_capita_columns,
     write_list_to_json,
     write_to_json_directory,
 )
 from housing_data.build_metros import load_metros
+from housing_data.build_places import load_places
+from housing_data.build_states import load_states
 from housing_data.california_apr import load_california_apr_data
 from housing_data.canada_bper import load_canada_bper
+from housing_data.county_population import get_county_population_estimates
 
 
 def main() -> None:
@@ -26,45 +31,24 @@ def main() -> None:
     # Make sure the public/ directory exists
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
-    # states_df = load_states(data_repo_path)
-    # states_df.to_parquet(PUBLIC_DIR / "states.parquet")
-
-    states_df = pd.read_parquet(PUBLIC_DIR / "states.parquet")
+    states_df = load_states(data_repo_path)
 
     print("Loading county population data...")
-    # county_population_df = get_county_population_estimates(
-    #     data_path=data_repo_path / COUNTY_POPULATION_DIR
-    #     if args.data_repo_path
-    #     else None,
-    #     data_repo_path=data_repo_path if args.data_repo_path else None,
-    # )
-    # county_population_df.to_parquet(PUBLIC_DIR / "county_populations.parquet")
-    pd.read_parquet(PUBLIC_DIR / "county_populations.parquet")
+    county_population_df = get_county_population_estimates(
+        data_path=data_repo_path / COUNTY_POPULATION_DIR
+        if args.data_repo_path
+        else None,
+        data_repo_path=data_repo_path if args.data_repo_path else None,
+    )
 
-    # raw_places_df, places_df = load_places(data_repo_path, county_population_df)
-    # counties_df = load_counties(data_repo_path, raw_places_df, county_population_df)
-
-    # raw_places_df.to_parquet(PUBLIC_DIR / "raw_places.parquet")
-    # places_df.to_parquet(PUBLIC_DIR / "places.parquet")
-    # counties_df.to_parquet(PUBLIC_DIR / "counties.parquet")
-
-    pd.read_parquet(PUBLIC_DIR / "raw_places.parquet")
-    places_df = pd.read_parquet(PUBLIC_DIR / "places.parquet")
-    counties_df = pd.read_parquet(PUBLIC_DIR / "counties.parquet")
+    raw_places_df, places_df = load_places(data_repo_path, county_population_df)
+    counties_df = load_counties(data_repo_path, raw_places_df, county_population_df)
 
     (
         california_places_df,
         california_counties_df,
         california_states_df,
     ) = load_california_apr_data(data_repo_path)
-
-    california_places_df.to_parquet(PUBLIC_DIR / "california_places.parquet")
-    california_counties_df.to_parquet(PUBLIC_DIR / "california_counties.parquet")
-    california_states_df.to_parquet(PUBLIC_DIR / "california_states.parquet")
-
-    california_places_df = pd.read_parquet(PUBLIC_DIR / "california_places.parquet")
-    california_counties_df = pd.read_parquet(PUBLIC_DIR / "california_counties.parquet")
-    california_states_df = pd.read_parquet(PUBLIC_DIR / "california_states.parquet")
 
     # For California rows, add APR columns for units and buildings (not available for value)
     places_df = places_df.merge(

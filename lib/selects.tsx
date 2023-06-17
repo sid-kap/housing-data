@@ -59,7 +59,7 @@ export function usePerCapitaInput(): {
             checked={preferAprData}
             onChange={() => setPreferAprData(!preferAprData)}
           />
-          <span className="ml-1">Prefer HCD APR data</span>
+          <span className="ml-1">Prefer California HCD data</span>
         </label>
       </div>
     </div>

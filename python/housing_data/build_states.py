@@ -48,7 +48,7 @@ def load_states(data_repo_path: Optional[Path]) -> pd.DataFrame:
 
     states_df["fips_state"] = (
         states_df["fips_state"]
-        .map({code: None for code in NON_STATE_FIPS})
+        .replace({code: None for code in NON_STATE_FIPS})
         .astype("Int64")
     )
     states_df = states_df.rename(columns={"fips_state": "state_code"})
