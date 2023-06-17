@@ -1,16 +1,9 @@
 from pathlib import Path
 from typing import Optional
 
-import numpy as np
 import pandas as pd
 from housing_data.build_data_utils import (
     BPS_NUMERICAL_COLUMNS,
-    OPTIONAL_PREFIXES,
-    OPTIONAL_SUFFIXES,
-    PREFIXES,
-    PUBLIC_DIR,
-    SUFFIXES,
-    add_per_capita_columns,
     get_state_abbrs,
     load_bps_all_years_plus_monthly,
 )
@@ -60,18 +53,6 @@ def load_counties(
     print(population_df.columns)
     print(counties_df.columns)
 
-    # TODO actually add the data
-    for prefix in OPTIONAL_PREFIXES + PREFIXES:
-        for suffix in OPTIONAL_SUFFIXES:
-            counties_df[prefix + suffix] = np.nan
-
-    add_per_capita_columns(
-        counties_df, prefixes=PREFIXES, suffixes=SUFFIXES + OPTIONAL_SUFFIXES
-    )
-    add_per_capita_columns(
-        counties_df, prefixes=OPTIONAL_PREFIXES, suffixes=OPTIONAL_SUFFIXES
-    )
-
     # TODO figure out why some are null/which ones are getting dropped
     counties_df = counties_df[counties_df["county_name"].notnull()]
 
@@ -80,8 +61,6 @@ def load_counties(
     counties_df["path_1"] = state_abbrs
     counties_df["path_2"] = counties_df["county_name"].str.replace(" ", "_")
     counties_df = counties_df.drop(columns=["county_name"])
-
-    counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")
 
     return counties_df
 

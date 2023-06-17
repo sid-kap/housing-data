@@ -4,6 +4,10 @@ import pandas as pd
 from housing_data.build_data_utils import (
     CANADA_BPER_DIR,
     CANADA_CROSSWALK_DIR,
+    OPTIONAL_PREFIXES,
+    OPTIONAL_SUFFIXES,
+    PREFIXES,
+    SUFFIXES,
     add_per_capita_columns,
 )
 from housing_data.canada_crosswalk import load_crosswalk
@@ -99,13 +103,19 @@ def load_canada_bper(data_repo_path: Path) -> pd.DataFrame:
 
 
 def _add_per_capita_columns(df: pd.DataFrame) -> None:
-    add_per_capita_columns(
-        df,
-        # No projected units
-        prefixes=("1_unit", "2_units", "3_to_4_units", "5_plus_units", "total"),
-        # No buildings/value (for now)
-        suffixes=("_units",),
-    )
+    for prefix in PREFIXES:
+        for suffix in set(SUFFIXES + OPTIONAL_SUFFIXES) - {"units"}:
+            # We don't have bldgs or value for Canada
+            df[prefix + suffix] = 0
+            df[prefix + suffix] = 0
+
+    for prefix in OPTIONAL_PREFIXES:
+        for suffix in OPTIONAL_SUFFIXES:
+            # We don't have any California-specific columns
+            df[prefix + suffix] = 0
+            df[prefix + suffix] = 0
+
+    add_per_capita_columns(df)
 
 
 def load_raw_bper(data_repo_path: Path) -> pd.DataFrame:

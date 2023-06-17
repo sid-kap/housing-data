@@ -5,17 +5,11 @@ import pandas as pd
 from housing_data import place_population
 from housing_data.build_data_utils import (
     BPS_NUMERICAL_COLUMNS,
-    OPTIONAL_PREFIXES,
-    OPTIONAL_SUFFIXES,
     PLACE_POPULATION_DIR,
-    PREFIXES,
     PUBLIC_DIR,
-    SUFFIXES,
-    add_per_capita_columns,
     get_state_abbrs,
     load_bps_all_years_plus_monthly,
 )
-from housing_data.california_apr import load_california_apr_data
 
 
 def make_bps_fips_mapping(
@@ -314,30 +308,12 @@ def load_places(
 
     places_df = add_place_population_data(raw_places_df, place_populations_df)
 
-    # For California rows, add APR columns for units and buildings (not available for value)
-    places_df = places_df.merge(
-        load_california_apr_data(data_repo_path),
-        on=["place_or_county_code", "state_code", "year"],
-        how="left",
-    )
-
-    # There's an asymmetry here: PREFIXES exists for SUFFIXES and OPTIONAL_SUFFIXES,
-    # but OPTIONAL_PREFIXES only exists for california rows
-    add_per_capita_columns(
-        places_df, prefixes=PREFIXES, suffixes=SUFFIXES + OPTIONAL_SUFFIXES
-    )
-    add_per_capita_columns(
-        places_df, prefixes=OPTIONAL_PREFIXES, suffixes=OPTIONAL_SUFFIXES
-    )
-
     name = get_name_spelling(places_df)
     state_abbrs = get_state_abbrs(places_df["state_code"])
     places_df["name"] = name + ", " + state_abbrs
     places_df["path_1"] = state_abbrs
     places_df["path_2"] = name.str.replace("/", "-").str.replace(" ", "_")
     places_df = places_df.drop(columns=["place_name", "place_type"])
-
-    places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
     # Not sure why I have to do this
     places_df = places_df[places_df["path_1"].notnull() & places_df["path_2"].notnull()]

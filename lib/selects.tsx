@@ -33,6 +33,7 @@ export function usePerCapitaInput(): {
   populationInput: JSX.Element
 } {
   const [denom, setDenom] = useState<Denom>("total")
+  const [preferAprData, setPreferAprData] = useState<boolean>(true)
   const populationInput = (
     <div>
       <label className="mr-3">
@@ -51,11 +52,22 @@ export function usePerCapitaInput(): {
         />
         <span className="ml-1">Per capita</span>
       </label>
+      <div className="mt-2">
+        <label className="mr-3">
+          <input
+            type="checkbox"
+            checked={preferAprData}
+            onChange={() => setPreferAprData(!preferAprData)}
+          />
+          <span className="ml-1">Prefer HCD APR data</span>
+        </label>
+      </div>
     </div>
   )
 
   return {
     denom: denom,
+    preferAprData: preferAprData,
     populationInput: populationInput,
   }
 }

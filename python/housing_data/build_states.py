@@ -1,19 +1,29 @@
 from pathlib import Path
 from typing import Optional
 
-import numpy as np
 import pandas as pd
 from housing_data import state_population
 from housing_data.build_data_utils import (
-    OPTIONAL_PREFIXES,
-    OPTIONAL_SUFFIXES,
-    PREFIXES,
-    PUBLIC_DIR,
     STATE_POPULATION_DIR,
-    SUFFIXES,
-    add_per_capita_columns,
     load_bps_all_years_plus_monthly,
 )
+
+NON_STATE_FIPS = {
+    "US",
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "D1",
+    "D2",
+    "D3",
+    "D4",
+    "D5",
+    "D6",
+    "D7",
+    "D8",
+    "D9",
+}
 
 
 def load_states(data_repo_path: Optional[Path]) -> pd.DataFrame:
@@ -30,23 +40,18 @@ def load_states(data_repo_path: Optional[Path]) -> pd.DataFrame:
         right_on=["state", "year"],
     )
 
-    # TODO actually add the data
-    for prefix in OPTIONAL_PREFIXES + PREFIXES:
-        for suffix in OPTIONAL_SUFFIXES:
-            states_df[prefix + suffix] = np.nan
-
-    add_per_capita_columns(
-        states_df, prefixes=PREFIXES, suffixes=SUFFIXES + OPTIONAL_SUFFIXES
-    )
-    add_per_capita_columns(
-        states_df, prefixes=OPTIONAL_PREFIXES, suffixes=OPTIONAL_SUFFIXES
-    )
-
     states_df["name"] = states_df["state_name"]
     states_df["path_1"] = None
     states_df["path_2"] = states_df["state_name"]
+
+    print(list(states_df["fips_state"].drop_duplicates()))
     states_df = states_df.drop(columns=["state_name", "state"])
 
-    states_df.to_parquet(PUBLIC_DIR / "states_annual.parquet")
+    states_df["fips_state"] = (
+        states_df["fips_state"]
+        .map({code: None for code in NON_STATE_FIPS})
+        .astype("Int64")
+    )
+    states_df = states_df.rename(columns={"fips_state": "state_code"})
 
     return states_df

@@ -119,17 +119,21 @@ def write_list_to_json(
     subset_df.to_json(output_path, orient="records")
 
 
-def add_per_capita_columns(
-    df: pd.DataFrame,
-    prefixes: Tuple[Prefix, ...] = PREFIXES,
-    suffixes: Tuple[Suffix, ...] = SUFFIXES,
-) -> None:
+def add_per_capita_columns(df: pd.DataFrame) -> None:
     # There are three cities (Sitka, Weeki Wachee, and Carlton Landing) that had population 0 in some years
     population = df["population"].where(df["population"] != 0, 1)
 
-    for prefix in prefixes:
-        for suffix in suffixes:
-            df[prefix + suffix + "_per_capita"] = df[prefix + suffix] / population
+    prefixes_and_suffixes = [
+        (prefix, suffix)
+        for prefix in PREFIXES
+        for suffix in SUFFIXES + OPTIONAL_SUFFIXES
+    ] + [
+        (prefix, suffix) for prefix in OPTIONAL_PREFIXES for suffix in OPTIONAL_SUFFIXES
+    ]
+
+    for prefix, suffix in prefixes_and_suffixes:
+        print(prefix + suffix, df[prefix + suffix].dtype)
+        df[prefix + suffix + "_per_capita"] = df[prefix + suffix] / population
 
 
 def get_state_abbrs(state_codes: pd.Series) -> pd.Series:

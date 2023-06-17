@@ -42,7 +42,7 @@ export default function PlotsTemplate({
 
   const { selectedUnits, unitsSelect } = useUnitsSelect()
 
-  const { denom, populationInput } = usePerCapitaInput()
+  const { denom, preferAprData, populationInput } = usePerCapitaInput()
   const perCapita = denom === "per_capita"
 
   return (
@@ -60,6 +60,7 @@ export default function PlotsTemplate({
           data={{ table: data }}
           units={selectedUnits}
           perCapita={perCapita}
+          preferAprData={preferAprData}
         />
       </div>
       {populationInput}

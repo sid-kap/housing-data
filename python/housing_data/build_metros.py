@@ -1,22 +1,12 @@
+from pathlib import Path
 from typing import Dict
 
 import pandas as pd
-from housing_data.build_data_utils import (
-    NUMERICAL_COLUMNS,
-    OPTIONAL_PREFIXES,
-    OPTIONAL_SUFFIXES,
-    PREFIXES,
-    PUBLIC_DIR,
-    SUFFIXES,
-    add_per_capita_columns,
-)
+from housing_data.build_data_utils import NUMERICAL_COLUMNS
 
 
-def load_crosswalk_df() -> pd.DataFrame:
-    # TODO: cache this file to housing-data-data to speed up builds by a few seconds
-    crosswalk_df = pd.read_csv(
-        "http://data.nber.org/cbsa-csa-fips-county-crosswalk/cbsa2fipsxw.csv"
-    )
+def load_crosswalk_df(data_repo_path: Path) -> pd.DataFrame:
+    crosswalk_df = pd.read_csv(data_repo_path / "data/crosswalk/cbsa2fipsxw.csv")
 
     # Drop the μSAs, no one cares about them.
     # Most of them are just one county anyway, so showing the combined metro stats doesn't
@@ -26,8 +16,8 @@ def load_crosswalk_df() -> pd.DataFrame:
         == "Metropolitan Statistical Area"
     ]
 
-    # Could also get county name from 'countycountyequivalent' in crosswalk_df... I'm indifferent, just using the
-    # one from counties_df for now.
+    # Could also get county name from 'countycountyequivalent' in crosswalk_df...
+    # I'm indifferent, just using the one from counties_df for now.
     crosswalk_df = (
         crosswalk_df[["fipsstatecode", "fipscountycode", "csatitle", "cbsatitle"]]
         .rename(
@@ -121,12 +111,13 @@ def get_aggregate_functions() -> Dict[str, pd.NamedAgg]:
     return aggregate_functions
 
 
-def load_metros(counties_df: pd.DataFrame) -> pd.DataFrame:
+def load_metros(data_repo_path: Path, counties_df: pd.DataFrame) -> pd.DataFrame:
+    # TODO: we should add per capita columns after calling load_metros
     counties_df = counties_df.drop(
-        columns=[col for col in counties_df.columns if "_per_capita" in col]
+        columns=[col for col in counties_df.columns if col.endswith("_per_capita")]
     )
 
-    crosswalk_df = load_crosswalk_df()
+    crosswalk_df = load_crosswalk_df(data_repo_path)
 
     merged_df = crosswalk_df.merge(
         counties_df, on=["fips_state", "fips_county"], how="left"
@@ -136,13 +127,6 @@ def load_metros(counties_df: pd.DataFrame) -> pd.DataFrame:
     csas_df = combine_metro_rows(merged_df, "csa", crosswalk_df)
 
     metros_df = pd.concat([msas_df, csas_df])
-
-    add_per_capita_columns(
-        metros_df, prefixes=PREFIXES, suffixes=SUFFIXES + OPTIONAL_SUFFIXES
-    )
-    add_per_capita_columns(
-        metros_df, prefixes=OPTIONAL_PREFIXES, suffixes=OPTIONAL_SUFFIXES
-    )
 
     metros_df["path_1"] = None
     metros_df["path_2"] = (
@@ -157,7 +141,5 @@ def load_metros(counties_df: pd.DataFrame) -> pd.DataFrame:
     # For the plot labels, would like to use the full metro name with the "MSA" or "CSA" suffix.
     metros_df["name"] = metros_df["metro_name_with_suffix"]
     metros_df = metros_df.drop(columns=["metro_name_with_suffix", "metro_name"])
-
-    metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
 
     return metros_df
