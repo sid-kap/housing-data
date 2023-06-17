@@ -128,24 +128,6 @@ function makeTransforms(
   perThousand: boolean,
   preferAprData: boolean
 ): Transform[] {
-  let endTransforms: Transform[] = [
-    { fold: fields },
-    {
-      filter: {
-        field: "key",
-        oneOf: filterFields,
-      },
-    },
-    {
-      calculate: JSON.stringify(keyMapping) + '[datum.key] || "Error"',
-      as: "key_pretty_printed",
-    },
-    {
-      calculate: JSON.stringify(orderMapping) + '[datum.key] || "Error"',
-      as: "bar_chart_order",
-    },
-  ]
-
   let transforms: Transform[] = []
 
   if (perThousand) {
@@ -159,10 +141,9 @@ function makeTransforms(
       }
     })
 
-    transforms = transforms.concat(perThousandTransforms)
+    transforms.push(...perThousandTransforms)
   }
 
-  // TODO I broke projected units! Idk why
   if (preferAprData) {
     const aprTransforms: Transform[] = []
     for (const numUnits of NUM_UNITS) {
@@ -171,18 +152,45 @@ function makeTransforms(
         for (const suffix of ["", "_per_capita", "_per_capita_per_1000"]) {
           const prefix = `${numUnits}_${type}`
           aprTransforms.push({
-            calculate: `datum['${prefix}_apr${suffix}'] || datum['${prefix}${suffix}']`,
+            calculate: `datum['${prefix}_apr${suffix}'] || datum['${prefix}${suffix}'] || 0`,
             as: `${prefix}${suffix}`,
           })
         }
       }
     }
 
-    transforms = transforms.concat(aprTransforms)
+    transforms.push(...aprTransforms)
+  } else {
+    // This is a hack, should make this better.
+    // The problem is that if a field is null, it messes up the plot and causes projected
+    // units to not appear for some reason.
+    // So we either need to filter out this field, or replace it with 0 like in the preferAprData case.
+    filterFields = filterFields.filter((field) => !field.includes("adu_"))
   }
+
+  console.log(fields)
+  transforms.push(
+    ...[
+      { fold: fields },
+      {
+        filter: {
+          field: "key",
+          oneOf: filterFields,
+        },
+      },
+      {
+        calculate: JSON.stringify(keyMapping) + '[datum.key] || "Error"',
+        as: "key_pretty_printed",
+      },
+      {
+        calculate: JSON.stringify(orderMapping) + '[datum.key] || "Error"',
+        as: "bar_chart_order",
+      },
+    ]
+  )
   console.log(transforms)
 
-  return transforms.concat(endTransforms)
+  return transforms
 }
 
 function makeSpec(
@@ -197,6 +205,7 @@ function makeSpec(
   const suffix = perCapitaSuffix + perThousandSuffix
 
   const filterFields = Array.from(fieldsGenerator([units], [suffix]))
+  console.log(filterFields)
 
   const plotWidth = Math.min(width * 0.92, 936)
 
@@ -288,7 +297,6 @@ function makeSpec(
               // Taken from Tableau 10 (https://www.tableau.com/about/blog/2016/7/colors-upgrade-tableau-10-56782)
               range: [
                 "#edc948",
-                /* "#ff9da7", */
                 "#4e79a7",
                 "#f28e2b",
                 "#e15759",
