@@ -212,9 +212,6 @@ def _melt_df(df: pd.DataFrame, years: List[int]) -> pd.DataFrame:
 
 
 def get_state_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
-    """
-    This one goes through 2020
-    """
     df = pd.read_csv(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/state/totals/nst-est2020-alldata.csv",
@@ -222,7 +219,7 @@ def get_state_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
         )
     )
 
-    return _melt_df(df, list(range(2010, 2021)))
+    return _melt_df(df, list(range(2010, 2020)))
 
 
 def get_state_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
