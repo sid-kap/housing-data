@@ -168,7 +168,6 @@ function makeTransforms(
     filterFields = filterFields.filter((field) => !field.includes("adu_"))
   }
 
-  console.log(fields)
   transforms.push(
     ...[
       { fold: fields },
@@ -188,7 +187,6 @@ function makeTransforms(
       },
     ]
   )
-  console.log(transforms)
 
   return transforms
 }
@@ -205,7 +203,6 @@ function makeSpec(
   const suffix = perCapitaSuffix + perThousandSuffix
 
   const filterFields = Array.from(fieldsGenerator([units], [suffix]))
-  console.log(filterFields)
 
   const plotWidth = Math.min(width * 0.92, 936)
 
