@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 import { useMediaQuery } from "@react-hook/media-query"
 import { OrderedMap } from "immutable"
@@ -7,6 +7,7 @@ import { useQueries } from "react-query"
 import { VegaLite } from "react-vega"
 import { expressionFunction } from "vega"
 import { TopLevelSpec } from "vega-lite"
+import { Transform } from "vega-lite/src/transform"
 
 import { makeMetroOptions } from "lib/MetroPlots"
 import MultiSelect from "lib/MultiSelect"
@@ -17,7 +18,6 @@ import {
   HcdDataInfo,
   usePerCapitaInput,
   usePreferHcdDataInput,
-  useUnitsSelect,
 } from "lib/selects"
 import { scoreFnWithPopulation } from "lib/utils"
 
@@ -366,6 +366,7 @@ function combineDatas(datas) {
 type Option = {
   value: number
   path: string
+  has_ca_hcd_data: boolean
 }
 
 const fuzzysortOptions = {
@@ -482,7 +483,7 @@ export default function Home(): JSX.Element {
                 spec={spec(
                   width,
                   height,
-                  denom === "per_capita",
+                  perCapita,
                   preferHcdData,
                   false,
                   grouping,
