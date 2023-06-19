@@ -80,12 +80,12 @@ export default function BarPlot({
   data,
   units,
   perCapita,
-  preferAprData,
+  preferHcdData,
 }: {
   data: PlainObject
   units: string
   perCapita: boolean
-  preferAprData: boolean
+  preferHcdData: boolean
 }): JSX.Element {
   return (
     <>
@@ -113,7 +113,7 @@ export default function BarPlot({
       <ContainerDimensions>
         {({ width }) => (
           <VegaLite
-            spec={makeSpec(units, perCapita, preferAprData, width)}
+            spec={makeSpec(units, perCapita, preferHcdData, width)}
             data={data}
           />
         )}
@@ -126,7 +126,7 @@ function makeTransforms(
   units: string,
   filterFields: Array<string>,
   perThousand: boolean,
-  preferAprData: boolean
+  preferHcdData: boolean
 ): Transform[] {
   let transforms: Transform[] = []
 
@@ -144,7 +144,7 @@ function makeTransforms(
     transforms.push(...perThousandTransforms)
   }
 
-  if (preferAprData) {
+  if (preferHcdData) {
     const aprTransforms: Transform[] = []
     for (const numUnits of NUM_UNITS) {
       // We don't have value data from APRs, so only do the substitution for buildings and units.
@@ -164,7 +164,7 @@ function makeTransforms(
     // This is a hack, should make this better.
     // The problem is that if a field is null, it messes up the plot and causes projected
     // units to not appear for some reason.
-    // So we either need to filter out this field, or replace it with 0 like in the preferAprData case.
+    // So we either need to filter out this field, or replace it with 0 like in the preferHcdData case.
     filterFields = filterFields.filter((field) => !field.includes("adu_"))
   }
 
@@ -194,7 +194,7 @@ function makeTransforms(
 function makeSpec(
   units: string,
   perCapita: boolean,
-  preferAprData: boolean,
+  preferHcdData: boolean,
   width: number
 ): TopLevelSpec {
   const perThousand = perCapita && units === "units"
@@ -220,7 +220,7 @@ function makeSpec(
     units,
     filterFields,
     perThousand,
-    preferAprData
+    preferHcdData
   )
 
   return {

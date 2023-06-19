@@ -1,7 +1,12 @@
 import BarPlot from "lib/BarPlot"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
-import { usePerCapitaInput, useUnitsSelect } from "lib/selects"
+import {
+  HcdDataInfo,
+  usePerCapitaInput,
+  usePreferHcdDataInput,
+  useUnitsSelect,
+} from "lib/selects"
 
 interface Option {
   value: string
@@ -36,14 +41,17 @@ export default function PlotsTemplate({
   jsonRoot: string
   countyList?: JSX.Element
 }): JSX.Element {
+  console.log(selected)
   const { data } = useFetch(
     selected != null ? jsonRoot + selected.value + ".json" : null
   )
 
   const { selectedUnits, unitsSelect } = useUnitsSelect()
 
-  const { denom, preferAprData, populationInput } = usePerCapitaInput()
+  const { denom, perCapitaInput } = usePerCapitaInput()
   const perCapita = denom === "per_capita"
+
+  const { preferHcdData, preferHcdDataInput } = usePreferHcdDataInput()
 
   return (
     <div className="mx-auto mb-10 align-center items-center flex flex-col justify-center">
@@ -60,12 +68,16 @@ export default function PlotsTemplate({
           data={{ table: data }}
           units={selectedUnits}
           perCapita={perCapita}
-          preferAprData={preferAprData}
+          preferHcdData={preferHcdData}
         />
       </div>
-      {populationInput}
+      {perCapitaInput}
+      {selected?.has_ca_hcd_data && preferHcdDataInput}
       {countyList ?? ""}
-      <CurrentYearExtrapolationInfo />
+      <div>
+        <CurrentYearExtrapolationInfo />
+        {selected?.has_ca_hcd_data && <HcdDataInfo />}
+      </div>
     </div>
   )
 }

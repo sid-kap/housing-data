@@ -55,7 +55,6 @@ def main() -> None:
         on=["place_or_county_code", "state_code", "year"],
         how="left",
     )
-    places_df["has_ca_hcd_data"] = places_df["has_ca_hcd_data"].fillna(False)
 
     counties_df = counties_df.merge(
         california_counties_df.assign(state_code=6, has_ca_hcd_data=True).astype(
@@ -64,7 +63,6 @@ def main() -> None:
         on=["county_code", "state_code", "year"],
         how="left",
     )
-    counties_df["has_ca_hcd_data"] = counties_df["has_ca_hcd_data"].fillna(False)
 
     metros_df = load_metros(data_repo_path, counties_df)
 
@@ -75,7 +73,6 @@ def main() -> None:
         on=["state_code", "year"],
         how="left",
     )
-    states_df["has_ca_hcd_data"] = states_df["has_ca_hcd_data"].fillna(False)
 
     add_per_capita_columns(places_df, [DataSource.BPS, DataSource.CA_HCD])
     add_per_capita_columns(counties_df, [DataSource.BPS, DataSource.CA_HCD])
@@ -109,10 +106,7 @@ def generate_json(
     states_df: pd.DataFrame,
 ) -> None:
     # Places
-    write_list_json(
-        places_df,
-        PUBLIC_DIR / "places_list.json",
-    )
+    write_list_json(places_df, PUBLIC_DIR / "places_list.json")
     write_to_json_directory(places_df, PUBLIC_DIR / "places_data")
 
     # Metros
@@ -136,10 +130,7 @@ def generate_json(
     write_to_json_directory(counties_df, PUBLIC_DIR / "counties_data")
 
     # States
-    write_list_json(
-        states_df,
-        PUBLIC_DIR / "states_list.json",
-    )
+    write_list_json(states_df, PUBLIC_DIR / "states_list.json")
     write_to_json_directory(states_df, PUBLIC_DIR / "states_data")
 
 

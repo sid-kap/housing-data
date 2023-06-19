@@ -30,11 +30,10 @@ type Denom = "total" | "per_capita"
 
 export function usePerCapitaInput(): {
   denom: string
-  populationInput: JSX.Element
+  perCapitaInput: JSX.Element
 } {
   const [denom, setDenom] = useState<Denom>("total")
-  const [preferAprData, setPreferAprData] = useState<boolean>(true)
-  const populationInput = (
+  const perCapitaInput = (
     <div>
       <label className="mr-3">
         <input
@@ -52,22 +51,53 @@ export function usePerCapitaInput(): {
         />
         <span className="ml-1">Per capita</span>
       </label>
-      <div className="mt-2">
-        <label className="mr-3">
-          <input
-            type="checkbox"
-            checked={preferAprData}
-            onChange={() => setPreferAprData(!preferAprData)}
-          />
-          <span className="ml-1">Prefer California HCD data</span>
-        </label>
-      </div>
     </div>
   )
 
   return {
     denom: denom,
-    preferAprData: preferAprData,
-    populationInput: populationInput,
+    perCapitaInput: perCapitaInput,
   }
+}
+
+export function usePreferHcdDataInput(): {
+  preferHcdData: boolean
+  preferHcdDataInput: JSX.Element
+} {
+  const [preferAprData, setPreferAprData] = useState<boolean>(true)
+  const preferHcdDataInput = (
+    <div className="mt-2">
+      <label className="mr-3">
+        <input
+          type="checkbox"
+          checked={preferAprData}
+          onChange={() => setPreferAprData(!preferAprData)}
+        />
+        <span className="ml-1">Prefer California HCD data for 2018–2022†</span>
+      </label>
+    </div>
+  )
+
+  return {
+    preferHcdData: preferAprData,
+    preferHcdDataInput: preferHcdDataInput,
+  }
+}
+
+export function HcdDataInfo(): JSX.Element {
+  return (
+    <>
+      <div className="text-xs mt-3 text-left">
+        †Use California HCD's{" "}
+        <a
+          href="https://www.hcd.ca.gov/planning-and-community-development/annual-progress-reports"
+          className="text-blue-500 hover:text-blue-300"
+        >
+          Annual Progress Reports
+        </a>{" "}
+        data, which is likely more accurate than the Census Building Permits
+        Survey, and unlike BPS includes an ADU category.
+      </div>
+    </>
+  )
 }

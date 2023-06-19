@@ -118,9 +118,9 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
         )
 
 
-# Columns to write to the "{geography}_list.json" file
-# Note: we also add "has_ca_hcd_data", but that requires a more complex aggregation (see below)
-# because it has different values for different years.
+# Columns to write to the "{geography}_list.json" file.
+# We also add "population" and "has_ca_hcd_data", but those require more
+# complicated aggregations because they have different values for different years.
 LIST_COLUMNS = ["name", "path_1", "path_2", "alt_name"]
 
 
@@ -138,31 +138,29 @@ def write_list_json(
         they would cause "[type] is not hashable" errors.
     """
     columns = LIST_COLUMNS + (extra_columns or [])
-    hashable_columns = list(set(columns) - set(unhashable_columns or []))
-    subset_df = df[columns].copy().drop_duplicates(subset=hashable_columns)
+    keys = list(set(columns) - set(unhashable_columns or []))
+    subset_df = df[columns].copy().drop_duplicates(subset=keys)
 
     # Refers to both the path of the json file (https://housingdata.app/places_data/{path}.json)
     # and the URL path (https://housingdata.app/places/{path})
     subset_df["path"] = (subset_df["path_1"] + "/").fillna("") + subset_df["path_2"]
 
-    # Add the "population" column
+    # Add population column
     latest_populations = (
-        df[hashable_columns + ["year", "population"]]
+        df[keys + ["year", "population"]]
         .sort_values("year")
-        .drop_duplicates(subset=hashable_columns, keep="last")
+        .drop_duplicates(subset=keys, keep="last")
     )
     latest_populations["population"] = (
         latest_populations["population"].fillna(0).astype(int)
     )
-    subset_df = subset_df.merge(latest_populations, on=hashable_columns, how="left")
+    subset_df = subset_df.merge(latest_populations, on=keys, how="left")
 
-    # Add a column indicating whether the place has CA HCD data
-    has_ca_hcd_data = (
-        df.groupby(hashable_columns)["has_ca_hcd_data"].any().reset_index()
-    )
-    subset_df = subset_df.merge(has_ca_hcd_data, on=hashable_columns, how="left")
+    # Add column indicating whether the place has CA HCD data
+    has_ca_hcd_data = df.groupby("name")["has_ca_hcd_data"].any().reset_index()
+    subset_df = subset_df.merge(has_ca_hcd_data, on="name", how="left")
 
-    subset_df = subset_df.sort_values(hashable_columns)
+    subset_df = subset_df.sort_values(keys)
     subset_df = subset_df.drop(columns=["path_1", "path_2"])
     subset_df.to_json(output_path, orient="records")
 
