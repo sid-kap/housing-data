@@ -9,13 +9,6 @@ from housing_data import building_permits_survey as bps
 from tqdm import tqdm
 
 _COMMON_PREFIXES = ["1_unit", "2_units", "3_to_4_units", "5_plus_units"]
-_DERIVED_PREFIXES = ["total", "projected"]
-
-_BPS_SUFFIXES = ["_bldgs", "_units", "_value"]
-
-# We don't have value data in the CA HCD dataset
-# (In the UI, for value we fallback to BPS data)
-_CA_HCD_SUFFIXES = ["_units_apr", "_bldgs_apr"]
 
 
 class DataSource(Enum):
@@ -24,22 +17,55 @@ class DataSource(Enum):
     CANADA = auto()
 
 
-NUMERICAL_COLUMNS = {
-    DataSource.BPS: [
-        prefix + suffix for prefix in _COMMON_PREFIXES for suffix in _BPS_SUFFIXES
-    ],
-    DataSource.CA_HCD: [
-        prefix + suffix
-        # We have ADU data only in the CA HCD dataset
-        for prefix in _COMMON_PREFIXES + ["adu"]
-        for suffix in _CA_HCD_SUFFIXES
-    ],
-    DataSource.CANADA: [
-        # We only have units, not bldgs or value for Canada
-        prefix + "_units"
-        for prefix in _COMMON_PREFIXES
-    ],
+# There are also two "derived" prefixes: "total" and "projected"
+PREFIXES = {
+    DataSource.BPS: _COMMON_PREFIXES,
+    # We have ADU data only in the CA HCD dataset
+    DataSource.CA_HCD: _COMMON_PREFIXES + ["adu"],
+    DataSource.CANADA: _COMMON_PREFIXES,
 }
+
+
+SUFFIXES = {
+    DataSource.BPS: ["_bldgs", "_units", "_value"],
+    # We don't have value data in the CA HCD dataset
+    # (In the UI, for value we fallback to BPS data)
+    DataSource.CA_HCD: ["_units_apr", "_bldgs_apr"],
+    # We only have units, not bldgs or value for Canada
+    DataSource.CANADA: ["_units"],
+}
+
+
+def get_numerical_columns(
+    data_source: DataSource,
+    totals: bool = False,
+    projected: bool = False,
+    per_capitas: bool = False,
+) -> list[str]:
+    """
+    Args:
+        post_processing: Whether to include the "{}_per_capita" and "total_{}" columns
+    """
+    cols = [
+        prefix + suffix
+        for prefix in PREFIXES[data_source]
+        for suffix in SUFFIXES[data_source]
+    ]
+
+    if totals:
+        cols += [f"total{suffix}" for suffix in SUFFIXES[data_source]]
+
+    if projected and data_source == DataSource.BPS:
+        # We only call add_current_year_projections (which adds the "projected_*" columns)
+        # on BPS data, since BPS is the only data source released monthly.
+        cols += [f"projected{suffix}" for suffix in SUFFIXES[data_source]]
+
+    if per_capitas:
+        # This must happen after totals
+        cols += [col + "_per_capita" for col in cols]
+
+    return cols
+
 
 PUBLIC_DIR = Path("../public")
 
@@ -71,10 +97,13 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
 
         # Don't bloat non-California JSON files with columns that are all null
         ca_only_columns = [
-            col + per_capita_suffix
-            for col in NUMERICAL_COLUMNS[DataSource.CA_HCD]
-            for per_capita_suffix in ["", "_per_capita"]
-            if group[col + per_capita_suffix].isnull().all()
+            col
+            # doesn't matter if we pass projected=True here, since projected columns
+            # aren't present in CA HCD data. But just passing for consistency.
+            for col in get_numerical_columns(
+                DataSource.CA_HCD, totals=True, projected=True, per_capitas=True
+            )
+            if group[col].isnull().all()
         ]
         if ca_only_columns:
             group = group.drop(columns=ca_only_columns)
@@ -127,9 +156,12 @@ def add_per_capita_columns(df: pd.DataFrame, data_sources: list[DataSource]) -> 
     # There are three cities (Sitka, Weeki Wachee, and Carlton Landing) that had population 0 in some years
     population = df["population"].where(df["population"] != 0, 1)
 
-    for col in {
-        col for data_source in data_sources for col in NUMERICAL_COLUMNS[data_source]
-    }:
+    cols = {
+        col
+        for data_source in data_sources
+        for col in get_numerical_columns(data_source, totals=True, projected=True)
+    }
+    for col in cols:
         df[col + "_per_capita"] = df[col] / population
 
 
@@ -209,9 +241,10 @@ def load_bps_all_years_plus_monthly(
 
 
 def add_total_columns(df: pd.DataFrame, data_source: DataSource) -> None:
-    # TODO - are totals available for Canada?
-    for suffix in _BPS_SUFFIXES:
-        cols = [col for col in NUMERICAL_COLUMNS[data_source] if col.endswith(suffix)]
+    for suffix in SUFFIXES[data_source]:
+        cols = [
+            col for col in get_numerical_columns(data_source) if col.endswith(suffix)
+        ]
         df[f"total{suffix}"] = df[cols].sum(axis=1)
 
 
@@ -224,13 +257,13 @@ def add_current_year_projections(year_to_date_df: pd.DataFrame) -> pd.DataFrame:
     The projected units for the remainder of the year will be stacked on top of
     the already observed units in the bar chart, with a different shading pattern.
     """
-    for value_type in ["bldgs", "units", "value"]:
+    for suffix in SUFFIXES[DataSource.BPS]:
         # number of remaining months in the year / number of observed months
         projected_units_ratio = (12 - year_to_date_df["month"]) / year_to_date_df[
             "month"
         ]
-        year_to_date_df[f"projected_{value_type}"] = (
-            projected_units_ratio * year_to_date_df[f"total_{value_type}"]
+        year_to_date_df[f"projected{suffix}"] = (
+            projected_units_ratio * year_to_date_df[f"total{suffix}"]
         ).astype(int)
 
     return year_to_date_df

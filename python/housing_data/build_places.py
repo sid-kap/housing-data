@@ -4,10 +4,10 @@ from typing import Optional
 import pandas as pd
 from housing_data import place_population
 from housing_data.build_data_utils import (
-    NUMERICAL_COLUMNS,
     PLACE_POPULATION_DIR,
     PUBLIC_DIR,
     DataSource,
+    get_numerical_columns,
     get_state_abbrs,
     load_bps_all_years_plus_monthly,
 )
@@ -188,7 +188,9 @@ def _make_nyc_rows(raw_places_df: pd.DataFrame) -> pd.DataFrame:
     ]
     # TODO might need to add "month" to the groupby?
     nyc_rows = (
-        nyc_df.groupby("year")[NUMERICAL_COLUMNS[DataSource.BPS]].sum().reset_index()
+        nyc_df.groupby("year")[get_numerical_columns(DataSource.BPS)]
+        .sum()
+        .reset_index()
     )
 
     nyc_rows["fips place_code"] = 51000

@@ -14,7 +14,7 @@ from housing_data.build_data_utils import (
 from housing_data.build_metros import load_metros
 from housing_data.build_places import load_places
 from housing_data.build_states import load_states
-from housing_data.california_apr import load_california_apr_data
+from housing_data.california_hcd_data import load_california_hcd_data
 from housing_data.canada_bper import load_canada_bper
 from housing_data.county_population import get_county_population_estimates
 
@@ -47,7 +47,7 @@ def main() -> None:
         california_places_df,
         california_counties_df,
         california_states_df,
-    ) = load_california_apr_data(data_repo_path)
+    ) = load_california_hcd_data(data_repo_path)
 
     # For California rows, add APR columns for units and buildings (not available for value)
     places_df = places_df.merge(
@@ -66,6 +66,8 @@ def main() -> None:
     )
     counties_df["has_ca_hcd_data"] = counties_df["has_ca_hcd_data"].fillna(False)
 
+    metros_df = load_metros(data_repo_path, counties_df)
+
     states_df = states_df.merge(
         california_states_df.assign(has_ca_hcd_data=True).astype(
             {"state_code": "Int64"}
@@ -77,15 +79,13 @@ def main() -> None:
 
     add_per_capita_columns(places_df, [DataSource.BPS, DataSource.CA_HCD])
     add_per_capita_columns(counties_df, [DataSource.BPS, DataSource.CA_HCD])
+    add_per_capita_columns(metros_df, [DataSource.BPS, DataSource.CA_HCD])
     add_per_capita_columns(states_df, [DataSource.BPS, DataSource.CA_HCD])
 
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
     counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")
-    states_df.to_parquet(PUBLIC_DIR / "states_annual.parquet")
-
-    metros_df = load_metros(data_repo_path, counties_df)
-    add_per_capita_columns(metros_df, [DataSource.BPS, DataSource.CA_HCD])
     metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
+    states_df.to_parquet(PUBLIC_DIR / "states_annual.parquet")
 
     (
         canada_places_df,

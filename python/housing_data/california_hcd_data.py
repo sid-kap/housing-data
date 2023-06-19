@@ -14,10 +14,7 @@ from typing import Literal, Optional
 
 import numpy as np
 import pandas as pd
-from housing_data.build_data_utils import (
-    DataSource,
-    add_total_columns,
-)
+from housing_data.build_data_utils import DataSource, add_total_columns
 from housing_data.fips_crosswalk import load_fips_crosswalk
 
 BUILDING_PERMIT_COLUMNS = [
@@ -31,7 +28,7 @@ BUILDING_PERMIT_COLUMNS = [
 ]
 
 
-def load_california_apr_data(
+def load_california_hcd_data(
     data_path: Path,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     df = pd.read_csv(data_path / "data/apr/table-a2-2018-2022.csv.gz")
