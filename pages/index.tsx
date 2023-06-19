@@ -13,6 +13,12 @@ import MultiSelect from "lib/MultiSelect"
 import { makeOptions } from "lib/PlotsTemplate"
 import { Page } from "lib/common_elements"
 import { useFetch } from "lib/queries"
+import {
+  HcdDataInfo,
+  usePerCapitaInput,
+  usePreferHcdDataInput,
+  useUnitsSelect,
+} from "lib/selects"
 import { scoreFnWithPopulation } from "lib/utils"
 
 /**
@@ -124,6 +130,7 @@ function spec(
   width: number,
   height: number,
   perCapita: boolean,
+  preferHcdData: boolean,
   interpolate: boolean,
   grouping: string,
   isWide: boolean
@@ -135,14 +142,21 @@ function spec(
     ? "Units permitted per 1000 residents per year"
     : "Units permitted per year"
 
-  return {
-    width: plotWidth,
-    height: 0.75 * plotWidth,
-    autosize: {
-      type: "fit",
-      contains: "padding",
-    },
-    transform: [
+  const transforms: Transform[] = []
+  if (preferHcdData) {
+    // We don't have value data from APRs, so only do the substitution for buildings and units.
+    for (const type of ["bldgs", "units"]) {
+      for (const suffix of ["", "_per_capita"]) {
+        const prefix = `total_${type}`
+        transforms.push({
+          calculate: `datum['${prefix}_apr${suffix}'] || datum['${prefix}${suffix}'] || 0`,
+          as: `${prefix}${suffix}`,
+        })
+      }
+    }
+  }
+  transforms.push(
+    ...[
       {
         calculate: "1000 * datum['total_units_per_capita']",
         as: "total_units_per_capita_per_1000",
@@ -164,7 +178,17 @@ function spec(
         },
         default: 2022,
       },
-    ],
+    ]
+  )
+
+  return {
+    width: plotWidth,
+    height: 0.75 * plotWidth,
+    autosize: {
+      type: "fit",
+      contains: "padding",
+    },
+    transform: transforms,
     encoding: {
       x: {
         field: "binned_year",
@@ -391,30 +415,12 @@ export default function Home(): JSX.Element {
     () => combineDatas(datas),
     [datas.map((res) => res.status)]
   )
+  console.log(data)
 
-  type Denom = "total" | "per_capita"
+  const { denom, perCapitaInput } = usePerCapitaInput()
+  const perCapita = denom === "per_capita"
 
-  const [denom, setDenom] = useState<Denom>("total")
-  const setTotal = useCallback(() => setDenom("total"), [])
-  const setPerCapita = useCallback(() => setDenom("per_capita"), [])
-
-  const populationInput = (
-    <div>
-      <label className="mr-3">
-        <input type="radio" checked={denom === "total"} onChange={setTotal} />
-        <span className="ml-1">Total units</span>
-      </label>
-
-      <label className="mr-3">
-        <input
-          type="radio"
-          checked={denom === "per_capita"}
-          onChange={setPerCapita}
-        />
-        <span className="ml-1">Units per capita</span>
-      </label>
-    </div>
-  )
+  const { preferHcdData, preferHcdDataInput } = usePreferHcdDataInput()
 
   // const [interpolate, setInterpolate] = useState(false)
   // const interpolateInput = (
@@ -477,6 +483,7 @@ export default function Home(): JSX.Element {
                   width,
                   height,
                   denom === "per_capita",
+                  preferHcdData,
                   false,
                   grouping,
                   isMediumOrWider
@@ -486,8 +493,10 @@ export default function Home(): JSX.Element {
             )}
           </ContainerDimensions>
         </div>
-        {populationInput}
+        {perCapitaInput}
         {groupingInput}
+        {selectedLocations.some((l) => l.has_ca_hcd_data) && preferHcdDataInput}
+        {selectedLocations.some((l) => l.has_ca_hcd_data) && <HcdDataInfo />}
       </div>
     </Page>
   )

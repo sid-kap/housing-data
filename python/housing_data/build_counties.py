@@ -68,7 +68,7 @@ def impute_pre_1990_counties(
 ) -> pd.DataFrame:
     summed_places_df = (
         places_df.groupby(["county_code", "state_code", "year"])[
-            get_numerical_columns(DataSource.BPS)
+            get_numerical_columns(DataSource.BPS, totals=True)
         ]
         .sum()
         .reset_index()
