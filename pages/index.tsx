@@ -144,12 +144,12 @@ function spec(
 
   const transforms: Transform[] = []
   if (preferHcdData) {
-    // We don't have value data from APRs, so only do the substitution for buildings and units.
+    // We don't have value data in the HCD dataset, so only do the substitution for buildings and units.
     for (const type of ["bldgs", "units"]) {
       for (const suffix of ["", "_per_capita"]) {
         const prefix = `total_${type}`
         transforms.push({
-          calculate: `datum['${prefix}_apr${suffix}'] || datum['${prefix}${suffix}'] || 0`,
+          calculate: `datum['${prefix}_hcd{suffix}'] || datum['${prefix}${suffix}'] || 0`,
           as: `${prefix}${suffix}`,
         })
       }

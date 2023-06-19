@@ -20,10 +20,10 @@ export function* fieldsGenerator(
   }
 }
 
-export function* aprFieldsPerCapitaGenerator(): IterableIterator<string> {
+export function* hcdFieldsPerCapitaGenerator(): IterableIterator<string> {
   for (const numUnits of NUM_UNITS) {
     for (const type of ["units", "bldgs"]) {
-      yield `${numUnits}_${type}_apr_per_capita`
+      yield `${numUnits}_${type}_hcd_per_capita`
     }
   }
 }

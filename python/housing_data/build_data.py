@@ -49,7 +49,7 @@ def main() -> None:
         california_states_df,
     ) = load_california_hcd_data(data_repo_path)
 
-    # For California rows, add APR columns for units and buildings (not available for value)
+    # For California rows, add HCD columns for units and buildings (not available for value)
     places_df = places_df.merge(
         california_places_df.assign(has_ca_hcd_data=True),
         on=["place_or_county_code", "state_code", "year"],

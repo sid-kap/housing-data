@@ -64,14 +64,14 @@ export function usePreferHcdDataInput(): {
   preferHcdData: boolean
   preferHcdDataInput: JSX.Element
 } {
-  const [preferAprData, setPreferAprData] = useState<boolean>(true)
+  const [preferHcdData, setPreferHcdData] = useState<boolean>(true)
   const preferHcdDataInput = (
     <div className="mt-2">
       <label className="mr-3">
         <input
           type="checkbox"
-          checked={preferAprData}
-          onChange={() => setPreferAprData(!preferAprData)}
+          checked={preferHcdData}
+          onChange={() => setPreferHcdData(!preferHcdData)}
         />
         <span className="ml-1">Prefer California HCD data for 2018–2022†</span>
       </label>
@@ -79,7 +79,7 @@ export function usePreferHcdDataInput(): {
   )
 
   return {
-    preferHcdData: preferAprData,
+    preferHcdData: preferHcdData,
     preferHcdDataInput: preferHcdDataInput,
   }
 }

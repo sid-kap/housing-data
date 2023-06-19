@@ -30,7 +30,7 @@ SUFFIXES = {
     DataSource.BPS: ["_bldgs", "_units", "_value"],
     # We don't have value data in the CA HCD dataset
     # (In the UI, for value we fallback to BPS data)
-    DataSource.CA_HCD: ["_units_apr", "_bldgs_apr"],
+    DataSource.CA_HCD: ["_units_hcd", "_bldgs_hcd"],
     # We only have units, not bldgs or value for Canada
     DataSource.CANADA: ["_units"],
 }

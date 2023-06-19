@@ -110,7 +110,7 @@ def _aggregate_to_geography(
     ).reset_index()
 
     wide_df.columns = [
-        f"{level_1}_{level_0}_apr" if level_1 else level_0
+        f"{level_1}_{level_0}_hcd" if level_1 else level_0
         for level_0, level_1 in wide_df.columns
     ]
 

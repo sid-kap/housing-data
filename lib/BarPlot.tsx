@@ -7,8 +7,8 @@ import { Transform } from "vega-lite/src/transform"
 
 import {
   NUM_UNITS,
-  aprFieldsPerCapitaGenerator,
   fieldsGenerator,
+  hcdFieldsPerCapitaGenerator,
 } from "lib/plots"
 import { projectedUnitsLabel } from "lib/projections"
 
@@ -133,7 +133,7 @@ function makeTransforms(
   if (perThousand) {
     const baseFields = Array.from(
       fieldsGenerator([units], ["_per_capita"])
-    ).concat(Array.from(aprFieldsPerCapitaGenerator()))
+    ).concat(Array.from(hcdFieldsPerCapitaGenerator()))
     const perThousandTransforms: Transform[] = baseFields.map((field) => {
       return {
         calculate: `1000 * datum['${field}']`,
@@ -145,21 +145,21 @@ function makeTransforms(
   }
 
   if (preferHcdData) {
-    const aprTransforms: Transform[] = []
+    const hcdTransforms: Transform[] = []
     for (const numUnits of NUM_UNITS) {
-      // We don't have value data from APRs, so only do the substitution for buildings and units.
+      // We don't have value data in the HCD dataset, so only do the substitution for buildings and units.
       for (const type of ["bldgs", "units"]) {
         for (const suffix of ["", "_per_capita", "_per_capita_per_1000"]) {
           const prefix = `${numUnits}_${type}`
-          aprTransforms.push({
-            calculate: `datum['${prefix}_apr${suffix}'] || datum['${prefix}${suffix}'] || 0`,
+          hcdTransforms.push({
+            calculate: `datum['${prefix}_hcd{suffix}'] || datum['${prefix}${suffix}'] || 0`,
             as: `${prefix}${suffix}`,
           })
         }
       }
     }
 
-    transforms.push(...aprTransforms)
+    transforms.push(...hcdTransforms)
   } else {
     // This is a hack, should make this better.
     // The problem is that if a field is null, it messes up the plot and causes projected
