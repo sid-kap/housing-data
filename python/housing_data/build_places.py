@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 import pandas as pd
 from housing_data import place_population
@@ -218,7 +218,7 @@ def add_alt_names(raw_places_df: pd.DataFrame) -> None:
 
 def get_place_name_spellings(
     df: pd.DataFrame,
-) -> Dict[Tuple[str, Optional[str], int], str]:
+) -> dict[tuple[str, Optional[str], int], str]:
     """
     :param df: A DataFrame with columns place_name, place_type, and state_code.
 
@@ -284,7 +284,7 @@ def get_name_spelling(places_df: pd.DataFrame) -> pd.Series:
 
 def load_places(
     data_repo_path: Optional[Path], counties_population_df: pd.DataFrame = None
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     raw_places_df = pd.concat(
         [
             load_bps_all_years_plus_monthly(data_repo_path, "place", region=region)
