@@ -42,7 +42,6 @@ export default function PlotsTemplate({
   jsonRoot: string
   countyList?: JSX.Element
 }): JSX.Element {
-  console.log(selected)
   const { data } = useFetch(
     selected != null ? jsonRoot + selected.value + ".json" : null
   )

@@ -416,7 +416,6 @@ export default function Home(): JSX.Element {
     () => combineDatas(datas),
     [datas.map((res) => res.status)]
   )
-  console.log(data)
 
   const { denom, perCapitaInput } = usePerCapitaInput()
   const perCapita = denom === "per_capita"
