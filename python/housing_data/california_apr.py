@@ -10,7 +10,7 @@ a greater incentive to report this data correctly.
 """
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal, Optional, Tuple
+from typing import Literal, Optional
 
 import numpy as np
 import pandas as pd
@@ -30,7 +30,7 @@ BUILDING_PERMIT_COLUMNS = [
 
 def load_california_apr_data(
     data_path: Optional[str],
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     df = pd.read_csv(data_path / "data/apr/table-a2-2018-2022.csv.gz")
 
     # BPS doesn't include mobile homes, so we shouldn't include them here either

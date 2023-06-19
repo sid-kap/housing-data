@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Dict
 
 import pandas as pd
 from housing_data.build_data_utils import NUMERICAL_COLUMNS
@@ -94,21 +93,19 @@ def combine_metro_rows(
     return combined_df
 
 
-def get_aggregate_functions() -> Dict[str, pd.NamedAgg]:
-    aggregate_functions = {
+def get_aggregate_functions() -> dict[str, pd.NamedAgg]:
+    return {
         col: pd.NamedAgg(column=col, aggfunc="sum") for col in NUMERICAL_COLUMNS
+    } | {
+        "county_names": pd.NamedAgg(
+            column="name", aggfunc=lambda counties: counties.tolist()
+        ),
+        "population": pd.NamedAgg(column="population", aggfunc="sum"),
+        # So that we can check if all the counties in a metro were observed in that year
+        "num_observed_counties": pd.NamedAgg(column="name", aggfunc="count"),
+        # If any county has CA HCD data, then the combined metro has CA HCD data
+        "has_ca_hcd_data": pd.NamedAgg(column="has_ca_hcd_data", aggfunc="max"),
     }
-    aggregate_functions["county_names"] = pd.NamedAgg(
-        column="name", aggfunc=lambda counties: counties.tolist()
-    )
-    aggregate_functions["population"] = pd.NamedAgg(column="population", aggfunc="sum")
-
-    # So that we can check if all the counties in a metro were observed in that year
-    aggregate_functions["num_observed_counties"] = pd.NamedAgg(
-        column="name", aggfunc="count"
-    )
-
-    return aggregate_functions
 
 
 def load_metros(data_repo_path: Path, counties_df: pd.DataFrame) -> pd.DataFrame:

@@ -1,6 +1,6 @@
 from io import StringIO
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import pandas as pd
 import us
@@ -9,7 +9,7 @@ from housing_data.data_loading_helpers import get_path, get_url_text
 from housing_data.fips_crosswalk import load_fips_crosswalk
 
 
-def _melt_df(df: pd.DataFrame, years: List[int]) -> pd.DataFrame:
+def _melt_df(df: pd.DataFrame, years: list[int]) -> pd.DataFrame:
     rename_cols = {"STATE": "state_code", "COUNTY": "county_code"} | {
         "POPESTIMATE" + str(year): str(year) for year in years
     }

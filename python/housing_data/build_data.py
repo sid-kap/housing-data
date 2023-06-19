@@ -7,7 +7,7 @@ from housing_data.build_data_utils import (
     COUNTY_POPULATION_DIR,
     PUBLIC_DIR,
     add_per_capita_columns,
-    write_list_to_json,
+    write_list_json,
     write_to_json_directory,
 )
 from housing_data.build_metros import load_metros
@@ -52,22 +52,29 @@ def main() -> None:
 
     # For California rows, add APR columns for units and buildings (not available for value)
     places_df = places_df.merge(
-        california_places_df,
+        california_places_df.assign(has_ca_hcd_data=True),
         on=["place_or_county_code", "state_code", "year"],
         how="left",
     )
+    places_df["has_ca_hcd_data"] = places_df["has_ca_hcd_data"].fillna(False)
+
     counties_df = counties_df.merge(
-        california_counties_df.assign(state_code=6).astype(
+        california_counties_df.assign(state_code=6, has_ca_hcd_data=True).astype(
             {"county_code": "Int64", "state_code": "Int64"}
         ),
         on=["county_code", "state_code", "year"],
         how="left",
     )
+    counties_df["has_ca_hcd_data"] = counties_df["has_ca_hcd_data"].fillna(False)
+
     states_df = states_df.merge(
-        california_states_df.astype({"state_code": "Int64"}),
+        california_states_df.assign(has_ca_hcd_data=True).astype(
+            {"state_code": "Int64"}
+        ),
         on=["state_code", "year"],
         how="left",
     )
+    states_df["has_ca_hcd_data"] = states_df["has_ca_hcd_data"].fillna(False)
 
     add_per_capita_columns(places_df)
     add_per_capita_columns(counties_df)
@@ -103,7 +110,7 @@ def generate_json(
     states_df: pd.DataFrame,
 ) -> None:
     # Places
-    write_list_to_json(
+    write_list_json(
         places_df,
         PUBLIC_DIR / "places_list.json",
         add_latest_population_column=True,
@@ -111,7 +118,7 @@ def generate_json(
     write_to_json_directory(places_df, PUBLIC_DIR / "places_data")
 
     # Metros
-    write_list_to_json(
+    write_list_json(
         metros_df,
         PUBLIC_DIR / "metros_list.json",
         add_latest_population_column=True,
@@ -123,7 +130,7 @@ def generate_json(
     )
 
     # Counties
-    write_list_to_json(
+    write_list_json(
         counties_df.drop(columns=["state_code"]).rename(
             columns={"fips_state": "state_code"}
         ),
@@ -133,7 +140,7 @@ def generate_json(
     write_to_json_directory(counties_df, PUBLIC_DIR / "counties_data")
 
     # States
-    write_list_to_json(
+    write_list_json(
         states_df,
         PUBLIC_DIR / "states_list.json",
         add_latest_population_column=True,

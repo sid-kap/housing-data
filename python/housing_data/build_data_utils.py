@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import List, Literal, Optional, Tuple
+from typing import Literal, Optional
 
 import pandas as pd
 import us
@@ -31,8 +31,8 @@ OPTIONAL_PREFIXES = ("adu",)
 
 Suffix = Literal["_bldgs", "_units", "_value", "_bldgs_apr", "_units_apr"]
 
-SUFFIXES: Tuple[Suffix, ...] = ("_bldgs", "_units", "_value")
-OPTIONAL_SUFFIXES: Tuple[Suffix, ...] = ("_bldgs_apr", "_units_apr")
+SUFFIXES: tuple[Suffix, ...] = ("_bldgs", "_units", "_value")
+OPTIONAL_SUFFIXES: tuple[Suffix, ...] = ("_bldgs_apr", "_units_apr")
 
 BPS_NUMERICAL_COLUMNS = [prefix + suffix for prefix in PREFIXES for suffix in SUFFIXES]
 
@@ -84,21 +84,25 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
         )
 
 
-DEFAULT_COLUMNS = ["name", "path_1", "path_2", "alt_name"]
+# Columns to write to the "{geography}_list.json" file
+LIST_COLUMNS = ["name", "path_1", "path_2", "alt_name", "has_ca_hcd_data"]
 
 
-def write_list_to_json(
+def write_list_json(
     df: pd.DataFrame,
     output_path: Path,
     add_latest_population_column: bool = False,
-    unhashable_columns: Optional[List[str]] = None,
-    extra_columns: Optional[List[str]] = None,
+    unhashable_columns: Optional[list[str]] = None,
+    extra_columns: Optional[list[str]] = None,
 ) -> None:
     """
+    Writes the /public/{geography}_list.json file, which is a list of places
+    at that level. This is used by the select search.
+
     :param unhashable_columns: Columns to not include in calls to drop_duplicates, merge, etc. because
         they would cause "[type] is not hashable" errors.
     """
-    columns = DEFAULT_COLUMNS + (extra_columns or [])
+    columns = LIST_COLUMNS + (extra_columns or [])
     hashable_columns = list(set(columns) - set(unhashable_columns or []))
     subset_df = df[columns].copy().drop_duplicates(subset=hashable_columns)
 
