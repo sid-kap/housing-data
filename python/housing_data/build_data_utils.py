@@ -176,6 +176,7 @@ def load_bps_all_years_plus_monthly(
             region=region,
             data_path=data_path,
         ).assign(year=str(year), month=None)
+        add_total_columns(data)
         dfs.append(data)
 
     if not LAST_YEAR_ANNUAL_DATA_RELEASED:
@@ -188,6 +189,7 @@ def load_bps_all_years_plus_monthly(
             region=region,
             data_path=data_path,
         ).assign(year=str(last_full_year + 1))
+        add_total_columns(last_year_data)
         dfs.append(last_year_data)
 
     current_year_data = bps.load_data(
@@ -198,6 +200,7 @@ def load_bps_all_years_plus_monthly(
         region=region,
         data_path=data_path,
     ).assign(year=str(LATEST_MONTH[0]), month=LATEST_MONTH[1])
+    add_total_columns(current_year_data)
 
     if extrapolate_rest_of_year:
         current_year_data = add_current_year_projections(current_year_data)
@@ -205,6 +208,13 @@ def load_bps_all_years_plus_monthly(
     dfs.append(current_year_data)
 
     return pd.concat(dfs)
+
+
+def add_total_columns(df: pd.DataFrame) -> None:
+    for suffix in SUFFIXES:
+        df[f"total{suffix}"] = df[[prefix + suffix for prefix in BASE_PREFIXES]].sum(
+            axis=1
+        )
 
 
 def add_current_year_projections(year_to_date_df: pd.DataFrame) -> pd.DataFrame:
