@@ -96,15 +96,20 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
         sub_path.mkdir(exist_ok=True)
 
         # Don't bloat non-California JSON files with columns that are all null
-        ca_only_columns = [
+        ca_only_columns = {
             col
-            # doesn't matter if we pass projected=True here, since projected columns
-            # aren't present in CA HCD data. But just passing for consistency.
-            for col in get_numerical_columns(
-                DataSource.CA_HCD, totals=True, projected=True, per_capitas=True
-            )
-            if group[col].isnull().all()
-        ]
+            for col, is_all_null in group[
+                # doesn't matter if we pass projected=True here, since projected columns
+                # aren't present in CA HCD data. But just passing for consistency.
+                get_numerical_columns(
+                    DataSource.CA_HCD, totals=True, projected=True, per_capitas=True
+                )
+            ]
+            .isnull()
+            .all()
+            .items()
+            if is_all_null
+        }
         if ca_only_columns:
             group = group.drop(columns=ca_only_columns)
 
@@ -114,13 +119,14 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
 
 
 # Columns to write to the "{geography}_list.json" file
-LIST_COLUMNS = ["name", "path_1", "path_2", "alt_name", "has_ca_hcd_data"]
+# Note: we also add "has_ca_hcd_data", but that requires a more complex aggregation (see below)
+# because it has different values for different years.
+LIST_COLUMNS = ["name", "path_1", "path_2", "alt_name"]
 
 
 def write_list_json(
     df: pd.DataFrame,
     output_path: Path,
-    add_latest_population_column: bool = False,
     unhashable_columns: Optional[list[str]] = None,
     extra_columns: Optional[list[str]] = None,
 ) -> None:
@@ -139,13 +145,22 @@ def write_list_json(
     # and the URL path (https://housingdata.app/places/{path})
     subset_df["path"] = (subset_df["path_1"] + "/").fillna("") + subset_df["path_2"]
 
-    if add_latest_population_column:
-        latest_populations = df[df["year"] == "2020"][
-            hashable_columns + ["population"]
-        ].drop_duplicates()
-        subset_df = subset_df.merge(latest_populations, on=hashable_columns, how="left")
-        subset_df["population"] = subset_df["population"].fillna(0).astype(int)
-        subset_df = subset_df.sort_values("name", ascending=False)
+    # Add the "population" column
+    latest_populations = (
+        df[hashable_columns + ["year", "population"]]
+        .sort_values("year")
+        .drop_duplicates(subset=hashable_columns, keep="last")
+    )
+    latest_populations["population"] = (
+        latest_populations["population"].fillna(0).astype(int)
+    )
+    subset_df = subset_df.merge(latest_populations, on=hashable_columns, how="left")
+
+    # Add a column indicating whether the place has CA HCD data
+    has_ca_hcd_data = (
+        df.groupby(hashable_columns)["has_ca_hcd_data"].any().reset_index()
+    )
+    subset_df = subset_df.merge(has_ca_hcd_data, on=hashable_columns, how="left")
 
     subset_df = subset_df.sort_values(hashable_columns)
     subset_df = subset_df.drop(columns=["path_1", "path_2"])

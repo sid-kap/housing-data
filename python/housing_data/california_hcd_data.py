@@ -116,10 +116,6 @@ def _aggregate_to_geography(
 
     add_total_columns(wide_df, DataSource.CA_HCD)
 
-    # APR data has only past (completed) years, so no projections in those years
-    wide_df["projected_units_apr"] = 0
-    wide_df["projected_bldgs_apr"] = 0
-
     if level == "place":
         # Confirm that we can drop county because in California, a city can't span multiple counties
         assert (wide_df[["JURS_NAME", "year"]].value_counts() == 1).all()
