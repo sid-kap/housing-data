@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Dict, Tuple
 
 import pandas as pd
 
@@ -70,7 +69,7 @@ CD_TYPES = {
 
 def get_place_name_spellings(
     df: pd.DataFrame,
-) -> Dict[Tuple[str, str, str], str]:
+) -> dict[tuple[str, str, str], str]:
     """
     :param df: A DataFrame with columns place_name, type, and province.
 

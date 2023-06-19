@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import List, Literal, Optional, Tuple, get_args
+from typing import Literal, Optional, get_args
 
 import pandas as pd
 import us
@@ -22,9 +22,9 @@ Prefix = Literal[
     "total",
     "projected",
 ]
-PREFIXES: Tuple[Prefix, ...] = tuple(get_args(Prefix))
+PREFIXES: tuple[Prefix, ...] = tuple(get_args(Prefix))
 Suffix = Literal["_bldgs", "_units", "_value"]
-SUFFIXES: Tuple[Suffix, ...] = tuple(get_args(Suffix))
+SUFFIXES: tuple[Suffix, ...] = tuple(get_args(Suffix))
 
 NUMERICAL_COLUMNS = [prefix + suffix for prefix in PREFIXES for suffix in SUFFIXES]
 
@@ -67,8 +67,8 @@ def write_list_to_json(
     df: pd.DataFrame,
     output_path: Path,
     add_latest_population_column: bool = False,
-    unhashable_columns: Optional[List[str]] = None,
-    extra_columns: Optional[List[str]] = None,
+    unhashable_columns: Optional[list[str]] = None,
+    extra_columns: Optional[list[str]] = None,
 ) -> None:
     """
     :param unhashable_columns: Columns to not include in calls to drop_duplicates, merge, etc. because
@@ -97,8 +97,8 @@ def write_list_to_json(
 
 def add_per_capita_columns(
     df: pd.DataFrame,
-    prefixes: Tuple[Prefix, ...] = PREFIXES,
-    suffixes: Tuple[Suffix, ...] = SUFFIXES,
+    prefixes: tuple[Prefix, ...] = PREFIXES,
+    suffixes: tuple[Suffix, ...] = SUFFIXES,
 ) -> None:
     # There are three cities (Sitka, Weeki Wachee, and Carlton Landing) that had population 0 in some years
     population = df["population"].where(df["population"] != 0, 1)

@@ -1,6 +1,6 @@
 from io import StringIO
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import pandas as pd
 import us
@@ -71,7 +71,7 @@ STATE_TO_REGION = {
 }
 
 
-def _line_to_cols(row: str) -> List[str]:
+def _line_to_cols(row: str) -> list[str]:
     return [s.strip() for s in row.split()]
 
 
@@ -202,7 +202,7 @@ def get_state_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
     return df.melt(id_vars="state", var_name="year", value_name="population")
 
 
-def _melt_df(df: pd.DataFrame, years: List[int]) -> pd.DataFrame:
+def _melt_df(df: pd.DataFrame, years: list[int]) -> pd.DataFrame:
     return (
         df[["NAME"] + [f"POPESTIMATE{year}" for year in years]]
         .rename(columns={f"POPESTIMATE{year}": str(year) for year in years})
