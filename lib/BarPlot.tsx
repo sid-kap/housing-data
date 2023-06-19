@@ -152,7 +152,7 @@ function makeTransforms(
         for (const suffix of ["", "_per_capita", "_per_capita_per_1000"]) {
           const prefix = `${numUnits}_${type}`
           hcdTransforms.push({
-            calculate: `datum['${prefix}_hcd{suffix}'] || datum['${prefix}${suffix}'] || 0`,
+            calculate: `datum['${prefix}_hcd${suffix}'] || datum['${prefix}${suffix}'] || 0`,
             as: `${prefix}${suffix}`,
           })
         }
