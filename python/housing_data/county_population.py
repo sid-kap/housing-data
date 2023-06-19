@@ -44,9 +44,7 @@ def get_county_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
     return _melt_df(df, list(range(2010, 2020)))
 
 
-def get_county_populations_2000s(
-    data_path: Optional[Path], data_repo_path: Optional[Path]
-) -> pd.DataFrame:
+def get_county_populations_2000s(data_path: Path, data_repo_path: Path) -> pd.DataFrame:
     urls = [
         (
             state.fips,
@@ -118,7 +116,7 @@ def get_county_populations_2000s(
     return df
 
 
-def get_county_fips_crosswalk(data_repo_path: Optional[Path]) -> pd.DataFrame:
+def get_county_fips_crosswalk(data_repo_path: Path) -> pd.DataFrame:
     df = load_fips_crosswalk(data_repo_path)
     df = df[df["County Code (FIPS)"] != 0]
 
@@ -230,7 +228,7 @@ def get_county_populations_1980s(data_path: Optional[Path]) -> pd.DataFrame:
 
 
 def get_county_population_estimates(
-    data_path: Optional[Path], data_repo_path: Optional[Path]
+    data_path: Path, data_repo_path: Path
 ) -> pd.DataFrame:
     print("Loading 1980 populations...")
     df_1980s = get_county_populations_1980s(data_path)

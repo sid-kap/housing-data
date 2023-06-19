@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
-from housing_data.build_data_utils import NUMERICAL_COLUMNS
+from housing_data.build_data_utils import NUMERICAL_COLUMNS, DataSource
 
 
 def load_crosswalk_df(data_repo_path: Path) -> pd.DataFrame:
@@ -95,7 +95,10 @@ def combine_metro_rows(
 
 def get_aggregate_functions() -> dict[str, pd.NamedAgg]:
     return {
-        col: pd.NamedAgg(column=col, aggfunc="sum") for col in NUMERICAL_COLUMNS
+        col: pd.NamedAgg(column=col, aggfunc="sum")
+        for col in set(
+            NUMERICAL_COLUMNS[DataSource.BPS] + NUMERICAL_COLUMNS[DataSource.CA_HCD]
+        )
     } | {
         "county_names": pd.NamedAgg(
             column="name", aggfunc=lambda counties: counties.tolist()

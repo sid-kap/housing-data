@@ -6,6 +6,7 @@ from housing_data.build_counties import load_counties
 from housing_data.build_data_utils import (
     COUNTY_POPULATION_DIR,
     PUBLIC_DIR,
+    DataSource,
     add_per_capita_columns,
     write_list_json,
     write_to_json_directory,
@@ -26,7 +27,7 @@ def main() -> None:
     )
     args = parser.parse_args()
     print("Args:", args)
-    data_repo_path = Path(args.data_repo_path)
+    data_repo_path: Path = Path(args.data_repo_path)
 
     # Make sure the public/ directory exists
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
@@ -35,10 +36,8 @@ def main() -> None:
 
     print("Loading county population data...")
     county_population_df = get_county_population_estimates(
-        data_path=data_repo_path / COUNTY_POPULATION_DIR
-        if args.data_repo_path
-        else None,
-        data_repo_path=data_repo_path if args.data_repo_path else None,
+        data_path=data_repo_path / COUNTY_POPULATION_DIR,
+        data_repo_path=data_repo_path,
     )
 
     raw_places_df, places_df = load_places(data_repo_path, county_population_df)
@@ -76,16 +75,16 @@ def main() -> None:
     )
     states_df["has_ca_hcd_data"] = states_df["has_ca_hcd_data"].fillna(False)
 
-    add_per_capita_columns(places_df)
-    add_per_capita_columns(counties_df)
-    add_per_capita_columns(states_df)
+    add_per_capita_columns(places_df, [DataSource.BPS, DataSource.CA_HCD])
+    add_per_capita_columns(counties_df, [DataSource.BPS, DataSource.CA_HCD])
+    add_per_capita_columns(states_df, [DataSource.BPS, DataSource.CA_HCD])
 
     places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
     counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")
     states_df.to_parquet(PUBLIC_DIR / "states_annual.parquet")
 
     metros_df = load_metros(data_repo_path, counties_df)
-    add_per_capita_columns(metros_df)
+    add_per_capita_columns(metros_df, [DataSource.BPS, DataSource.CA_HCD])
     metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
 
     (

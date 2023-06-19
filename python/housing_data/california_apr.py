@@ -14,7 +14,10 @@ from typing import Literal, Optional
 
 import numpy as np
 import pandas as pd
-from housing_data.build_data_utils import BASE_PREFIXES, OPTIONAL_PREFIXES
+from housing_data.build_data_utils import (
+    DataSource,
+    add_total_columns,
+)
 from housing_data.fips_crosswalk import load_fips_crosswalk
 
 BUILDING_PERMIT_COLUMNS = [
@@ -29,7 +32,7 @@ BUILDING_PERMIT_COLUMNS = [
 
 
 def load_california_apr_data(
-    data_path: Optional[str],
+    data_path: Path,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     df = pd.read_csv(data_path / "data/apr/table-a2-2018-2022.csv.gz")
 
@@ -114,12 +117,7 @@ def _aggregate_to_geography(
         for level_0, level_1 in wide_df.columns
     ]
 
-    wide_df["total_units_apr"] = wide_df[
-        [prefix + "_units_apr" for prefix in BASE_PREFIXES + OPTIONAL_PREFIXES]
-    ].sum(axis="columns")
-    wide_df["total_bldgs_apr"] = wide_df[
-        [prefix + "_bldgs_apr" for prefix in BASE_PREFIXES + OPTIONAL_PREFIXES]
-    ].sum(axis="columns")
+    add_total_columns(wide_df, DataSource.CA_HCD)
 
     # APR data has only past (completed) years, so no projections in those years
     wide_df["projected_units_apr"] = 0
@@ -153,7 +151,7 @@ def _aggregate_to_geography(
 
 
 @lru_cache
-def _load_fips_crosswalk(data_path: Optional[Path]) -> pd.DataFrame:
+def _load_fips_crosswalk(data_path: Path) -> pd.DataFrame:
     crosswalk_df = load_fips_crosswalk(data_path)
     crosswalk_df = crosswalk_df[
         (crosswalk_df["State Code (FIPS)"] == 6)  # California rows

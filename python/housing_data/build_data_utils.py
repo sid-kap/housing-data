@@ -1,44 +1,45 @@
 import shutil
+from enum import Enum, auto
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Optional
 
 import pandas as pd
 import us
 from housing_data import building_permits_survey as bps
 from tqdm import tqdm
 
-UNITS_COLUMNS = [
-    "1_unit_units",
-    "2_units_units",
-    "3_to_4_units_units",
-    "5_plus_units_units",
-]
+_COMMON_PREFIXES = ["1_unit", "2_units", "3_to_4_units", "5_plus_units"]
+_DERIVED_PREFIXES = ["total", "projected"]
 
-Prefix = Literal[
-    "1_unit",
-    "2_units",
-    "3_to_4_units",
-    "5_plus_units",
-    "total",
-    "projected",
-    "adu",
-]
+_BPS_SUFFIXES = ["_bldgs", "_units", "_value"]
 
-# TODO use "CA_APR" or something instead of "OPTIONAL"
-BASE_PREFIXES = ("1_unit", "2_units", "3_to_4_units", "5_plus_units")
-PREFIXES = ("1_unit", "2_units", "3_to_4_units", "5_plus_units", "total", "projected")
-OPTIONAL_PREFIXES = ("adu",)
+# We don't have value data in the CA HCD dataset
+# (In the UI, for value we fallback to BPS data)
+_CA_HCD_SUFFIXES = ["_units_apr", "_bldgs_apr"]
 
-Suffix = Literal["_bldgs", "_units", "_value", "_bldgs_apr", "_units_apr"]
 
-SUFFIXES: tuple[Suffix, ...] = ("_bldgs", "_units", "_value")
-OPTIONAL_SUFFIXES: tuple[Suffix, ...] = ("_bldgs_apr", "_units_apr")
+class DataSource(Enum):
+    BPS = auto()
+    CA_HCD = auto()
+    CANADA = auto()
 
-BPS_NUMERICAL_COLUMNS = [prefix + suffix for prefix in PREFIXES for suffix in SUFFIXES]
 
-NUMERICAL_COLUMNS = [
-    prefix + suffix for prefix in PREFIXES for suffix in SUFFIXES + OPTIONAL_SUFFIXES
-] + [prefix + suffix for prefix in OPTIONAL_PREFIXES for suffix in OPTIONAL_SUFFIXES]
+NUMERICAL_COLUMNS = {
+    DataSource.BPS: [
+        prefix + suffix for prefix in _COMMON_PREFIXES for suffix in _BPS_SUFFIXES
+    ],
+    DataSource.CA_HCD: [
+        prefix + suffix
+        # We have ADU data only in the CA HCD dataset
+        for prefix in _COMMON_PREFIXES + ["adu"]
+        for suffix in _CA_HCD_SUFFIXES
+    ],
+    DataSource.CANADA: [
+        # We only have units, not bldgs or value for Canada
+        prefix + "_units"
+        for prefix in _COMMON_PREFIXES
+    ],
+}
 
 PUBLIC_DIR = Path("../public")
 
@@ -68,16 +69,15 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
         sub_path = path / json_dir if not pd.isnull(json_dir) else path
         sub_path.mkdir(exist_ok=True)
 
-        # Don't bloat non-California JSON files with null "*_apr" columns
-        empty_cols = [
-            prefix + suffix + suffix_2
-            for prefix in PREFIXES + OPTIONAL_PREFIXES
-            for suffix in OPTIONAL_SUFFIXES
-            for suffix_2 in ["", "_per_capita"]
-            if group[prefix + suffix + suffix_2].isnull().all()
+        # Don't bloat non-California JSON files with columns that are all null
+        ca_only_columns = [
+            col + per_capita_suffix
+            for col in NUMERICAL_COLUMNS[DataSource.CA_HCD]
+            for per_capita_suffix in ["", "_per_capita"]
+            if group[col + per_capita_suffix].isnull().all()
         ]
-        if empty_cols:
-            group = group.drop(columns=empty_cols)
+        if ca_only_columns:
+            group = group.drop(columns=ca_only_columns)
 
         group.reset_index(drop=True).to_json(
             sub_path / f"{json_name}.json", orient="records"
@@ -123,20 +123,14 @@ def write_list_json(
     subset_df.to_json(output_path, orient="records")
 
 
-def add_per_capita_columns(df: pd.DataFrame) -> None:
+def add_per_capita_columns(df: pd.DataFrame, data_sources: list[DataSource]) -> None:
     # There are three cities (Sitka, Weeki Wachee, and Carlton Landing) that had population 0 in some years
     population = df["population"].where(df["population"] != 0, 1)
 
-    prefixes_and_suffixes = [
-        (prefix, suffix)
-        for prefix in PREFIXES
-        for suffix in SUFFIXES + OPTIONAL_SUFFIXES
-    ] + [
-        (prefix, suffix) for prefix in OPTIONAL_PREFIXES for suffix in OPTIONAL_SUFFIXES
-    ]
-
-    for prefix, suffix in prefixes_and_suffixes:
-        df[prefix + suffix + "_per_capita"] = df[prefix + suffix] / population
+    for col in {
+        col for data_source in data_sources for col in NUMERICAL_COLUMNS[data_source]
+    }:
+        df[col + "_per_capita"] = df[col] / population
 
 
 def get_state_abbrs(state_codes: pd.Series) -> pd.Series:
@@ -180,7 +174,7 @@ def load_bps_all_years_plus_monthly(
             region=region,
             data_path=data_path,
         ).assign(year=str(year), month=None)
-        add_total_columns(data)
+        add_total_columns(data, DataSource.BPS)
         dfs.append(data)
 
     if not LAST_YEAR_ANNUAL_DATA_RELEASED:
@@ -193,7 +187,7 @@ def load_bps_all_years_plus_monthly(
             region=region,
             data_path=data_path,
         ).assign(year=str(last_full_year + 1))
-        add_total_columns(last_year_data)
+        add_total_columns(last_year_data, DataSource.BPS)
         dfs.append(last_year_data)
 
     current_year_data = bps.load_data(
@@ -204,7 +198,7 @@ def load_bps_all_years_plus_monthly(
         region=region,
         data_path=data_path,
     ).assign(year=str(LATEST_MONTH[0]), month=LATEST_MONTH[1])
-    add_total_columns(current_year_data)
+    add_total_columns(current_year_data, DataSource.BPS)
 
     if extrapolate_rest_of_year:
         current_year_data = add_current_year_projections(current_year_data)
@@ -214,11 +208,11 @@ def load_bps_all_years_plus_monthly(
     return pd.concat(dfs)
 
 
-def add_total_columns(df: pd.DataFrame) -> None:
-    for suffix in SUFFIXES:
-        df[f"total{suffix}"] = df[[prefix + suffix for prefix in BASE_PREFIXES]].sum(
-            axis=1
-        )
+def add_total_columns(df: pd.DataFrame, data_source: DataSource) -> None:
+    # TODO - are totals available for Canada?
+    for suffix in _BPS_SUFFIXES:
+        cols = [col for col in NUMERICAL_COLUMNS[data_source] if col.endswith(suffix)]
+        df[f"total{suffix}"] = df[cols].sum(axis=1)
 
 
 def add_current_year_projections(year_to_date_df: pd.DataFrame) -> pd.DataFrame:

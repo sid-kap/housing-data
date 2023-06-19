@@ -4,10 +4,7 @@ import pandas as pd
 from housing_data.build_data_utils import (
     CANADA_BPER_DIR,
     CANADA_CROSSWALK_DIR,
-    OPTIONAL_PREFIXES,
-    OPTIONAL_SUFFIXES,
-    PREFIXES,
-    SUFFIXES,
+    DataSource,
     add_per_capita_columns,
 )
 from housing_data.canada_crosswalk import load_crosswalk
@@ -102,22 +99,6 @@ def load_canada_bper(data_repo_path: Path) -> pd.DataFrame:
     return places_df, counties_df, metros_df, states_df
 
 
-def _add_per_capita_columns(df: pd.DataFrame) -> None:
-    for prefix in PREFIXES:
-        for suffix in set(SUFFIXES + OPTIONAL_SUFFIXES) - {"units"}:
-            # We don't have bldgs or value for Canada
-            df[prefix + suffix] = 0
-            df[prefix + suffix] = 0
-
-    for prefix in OPTIONAL_PREFIXES:
-        for suffix in OPTIONAL_SUFFIXES:
-            # We don't have any California-specific columns
-            df[prefix + suffix] = 0
-            df[prefix + suffix] = 0
-
-    add_per_capita_columns(df)
-
-
 def load_raw_bper(data_repo_path: Path) -> pd.DataFrame:
     file_path = data_repo_path / CANADA_BPER_DIR / "Case1091138_revised.xlsx"
 
@@ -197,14 +178,14 @@ def load_places(df: pd.DataFrame) -> pd.DataFrame:
     df["year"] = df["year"].astype(str)
     df = df.drop(columns=["province"])
 
-    _add_per_capita_columns(df)
+    add_per_capita_columns(df, [DataSource.CANADA])
     _add_alt_names(df)
     return df
 
 
 def aggregate_to_counties(df: pd.DataFrame) -> pd.DataFrame:
     df = df.groupby(["census_division", "year", "province_abbr"], as_index=False).sum()
-    _add_per_capita_columns(df)
+    add_per_capita_columns(df, [DataSource.CANADA])
 
     df["path_1"] = df["province_abbr"]
     df["path_2"] = df["census_division"].str.replace(r"[ /\-\.]+", "_", regex=True)
@@ -221,7 +202,7 @@ def aggregate_to_metros(df: pd.DataFrame) -> pd.DataFrame:
         .groupby(["metro", "year", "metro_province_abbr"], as_index=False)
         .sum()
     )
-    _add_per_capita_columns(df)
+    add_per_capita_columns(df, [DataSource.CANADA])
 
     metro = df["metro"].str.replace(" - ", "–")
     df["path_1"] = None
@@ -247,7 +228,7 @@ def aggregate_to_states(df: pd.DataFrame) -> pd.DataFrame:
         .groupby(["province", "year"], as_index=False)
         .sum()
     )
-    _add_per_capita_columns(df)
+    add_per_capita_columns(df, [DataSource.CANADA])
 
     df["path_1"] = None
     df["path_2"] = df["province"].str.replace(" ", "_")

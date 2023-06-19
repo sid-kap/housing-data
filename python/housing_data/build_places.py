@@ -4,12 +4,14 @@ from typing import Optional
 import pandas as pd
 from housing_data import place_population
 from housing_data.build_data_utils import (
-    BPS_NUMERICAL_COLUMNS,
+    NUMERICAL_COLUMNS,
     PLACE_POPULATION_DIR,
     PUBLIC_DIR,
+    DataSource,
     get_state_abbrs,
     load_bps_all_years_plus_monthly,
 )
+from housing_data.building_permits_survey import REGIONS
 
 
 def make_bps_fips_mapping(
@@ -185,7 +187,9 @@ def _make_nyc_rows(raw_places_df: pd.DataFrame) -> pd.DataFrame:
         & (raw_places_df["state_code"] == 36)
     ]
     # TODO might need to add "month" to the groupby?
-    nyc_rows = nyc_df.groupby("year")[BPS_NUMERICAL_COLUMNS].sum().reset_index()
+    nyc_rows = (
+        nyc_df.groupby("year")[NUMERICAL_COLUMNS[DataSource.BPS]].sum().reset_index()
+    )
 
     nyc_rows["fips place_code"] = 51000
     nyc_rows["state_code"] = 36
@@ -288,7 +292,7 @@ def load_places(
     raw_places_df = pd.concat(
         [
             load_bps_all_years_plus_monthly(data_repo_path, "place", region=region)
-            for region in ["west", "midwest", "south", "northeast"]
+            for region in REGIONS
         ]
     )
 

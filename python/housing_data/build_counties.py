@@ -3,7 +3,8 @@ from typing import Optional
 
 import pandas as pd
 from housing_data.build_data_utils import (
-    BPS_NUMERICAL_COLUMNS,
+    NUMERICAL_COLUMNS,
+    DataSource,
     get_state_abbrs,
     load_bps_all_years_plus_monthly,
 )
@@ -66,7 +67,9 @@ def impute_pre_1990_counties(
     counties_df: pd.DataFrame, places_df: pd.DataFrame
 ) -> pd.DataFrame:
     summed_places_df = (
-        places_df.groupby(["county_code", "state_code", "year"])[BPS_NUMERICAL_COLUMNS]
+        places_df.groupby(["county_code", "state_code", "year"])[
+            NUMERICAL_COLUMNS[DataSource.BPS]
+        ]
         .sum()
         .reset_index()
     )

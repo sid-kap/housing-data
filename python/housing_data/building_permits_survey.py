@@ -9,6 +9,7 @@ import pandas as pd
 from housing_data.data_loading_helpers import get_url_text
 
 Region = Literal["west", "midwest", "south", "northeast"]
+REGIONS: list[Region] = ["west", "midwest", "south", "northeast"]
 
 """
 Monthly data is provided in three forms:
