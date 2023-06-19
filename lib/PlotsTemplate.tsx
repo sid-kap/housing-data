@@ -11,6 +11,7 @@ import {
 interface Option {
   value: string
   name: string
+  has_ca_hcd_data: boolean
 }
 
 export function makeOptions<T extends { path: string }, U>(

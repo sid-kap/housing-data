@@ -12,6 +12,7 @@ type RawOption = {
   path: string
   population: string
   type: string
+  has_ca_hcd_data: boolean
 }
 
 type Option = {
@@ -19,6 +20,7 @@ type Option = {
   value: string // the path
   population: string
   type: string
+  has_ca_hcd_data: boolean
 }
 
 export default function StatePlots({

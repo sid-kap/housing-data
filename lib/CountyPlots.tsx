@@ -13,6 +13,7 @@ type RawOption = {
   path: string
   population: number
   alt_name: string
+  has_ca_hcd_data: boolean
 }
 
 type Option = {
@@ -20,6 +21,7 @@ type Option = {
   value: string // the path
   population: number
   alt_name: string
+  has_ca_hcd_data: boolean
 }
 
 const fuzzysortOptions = {

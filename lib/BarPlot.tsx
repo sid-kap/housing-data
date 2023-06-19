@@ -128,7 +128,7 @@ function makeTransforms(
   perThousand: boolean,
   preferHcdData: boolean
 ): Transform[] {
-  let transforms: Transform[] = []
+  const transforms: Transform[] = []
 
   if (perThousand) {
     const baseFields = Array.from(

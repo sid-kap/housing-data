@@ -88,7 +88,7 @@ export function HcdDataInfo(): JSX.Element {
   return (
     <>
       <div className="text-xs mt-3 text-left">
-        †Use California HCD's{" "}
+        †Use California HCD&apos;s{" "}
         <a
           href="https://www.hcd.ca.gov/planning-and-community-development/annual-progress-reports"
           className="text-blue-500 hover:text-blue-300"
