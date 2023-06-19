@@ -1,5 +1,3 @@
-from typing import Dict
-
 import pandas as pd
 from housing_data.build_data_utils import (
     NUMERICAL_COLUMNS,
@@ -100,7 +98,7 @@ def combine_metro_rows(
     return combined_df
 
 
-def get_aggregate_functions() -> Dict[str, pd.NamedAgg]:
+def get_aggregate_functions() -> dict[str, pd.NamedAgg]:
     aggregate_functions = {
         col: pd.NamedAgg(column=col, aggfunc="sum") for col in NUMERICAL_COLUMNS
     }

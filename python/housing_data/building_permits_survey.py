@@ -2,15 +2,11 @@ from __future__ import annotations
 
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Any, Literal, Optional
 from urllib.parse import quote
 
 import pandas as pd
 from housing_data.data_loading_helpers import get_url_text
-from typing_extensions import Literal
-
-if TYPE_CHECKING:
-    from typing import Any, List, Optional, Tuple
 
 Region = Literal["west", "midwest", "south", "northeast"]
 
@@ -74,7 +70,7 @@ def slugify(s: str) -> str:
     return s.lower().replace("-", "_").strip()
 
 
-def _merge_column_names(header_row_0: List[str], header_row_1: List[str]) -> pd.Series:
+def _merge_column_names(header_row_0: list[str], header_row_1: list[str]) -> pd.Series:
     for i, col in enumerate(header_row_0.copy()):
         if "unit" in col:
             header_row_0[i - 1] = col
@@ -110,7 +106,7 @@ def _merge_column_names(header_row_0: List[str], header_row_1: List[str]) -> pd.
 
 
 def _fix_column_names(
-    header_row_0: List[str], header_row_1: List[str], fix_row_lengths: bool = True
+    header_row_0: list[str], header_row_1: list[str], fix_row_lengths: bool = True
 ) -> pd.Series:
     if fix_row_lengths:
         assert len(header_row_1) == len(header_row_0) + 1
@@ -120,7 +116,7 @@ def _fix_column_names(
 
 
 def _fix_column_names_old_county_level(
-    header_row_0: List[str], header_row_1: List[str]
+    header_row_0: list[str], header_row_1: list[str]
 ) -> pd.Series:
     """
     For the very early county-level data between 1990 and 1998 (county doesn't exist before 1990),
@@ -496,7 +492,7 @@ def place_cleanup(df: pd.DataFrame, year: int) -> pd.DataFrame:
     return df
 
 
-def split_place_type(place_names: pd.Series, year: int) -> Tuple[pd.Series, pd.Series]:
+def split_place_type(place_names: pd.Series, year: int) -> tuple[pd.Series, pd.Series]:
     if year <= 1988:
         # Mostly only an issue from 1980 to 1987, but there are like 11 places that
         # still have the weird trailing dots in 1988 too.
@@ -513,7 +509,7 @@ def split_place_type(place_names: pd.Series, year: int) -> Tuple[pd.Series, pd.S
     title_place_types = [s.title() for s in place_types]
 
     new_place_names = []
-    extracted_place_types: List[Optional[str]] = []
+    extracted_place_types: list[Optional[str]] = []
     for name in place_names:
         for place_type, title_place_type in zip(place_types, title_place_types):
             if isinstance(name, str):

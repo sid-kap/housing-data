@@ -2,16 +2,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Optional, Union
 
 import requests
 
-if TYPE_CHECKING:
-    from typing import Optional, Tuple, Union
-
 
 def get_url_text(
-    url: Union[str, Tuple[str, str]],
+    url: Union[str, tuple[str, str]],
     data_path: Optional[Path],
     encoding: Optional[str] = None,
 ) -> str:
