@@ -149,7 +149,7 @@ function spec(
       for (const suffix of ["", "_per_capita"]) {
         const prefix = `total_${type}`
         transforms.push({
-          calculate: `datum['${prefix}_hcd{suffix}'] || datum['${prefix}${suffix}'] || 0`,
+          calculate: `datum['${prefix}_hcd${suffix}'] || datum['${prefix}${suffix}'] || 0`,
           as: `${prefix}${suffix}`,
         })
       }
