@@ -4,14 +4,14 @@ from typing import Optional
 import pandas as pd
 from housing_data import place_population
 from housing_data.build_data_utils import (
-    NUMERICAL_COLUMNS,
     PLACE_POPULATION_DIR,
     PUBLIC_DIR,
-    add_per_capita_columns,
+    DataSource,
+    get_numerical_columns,
     get_state_abbrs,
     load_bps_all_years_plus_monthly,
 )
-from housing_data.building_permits_survey import Region
+from housing_data.building_permits_survey import REGIONS
 
 
 def make_bps_fips_mapping(
@@ -26,7 +26,7 @@ def make_bps_fips_mapping(
     # The most recent years have fips code in BPS, so we'll use those to join.
     # Some years will have the same BPS 6-digit ID, so we can join roughly 1992 to present using that.
     # From 1980-1991 BPS has different FIPS codes, so it becomes a little trickier.
-    mapping = places_df[(places_df["year"] == "2019")][
+    mapping = places_df[places_df["year"] == "2019"][
         ["place_name", "fips place_code", "county_code", "state_code", "6_digit_id"]
     ].copy()
 
@@ -176,8 +176,6 @@ def add_place_population_data(
         )
     )
 
-    add_per_capita_columns(final_places_df)
-
     return final_places_df
 
 
@@ -189,7 +187,11 @@ def _make_nyc_rows(raw_places_df: pd.DataFrame) -> pd.DataFrame:
         & (raw_places_df["state_code"] == 36)
     ]
     # TODO might need to add "month" to the groupby?
-    nyc_rows = nyc_df.groupby("year")[NUMERICAL_COLUMNS].sum().reset_index()
+    nyc_rows = (
+        nyc_df.groupby("year")[get_numerical_columns(DataSource.BPS)]
+        .sum()
+        .reset_index()
+    )
 
     nyc_rows["fips place_code"] = 51000
     nyc_rows["state_code"] = 36
@@ -289,12 +291,12 @@ def get_name_spelling(places_df: pd.DataFrame) -> pd.Series:
 def load_places(
     data_repo_path: Optional[Path], counties_population_df: pd.DataFrame = None
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    dfs = []
-    regions: list[Region] = ["west", "midwest", "south", "northeast"]
-    for region in regions:
-        data = load_bps_all_years_plus_monthly(data_repo_path, "place", region=region)
-        dfs.append(data)
-    raw_places_df = pd.concat(dfs)
+    raw_places_df = pd.concat(
+        [
+            load_bps_all_years_plus_monthly(data_repo_path, "place", region=region)
+            for region in REGIONS
+        ]
+    )
 
     nyc_rows = _make_nyc_rows(raw_places_df)
     raw_places_df = pd.concat([raw_places_df, nyc_rows])
@@ -318,8 +320,6 @@ def load_places(
     places_df["path_1"] = state_abbrs
     places_df["path_2"] = name.str.replace("/", "-").str.replace(" ", "_")
     places_df = places_df.drop(columns=["place_name", "place_type"])
-
-    places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
 
     # Not sure why I have to do this
     places_df = places_df[places_df["path_1"].notnull() & places_df["path_2"].notnull()]

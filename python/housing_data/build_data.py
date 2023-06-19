@@ -6,12 +6,15 @@ from housing_data.build_counties import load_counties
 from housing_data.build_data_utils import (
     COUNTY_POPULATION_DIR,
     PUBLIC_DIR,
-    write_list_to_json,
+    DataSource,
+    add_per_capita_columns,
+    write_list_json,
     write_to_json_directory,
 )
 from housing_data.build_metros import load_metros
 from housing_data.build_places import load_places
 from housing_data.build_states import load_states
+from housing_data.california_hcd_data import load_california_hcd_data
 from housing_data.canada_bper import load_canada_bper
 from housing_data.county_population import get_county_population_estimates
 
@@ -24,7 +27,7 @@ def main() -> None:
     )
     args = parser.parse_args()
     print("Args:", args)
-    data_repo_path = Path(args.data_repo_path)
+    data_repo_path: Path = Path(args.data_repo_path)
 
     # Make sure the public/ directory exists
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
@@ -33,15 +36,53 @@ def main() -> None:
 
     print("Loading county population data...")
     county_population_df = get_county_population_estimates(
-        data_path=data_repo_path / COUNTY_POPULATION_DIR
-        if args.data_repo_path
-        else None
+        data_path=data_repo_path / COUNTY_POPULATION_DIR,
+        data_repo_path=data_repo_path,
     )
-    county_population_df.to_parquet(PUBLIC_DIR / "county_populations.parquet")
 
     raw_places_df, places_df = load_places(data_repo_path, county_population_df)
     counties_df = load_counties(data_repo_path, raw_places_df, county_population_df)
-    metros_df = load_metros(counties_df)
+
+    (
+        california_places_df,
+        california_counties_df,
+        california_states_df,
+    ) = load_california_hcd_data(data_repo_path)
+
+    # For California rows, add HCD columns for units and buildings (not available for value)
+    places_df = places_df.merge(
+        california_places_df.assign(has_ca_hcd_data=True),
+        on=["place_or_county_code", "state_code", "year"],
+        how="left",
+    )
+
+    counties_df = counties_df.merge(
+        california_counties_df.assign(state_code=6, has_ca_hcd_data=True).astype(
+            {"county_code": "Int64", "state_code": "Int64"}
+        ),
+        on=["county_code", "state_code", "year"],
+        how="left",
+    )
+
+    metros_df = load_metros(data_repo_path, counties_df)
+
+    states_df = states_df.merge(
+        california_states_df.assign(has_ca_hcd_data=True).astype(
+            {"state_code": "Int64"}
+        ),
+        on=["state_code", "year"],
+        how="left",
+    )
+
+    add_per_capita_columns(places_df, [DataSource.BPS, DataSource.CA_HCD])
+    add_per_capita_columns(counties_df, [DataSource.BPS, DataSource.CA_HCD])
+    add_per_capita_columns(metros_df, [DataSource.BPS, DataSource.CA_HCD])
+    add_per_capita_columns(states_df, [DataSource.BPS, DataSource.CA_HCD])
+
+    places_df.to_parquet(PUBLIC_DIR / "places_annual.parquet")
+    counties_df.to_parquet(PUBLIC_DIR / "counties_annual.parquet")
+    metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
+    states_df.to_parquet(PUBLIC_DIR / "states_annual.parquet")
 
     (
         canada_places_df,
@@ -65,18 +106,13 @@ def generate_json(
     states_df: pd.DataFrame,
 ) -> None:
     # Places
-    write_list_to_json(
-        places_df,
-        PUBLIC_DIR / "places_list.json",
-        add_latest_population_column=True,
-    )
+    write_list_json(places_df, PUBLIC_DIR / "places_list.json")
     write_to_json_directory(places_df, PUBLIC_DIR / "places_data")
 
     # Metros
-    write_list_to_json(
+    write_list_json(
         metros_df,
         PUBLIC_DIR / "metros_list.json",
-        add_latest_population_column=True,
         unhashable_columns=["county_names"],  # can't merge on a list-valued column
         extra_columns=["metro_type", "county_names"],
     )
@@ -85,21 +121,16 @@ def generate_json(
     )
 
     # Counties
-    write_list_to_json(
+    write_list_json(
         counties_df.drop(columns=["state_code"]).rename(
             columns={"fips_state": "state_code"}
         ),
         PUBLIC_DIR / "counties_list.json",
-        add_latest_population_column=True,
     )
     write_to_json_directory(counties_df, PUBLIC_DIR / "counties_data")
 
     # States
-    write_list_to_json(
-        states_df,
-        PUBLIC_DIR / "states_list.json",
-        add_latest_population_column=True,
-    )
+    write_list_json(states_df, PUBLIC_DIR / "states_list.json")
     write_to_json_directory(states_df, PUBLIC_DIR / "states_data")
 
 

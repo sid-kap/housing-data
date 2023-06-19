@@ -1,16 +1,11 @@
+from pathlib import Path
+
 import pandas as pd
-from housing_data.build_data_utils import (
-    NUMERICAL_COLUMNS,
-    PUBLIC_DIR,
-    add_per_capita_columns,
-)
+from housing_data.build_data_utils import DataSource, get_numerical_columns
 
 
-def load_crosswalk_df() -> pd.DataFrame:
-    # TODO: cache this file to housing-data-data to speed up builds by a few seconds
-    crosswalk_df = pd.read_csv(
-        "http://data.nber.org/cbsa-csa-fips-county-crosswalk/cbsa2fipsxw.csv"
-    )
+def load_crosswalk_df(data_repo_path: Path) -> pd.DataFrame:
+    crosswalk_df = pd.read_csv(data_repo_path / "data/crosswalk/cbsa2fipsxw.csv")
 
     # Drop the μSAs, no one cares about them.
     # Most of them are just one county anyway, so showing the combined metro stats doesn't
@@ -20,8 +15,8 @@ def load_crosswalk_df() -> pd.DataFrame:
         == "Metropolitan Statistical Area"
     ]
 
-    # Could also get county name from 'countycountyequivalent' in crosswalk_df... I'm indifferent, just using the
-    # one from counties_df for now.
+    # Could also get county name from 'countycountyequivalent' in crosswalk_df...
+    # I'm indifferent, just using the one from counties_df for now.
     crosswalk_df = (
         crosswalk_df[["fipsstatecode", "fipscountycode", "csatitle", "cbsatitle"]]
         .rename(
@@ -99,28 +94,26 @@ def combine_metro_rows(
 
 
 def get_aggregate_functions() -> dict[str, pd.NamedAgg]:
-    aggregate_functions = {
-        col: pd.NamedAgg(column=col, aggfunc="sum") for col in NUMERICAL_COLUMNS
+    return {
+        col: pd.NamedAgg(column=col, aggfunc="sum")
+        for col in set(
+            get_numerical_columns(DataSource.BPS, totals=True, projected=True)
+            + get_numerical_columns(DataSource.CA_HCD, totals=True, projected=True)
+        )
+    } | {
+        "county_names": pd.NamedAgg(
+            column="name", aggfunc=lambda counties: counties.tolist()
+        ),
+        "population": pd.NamedAgg(column="population", aggfunc="sum"),
+        # So that we can check if all the counties in a metro were observed in that year
+        "num_observed_counties": pd.NamedAgg(column="name", aggfunc="count"),
+        # If any county has CA HCD data, then the combined metro has CA HCD data
+        "has_ca_hcd_data": pd.NamedAgg(column="has_ca_hcd_data", aggfunc="max"),
     }
-    aggregate_functions["county_names"] = pd.NamedAgg(
-        column="name", aggfunc=lambda counties: counties.tolist()
-    )
-    aggregate_functions["population"] = pd.NamedAgg(column="population", aggfunc="sum")
-
-    # So that we can check if all the counties in a metro were observed in that year
-    aggregate_functions["num_observed_counties"] = pd.NamedAgg(
-        column="name", aggfunc="count"
-    )
-
-    return aggregate_functions
 
 
-def load_metros(counties_df: pd.DataFrame) -> pd.DataFrame:
-    counties_df = counties_df.drop(
-        columns=[col for col in counties_df.columns if "_per_capita" in col]
-    )
-
-    crosswalk_df = load_crosswalk_df()
+def load_metros(data_repo_path: Path, counties_df: pd.DataFrame) -> pd.DataFrame:
+    crosswalk_df = load_crosswalk_df(data_repo_path)
 
     merged_df = crosswalk_df.merge(
         counties_df, on=["fips_state", "fips_county"], how="left"
@@ -130,8 +123,6 @@ def load_metros(counties_df: pd.DataFrame) -> pd.DataFrame:
     csas_df = combine_metro_rows(merged_df, "csa", crosswalk_df)
 
     metros_df = pd.concat([msas_df, csas_df])
-
-    add_per_capita_columns(metros_df)
 
     metros_df["path_1"] = None
     metros_df["path_2"] = (
@@ -146,7 +137,5 @@ def load_metros(counties_df: pd.DataFrame) -> pd.DataFrame:
     # For the plot labels, would like to use the full metro name with the "MSA" or "CSA" suffix.
     metros_df["name"] = metros_df["metro_name_with_suffix"]
     metros_df = metros_df.drop(columns=["metro_name_with_suffix", "metro_name"])
-
-    metros_df.to_parquet(PUBLIC_DIR / "metros_annual.parquet")
 
     return metros_df

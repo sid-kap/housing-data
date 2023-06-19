@@ -26,7 +26,7 @@ const observedMonths =
 
 export function CurrentYearExtrapolationInfo(): JSX.Element {
   return (
-    <div>
+    <>
       <div className="text-xs mt-3 text-left">
         *{currentYear} includes data from {observedMonths}.
       </div>
@@ -34,6 +34,6 @@ export function CurrentYearExtrapolationInfo(): JSX.Element {
         &nbsp;The remainder of the year is extrapolated from the monthly rate
         from {observedMonths} {currentYear}.
       </div>
-    </div>
+    </>
   )
 }

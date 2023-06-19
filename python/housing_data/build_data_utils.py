@@ -1,32 +1,71 @@
 import shutil
+from enum import Enum, auto
 from pathlib import Path
-from typing import Literal, Optional, get_args
+from typing import Optional
 
 import pandas as pd
 import us
 from housing_data import building_permits_survey as bps
 from tqdm import tqdm
 
-UNITS_COLUMNS = [
-    "1_unit_units",
-    "2_units_units",
-    "3_to_4_units_units",
-    "5_plus_units_units",
-]
+_COMMON_PREFIXES = ["1_unit", "2_units", "3_to_4_units", "5_plus_units"]
 
-Prefix = Literal[
-    "1_unit",
-    "2_units",
-    "3_to_4_units",
-    "5_plus_units",
-    "total",
-    "projected",
-]
-PREFIXES: tuple[Prefix, ...] = tuple(get_args(Prefix))
-Suffix = Literal["_bldgs", "_units", "_value"]
-SUFFIXES: tuple[Suffix, ...] = tuple(get_args(Suffix))
 
-NUMERICAL_COLUMNS = [prefix + suffix for prefix in PREFIXES for suffix in SUFFIXES]
+class DataSource(Enum):
+    BPS = auto()
+    CA_HCD = auto()
+    CANADA = auto()
+
+
+# There are also two "derived" prefixes: "total" and "projected"
+PREFIXES = {
+    DataSource.BPS: _COMMON_PREFIXES,
+    # We have ADU data only in the CA HCD dataset
+    DataSource.CA_HCD: _COMMON_PREFIXES + ["adu"],
+    DataSource.CANADA: _COMMON_PREFIXES,
+}
+
+
+SUFFIXES = {
+    DataSource.BPS: ["_bldgs", "_units", "_value"],
+    # We don't have value data in the CA HCD dataset
+    # (In the UI, for value we fallback to BPS data)
+    DataSource.CA_HCD: ["_units_hcd", "_bldgs_hcd"],
+    # We only have units, not bldgs or value for Canada
+    DataSource.CANADA: ["_units"],
+}
+
+
+def get_numerical_columns(
+    data_source: DataSource,
+    totals: bool = False,
+    projected: bool = False,
+    per_capitas: bool = False,
+) -> list[str]:
+    """
+    Args:
+        post_processing: Whether to include the "{}_per_capita" and "total_{}" columns
+    """
+    cols = [
+        prefix + suffix
+        for prefix in PREFIXES[data_source]
+        for suffix in SUFFIXES[data_source]
+    ]
+
+    if totals:
+        cols += [f"total{suffix}" for suffix in SUFFIXES[data_source]]
+
+    if projected and data_source == DataSource.BPS:
+        # We only call add_current_year_projections (which adds the "projected_*" columns)
+        # on BPS data, since BPS is the only data source released monthly.
+        cols += [f"projected{suffix}" for suffix in SUFFIXES[data_source]]
+
+    if per_capitas:
+        # This must happen after totals
+        cols += [col + "_per_capita" for col in cols]
+
+    return cols
+
 
 PUBLIC_DIR = Path("../public")
 
@@ -55,57 +94,88 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
     ):
         sub_path = path / json_dir if not pd.isnull(json_dir) else path
         sub_path.mkdir(exist_ok=True)
+
+        # Don't bloat non-California JSON files with columns that are all null
+        ca_only_columns = {
+            col
+            for col, is_all_null in group[
+                # doesn't matter if we pass projected=True here, since projected columns
+                # aren't present in CA HCD data. But just passing for consistency.
+                get_numerical_columns(
+                    DataSource.CA_HCD, totals=True, projected=True, per_capitas=True
+                )
+            ]
+            .isnull()
+            .all()
+            .items()
+            if is_all_null
+        }
+        if ca_only_columns:
+            group = group.drop(columns=ca_only_columns)
+
         group.reset_index(drop=True).to_json(
             sub_path / f"{json_name}.json", orient="records"
         )
 
 
-DEFAULT_COLUMNS = ["name", "path_1", "path_2", "alt_name"]
+# Columns to write to the "{geography}_list.json" file.
+# We also add "population" and "has_ca_hcd_data", but those require more
+# complicated aggregations because they have different values for different years.
+LIST_COLUMNS = ["name", "path_1", "path_2", "alt_name"]
 
 
-def write_list_to_json(
+def write_list_json(
     df: pd.DataFrame,
     output_path: Path,
-    add_latest_population_column: bool = False,
     unhashable_columns: Optional[list[str]] = None,
     extra_columns: Optional[list[str]] = None,
 ) -> None:
     """
+    Writes the /public/{geography}_list.json file, which is a list of places
+    at that level. This is used by the select search.
+
     :param unhashable_columns: Columns to not include in calls to drop_duplicates, merge, etc. because
         they would cause "[type] is not hashable" errors.
     """
-    columns = DEFAULT_COLUMNS + (extra_columns or [])
-    hashable_columns = list(set(columns) - set(unhashable_columns or []))
-    subset_df = df[columns].copy().drop_duplicates(subset=hashable_columns)
+    columns = LIST_COLUMNS + (extra_columns or [])
+    keys = list(set(columns) - set(unhashable_columns or []))
+    subset_df = df[columns].copy().drop_duplicates(subset=keys)
 
     # Refers to both the path of the json file (https://housingdata.app/places_data/{path}.json)
     # and the URL path (https://housingdata.app/places/{path})
     subset_df["path"] = (subset_df["path_1"] + "/").fillna("") + subset_df["path_2"]
 
-    if add_latest_population_column:
-        latest_populations = df[df["year"] == "2020"][
-            hashable_columns + ["population"]
-        ].drop_duplicates()
-        subset_df = subset_df.merge(latest_populations, on=hashable_columns, how="left")
-        subset_df["population"] = subset_df["population"].fillna(0).astype(int)
-        subset_df = subset_df.sort_values("name", ascending=False)
+    # Add population column
+    latest_populations = (
+        df[keys + ["year", "population"]]
+        .sort_values("year")
+        .drop_duplicates(subset=keys, keep="last")
+    )
+    latest_populations["population"] = (
+        latest_populations["population"].fillna(0).astype(int)
+    )
+    subset_df = subset_df.merge(latest_populations, on=keys, how="left")
 
-    subset_df = subset_df.sort_values(hashable_columns)
+    # Add column indicating whether the place has CA HCD data
+    has_ca_hcd_data = df.groupby("name")["has_ca_hcd_data"].any().reset_index()
+    subset_df = subset_df.merge(has_ca_hcd_data, on="name", how="left")
+
+    subset_df = subset_df.sort_values(keys)
     subset_df = subset_df.drop(columns=["path_1", "path_2"])
     subset_df.to_json(output_path, orient="records")
 
 
-def add_per_capita_columns(
-    df: pd.DataFrame,
-    prefixes: tuple[Prefix, ...] = PREFIXES,
-    suffixes: tuple[Suffix, ...] = SUFFIXES,
-) -> None:
+def add_per_capita_columns(df: pd.DataFrame, data_sources: list[DataSource]) -> None:
     # There are three cities (Sitka, Weeki Wachee, and Carlton Landing) that had population 0 in some years
     population = df["population"].where(df["population"] != 0, 1)
 
-    for prefix in prefixes:
-        for suffix in suffixes:
-            df[prefix + suffix + "_per_capita"] = df[prefix + suffix] / population
+    cols = {
+        col
+        for data_source in data_sources
+        for col in get_numerical_columns(data_source, totals=True, projected=True)
+    }
+    for col in cols:
+        df[col + "_per_capita"] = df[col] / population
 
 
 def get_state_abbrs(state_codes: pd.Series) -> pd.Series:
@@ -149,6 +219,7 @@ def load_bps_all_years_plus_monthly(
             region=region,
             data_path=data_path,
         ).assign(year=str(year), month=None)
+        add_total_columns(data, DataSource.BPS)
         dfs.append(data)
 
     if not LAST_YEAR_ANNUAL_DATA_RELEASED:
@@ -161,6 +232,7 @@ def load_bps_all_years_plus_monthly(
             region=region,
             data_path=data_path,
         ).assign(year=str(last_full_year + 1))
+        add_total_columns(last_year_data, DataSource.BPS)
         dfs.append(last_year_data)
 
     current_year_data = bps.load_data(
@@ -171,6 +243,7 @@ def load_bps_all_years_plus_monthly(
         region=region,
         data_path=data_path,
     ).assign(year=str(LATEST_MONTH[0]), month=LATEST_MONTH[1])
+    add_total_columns(current_year_data, DataSource.BPS)
 
     if extrapolate_rest_of_year:
         current_year_data = add_current_year_projections(current_year_data)
@@ -178,6 +251,14 @@ def load_bps_all_years_plus_monthly(
     dfs.append(current_year_data)
 
     return pd.concat(dfs)
+
+
+def add_total_columns(df: pd.DataFrame, data_source: DataSource) -> None:
+    for suffix in SUFFIXES[data_source]:
+        cols = [
+            col for col in get_numerical_columns(data_source) if col.endswith(suffix)
+        ]
+        df[f"total{suffix}"] = df[cols].sum(axis=1)
 
 
 def add_current_year_projections(year_to_date_df: pd.DataFrame) -> pd.DataFrame:
@@ -189,13 +270,13 @@ def add_current_year_projections(year_to_date_df: pd.DataFrame) -> pd.DataFrame:
     The projected units for the remainder of the year will be stacked on top of
     the already observed units in the bar chart, with a different shading pattern.
     """
-    for value_type in ["bldgs", "units", "value"]:
+    for suffix in SUFFIXES[DataSource.BPS]:
         # number of remaining months in the year / number of observed months
         projected_units_ratio = (12 - year_to_date_df["month"]) / year_to_date_df[
             "month"
         ]
-        year_to_date_df[f"projected_{value_type}"] = (
-            projected_units_ratio * year_to_date_df[f"total_{value_type}"]
+        year_to_date_df[f"projected{suffix}"] = (
+            projected_units_ratio * year_to_date_df[f"total{suffix}"]
         ).astype(int)
 
     return year_to_date_df

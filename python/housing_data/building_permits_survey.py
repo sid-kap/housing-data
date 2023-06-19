@@ -9,6 +9,7 @@ import pandas as pd
 from housing_data.data_loading_helpers import get_url_text
 
 Region = Literal["west", "midwest", "south", "northeast"]
+REGIONS: list[Region] = ["west", "midwest", "south", "northeast"]
 
 """
 Monthly data is provided in three forms:
@@ -27,9 +28,6 @@ Scale = Literal["county", "metro", "place", "state"]
 ERROR_STRING = "Sorry, the page you requested has either been moved or is no longer available on this server."
 
 CENSUS_DATA_PATH = "https://www2.census.gov/econ/bps"
-
-VALUE_TYPES = ["bldgs", "units", "value"]
-BUILDING_UNIT_SIZES = ["1_unit", "2_units", "3_to_4_units", "5_plus_units"]
 
 
 def _validate_load_data_inputs(
@@ -340,18 +338,10 @@ TYPE_MAPPING = {
 }
 
 
-def add_totals_columns(df: pd.DataFrame) -> None:
-    for value_type in VALUE_TYPES:
-        df[f"total_{value_type}"] = sum(
-            [df[f"{size}_{value_type}"] for size in BUILDING_UNIT_SIZES]
-        )
-
-
 def state_cleanup(df: pd.DataFrame) -> None:
     df["state_name"] = df["state_name"].str.title()
     df["state_name"] = df["state_name"].apply(fix_state)
     df["type"] = df["state_name"].map(TYPE_MAPPING).fillna("state")
-    add_totals_columns(df)
     df["region_code"] = df["region_code"].astype(str)
     df["division_code"] = df["division_code"].astype(str)
 
@@ -474,8 +464,6 @@ def place_cleanup(df: pd.DataFrame, year: int) -> pd.DataFrame:
         df["place_name"].notnull() & ~df["place_name"].isin(PLACES_TO_REMOVE)
     ].copy()
 
-    add_totals_columns(df)
-
     # Miami-Dade County was called Dade County until 1997.
     # We need to fix the old rows to use the new name and new FIPS code (change 25 to 86).
     #
@@ -534,7 +522,5 @@ def county_cleanup(df: pd.DataFrame) -> pd.DataFrame:
     dade_county_rows = (df["fips_county"] == 25) & (df["fips_state"] == 12)
     df.loc[dade_county_rows, "county_name"] = "Miami-Dade County"
     df.loc[dade_county_rows, "fips_county"] = 86
-
-    add_totals_columns(df)
 
     return df

@@ -14,6 +14,7 @@ type RawOption = {
   alt_name: string
   metro_type: string
   county_names: string[]
+  has_ca_hcd_data: boolean
 }
 
 type Option = {
@@ -23,6 +24,7 @@ type Option = {
   alt_name: string
   metro_type: string
   county_names: string[]
+  has_ca_hcd_data: boolean
 }
 
 type OptionGroup = {

@@ -30,10 +30,10 @@ type Denom = "total" | "per_capita"
 
 export function usePerCapitaInput(): {
   denom: string
-  populationInput: JSX.Element
+  perCapitaInput: JSX.Element
 } {
   const [denom, setDenom] = useState<Denom>("total")
-  const populationInput = (
+  const perCapitaInput = (
     <div>
       <label className="mr-3">
         <input
@@ -56,6 +56,48 @@ export function usePerCapitaInput(): {
 
   return {
     denom: denom,
-    populationInput: populationInput,
+    perCapitaInput: perCapitaInput,
   }
+}
+
+export function usePreferHcdDataInput(): {
+  preferHcdData: boolean
+  preferHcdDataInput: JSX.Element
+} {
+  const [preferHcdData, setPreferHcdData] = useState<boolean>(true)
+  const preferHcdDataInput = (
+    <div className="mt-2">
+      <label className="mr-3">
+        <input
+          type="checkbox"
+          checked={preferHcdData}
+          onChange={() => setPreferHcdData(!preferHcdData)}
+        />
+        <span className="ml-1">Prefer California HCD data for 2018–2022†</span>
+      </label>
+    </div>
+  )
+
+  return {
+    preferHcdData: preferHcdData,
+    preferHcdDataInput: preferHcdDataInput,
+  }
+}
+
+export function HcdDataInfo(): JSX.Element {
+  return (
+    <>
+      <div className="text-xs mt-3 text-left">
+        †Use California HCD&apos;s{" "}
+        <a
+          href="https://www.hcd.ca.gov/planning-and-community-development/annual-progress-reports"
+          className="text-blue-500 hover:text-blue-300"
+        >
+          Annual Progress Reports
+        </a>{" "}
+        data, which is likely more accurate than the Census Building Permits
+        Survey, and unlike BPS includes an ADU category.
+      </div>
+    </>
+  )
 }

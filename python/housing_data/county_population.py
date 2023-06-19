@@ -6,6 +6,7 @@ import pandas as pd
 import us
 from housing_data.build_data_utils import impute_2023_population
 from housing_data.data_loading_helpers import get_path, get_url_text
+from housing_data.fips_crosswalk import load_fips_crosswalk
 
 
 def _melt_df(df: pd.DataFrame, years: list[int]) -> pd.DataFrame:
@@ -43,7 +44,7 @@ def get_county_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
     return _melt_df(df, list(range(2010, 2020)))
 
 
-def get_county_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
+def get_county_populations_2000s(data_path: Path, data_repo_path: Path) -> pd.DataFrame:
     urls = [
         (
             state.fips,
@@ -96,7 +97,7 @@ def get_county_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
     )
 
     df = df.merge(
-        get_county_fips_crosswalk(data_path),
+        get_county_fips_crosswalk(data_repo_path),
         how="left",
         on=["county_name", "state_code"],
     )
@@ -115,14 +116,8 @@ def get_county_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
     return df
 
 
-def get_county_fips_crosswalk(data_path: Optional[Path]) -> pd.DataFrame:
-    df = pd.read_excel(
-        get_path(
-            "https://www2.census.gov/programs-surveys/popest/geographies/2021/all-geocodes-v2021.xlsx",
-            data_path,
-        ),
-        skiprows=4,
-    )
+def get_county_fips_crosswalk(data_repo_path: Path) -> pd.DataFrame:
+    df = load_fips_crosswalk(data_repo_path)
     df = df[df["County Code (FIPS)"] != 0]
 
     rename_cols = {
@@ -232,13 +227,15 @@ def get_county_populations_1980s(data_path: Optional[Path]) -> pd.DataFrame:
     return combined_df
 
 
-def get_county_population_estimates(data_path: Optional[Path]) -> pd.DataFrame:
+def get_county_population_estimates(
+    data_path: Path, data_repo_path: Path
+) -> pd.DataFrame:
     print("Loading 1980 populations...")
     df_1980s = get_county_populations_1980s(data_path)
     print("Loading 1990s populations...")
     df_1990s = get_county_populations_1990s(data_path)
     print("Loading 2000s populations...")
-    df_2000s = get_county_populations_2000s(data_path)
+    df_2000s = get_county_populations_2000s(data_path, data_repo_path)
     print("Loading 2010s populations...")
     df_2010s = get_county_populations_2010s(data_path)
     print("Loading 2020s populations...")

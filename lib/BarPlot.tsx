@@ -5,7 +5,11 @@ import { TopLevelSpec } from "vega-lite"
 import { StringFieldDef } from "vega-lite/src/channeldef"
 import { Transform } from "vega-lite/src/transform"
 
-import { fieldsGenerator } from "lib/plots"
+import {
+  NUM_UNITS,
+  fieldsGenerator,
+  hcdFieldsPerCapitaGenerator,
+} from "lib/plots"
 import { projectedUnitsLabel } from "lib/projections"
 
 const unitsLabels = {
@@ -15,6 +19,9 @@ const unitsLabels = {
 }
 
 const baseKeyMapping = {
+  adu_units: "ADU",
+  adu_bldgs: "ADU",
+  adu_value: "ADU",
   "1_unit_units": "1 unit",
   "1_unit_bldgs": "1 unit",
   "1_unit_value": "1 unit",
@@ -33,6 +40,12 @@ const baseKeyMapping = {
 }
 
 const baseOrderMapping = {
+  projected_units: 6,
+  projected_bldgs: 6,
+  projected_value: 6,
+  adu_units: 5,
+  adu_bldgs: 5,
+  adu_value: 5,
   "1_unit_units": 4,
   "1_unit_bldgs": 4,
   "1_unit_value": 4,
@@ -45,9 +58,6 @@ const baseOrderMapping = {
   "5_plus_units_units": 1,
   "5_plus_units_bldgs": 1,
   "5_plus_units_value": 1,
-  projected_units: 5,
-  projected_bldgs: 5,
-  projected_value: 5,
 }
 
 export const keyMapping = {}
@@ -70,10 +80,12 @@ export default function BarPlot({
   data,
   units,
   perCapita,
+  preferHcdData,
 }: {
   data: PlainObject
   units: string
   perCapita: boolean
+  preferHcdData: boolean
 }): JSX.Element {
   return (
     <>
@@ -100,7 +112,10 @@ export default function BarPlot({
       </svg>
       <ContainerDimensions>
         {({ width }) => (
-          <VegaLite spec={makeSpec(units, perCapita, width)} data={data} />
+          <VegaLite
+            spec={makeSpec(units, perCapita, preferHcdData, width)}
+            data={data}
+          />
         )}
       </ContainerDimensions>
     </>
@@ -110,39 +125,68 @@ export default function BarPlot({
 function makeTransforms(
   units: string,
   filterFields: Array<string>,
-  perThousand: boolean
+  perThousand: boolean,
+  preferHcdData: boolean
 ): Transform[] {
-  let transforms: Transform[] = [
-    { fold: fields },
-    {
-      filter: {
-        field: "key",
-        oneOf: filterFields,
-      },
-    },
-    {
-      calculate: JSON.stringify(keyMapping) + '[datum.key] || "Error"',
-      as: "key_pretty_printed",
-    },
-    {
-      calculate: JSON.stringify(orderMapping) + '[datum.key] || "Error"',
-      as: "bar_chart_order",
-    },
-  ]
+  const transforms: Transform[] = []
 
   if (perThousand) {
     const baseFields = Array.from(
-      fieldsGenerator([units], [""], ["_per_capita"])
-    )
+      fieldsGenerator([units], ["_per_capita"])
+    ).concat(Array.from(hcdFieldsPerCapitaGenerator()))
     const perThousandTransforms: Transform[] = baseFields.map((field) => {
       return {
-        calculate: "1000 * datum['" + field + "']",
+        calculate: `1000 * datum['${field}']`,
         as: field + "_per_1000",
       }
     })
 
-    transforms = perThousandTransforms.concat(transforms)
+    transforms.push(...perThousandTransforms)
   }
+
+  if (preferHcdData) {
+    const hcdTransforms: Transform[] = []
+    for (const numUnits of NUM_UNITS) {
+      // We don't have value data in the HCD dataset, so only do the substitution for buildings and units.
+      for (const type of ["bldgs", "units"]) {
+        for (const suffix of ["", "_per_capita", "_per_capita_per_1000"]) {
+          const prefix = `${numUnits}_${type}`
+          hcdTransforms.push({
+            calculate: `datum['${prefix}_hcd${suffix}'] || datum['${prefix}${suffix}'] || 0`,
+            as: `${prefix}${suffix}`,
+          })
+        }
+      }
+    }
+
+    transforms.push(...hcdTransforms)
+  } else {
+    // This is a hack, should make this better.
+    // The problem is that if a field is null, it messes up the plot and causes projected
+    // units to not appear for some reason.
+    // So we either need to filter out this field, or replace it with 0 like in the preferHcdData case.
+    filterFields = filterFields.filter((field) => !field.includes("adu_"))
+  }
+
+  transforms.push(
+    ...[
+      { fold: fields },
+      {
+        filter: {
+          field: "key",
+          oneOf: filterFields,
+        },
+      },
+      {
+        calculate: JSON.stringify(keyMapping) + '[datum.key] || "Error"',
+        as: "key_pretty_printed",
+      },
+      {
+        calculate: JSON.stringify(orderMapping) + '[datum.key] || "Error"',
+        as: "bar_chart_order",
+      },
+    ]
+  )
 
   return transforms
 }
@@ -150,6 +194,7 @@ function makeTransforms(
 function makeSpec(
   units: string,
   perCapita: boolean,
+  preferHcdData: boolean,
   width: number
 ): TopLevelSpec {
   const perThousand = perCapita && units === "units"
@@ -157,7 +202,7 @@ function makeSpec(
   const perThousandSuffix = perThousand ? "_per_1000" : ""
   const suffix = perCapitaSuffix + perThousandSuffix
 
-  const filterFields = Array.from(fieldsGenerator([units], [""], [suffix]))
+  const filterFields = Array.from(fieldsGenerator([units], [suffix]))
 
   const plotWidth = Math.min(width * 0.92, 936)
 
@@ -171,7 +216,12 @@ function makeSpec(
 
   const yFormat = units === "value" ? (perCapita ? "$.2f" : "$s") : null
 
-  const transforms = makeTransforms(units, filterFields, perThousand)
+  const transforms = makeTransforms(
+    units,
+    filterFields,
+    perThousand,
+    preferHcdData
+  )
 
   return {
     width: plotWidth,
@@ -234,6 +284,7 @@ function makeSpec(
             field: "key_pretty_printed",
             scale: {
               domain: [
+                "ADU",
                 "1 unit",
                 "2 units",
                 "3-4 units",
@@ -242,6 +293,7 @@ function makeSpec(
               ],
               // Taken from Tableau 10 (https://www.tableau.com/about/blog/2016/7/colors-upgrade-tableau-10-56782)
               range: [
+                "#edc948",
                 "#4e79a7",
                 "#f28e2b",
                 "#e15759",
@@ -259,6 +311,7 @@ function makeSpec(
               timeUnit: "utcyear",
               title: "Year",
             } as StringFieldDef<string>,
+            { field: "adu_units", title: "ADU", format: "," },
             { field: "1_unit_units", title: "1 unit", format: "," },
             { field: "2_units_units", title: "2 units", format: "," },
             { field: "3_to_4_units_units", title: "3-4 units", format: "," },

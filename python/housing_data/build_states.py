@@ -4,11 +4,26 @@ from typing import Optional
 import pandas as pd
 from housing_data import state_population
 from housing_data.build_data_utils import (
-    PUBLIC_DIR,
     STATE_POPULATION_DIR,
-    add_per_capita_columns,
     load_bps_all_years_plus_monthly,
 )
+
+NON_STATE_FIPS = {
+    "US",
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "D1",
+    "D2",
+    "D3",
+    "D4",
+    "D5",
+    "D6",
+    "D7",
+    "D8",
+    "D9",
+}
 
 
 def load_states(data_repo_path: Optional[Path]) -> pd.DataFrame:
@@ -25,16 +40,17 @@ def load_states(data_repo_path: Optional[Path]) -> pd.DataFrame:
         right_on=["state", "year"],
     )
 
-    add_per_capita_columns(states_df)
-
     states_df["name"] = states_df["state_name"]
     states_df["path_1"] = None
     states_df["path_2"] = states_df["state_name"]
+
     states_df = states_df.drop(columns=["state_name", "state"])
 
-    states_df.to_parquet(PUBLIC_DIR / "states_annual.parquet")
-
-    # Old format (all states in one file) - might get rid of this at some point
-    states_df.to_json(PUBLIC_DIR / "state_annual.json", orient="records")
+    states_df["fips_state"] = (
+        states_df["fips_state"]
+        .replace({code: None for code in NON_STATE_FIPS})
+        .astype("Int64")
+    )
+    states_df = states_df.rename(columns={"fips_state": "state_code"})
 
     return states_df
