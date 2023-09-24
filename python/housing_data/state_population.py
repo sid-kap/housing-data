@@ -167,7 +167,7 @@ def get_state_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
             ]
         )
         .groupby(["year", "state"])
-        .sum()
+        .sum(numeric_only=True)
         .reset_index()
     )
 
@@ -263,13 +263,13 @@ def get_state_population_estimates(data_path: Optional[Path]) -> pd.DataFrame:
     divisions_df = (
         states_df.assign(state=states_df["state"].map(STATE_TO_DIVISION))
         .groupby(["state", "year"])
-        .sum()
+        .sum(numeric_only=True)
         .reset_index()
     )
     regions_df = (
         states_df.assign(state=states_df["state"].map(STATE_TO_REGION))
         .groupby(["state", "year"])
-        .sum()
+        .sum(numeric_only=True)
         .reset_index()
     )
 

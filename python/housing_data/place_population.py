@@ -313,7 +313,7 @@ def get_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
             ["place", "state_abbr", "state_fips", "place_fips", "place_or_county_code"],
             dropna=False,
         )
-        .sum()
+        .sum(numeric_only=True)
         .reset_index()
     )
 

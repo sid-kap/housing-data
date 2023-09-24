@@ -36,7 +36,7 @@ def load_california_hcd_data(
     # BPS doesn't include mobile homes, so we shouldn't include them here either
     df = df[df["UNIT_CAT_DESC"] != "Mobile Home Unit"].copy()
 
-    df["units"] = df[BUILDING_PERMIT_COLUMNS].sum(axis="columns")
+    df["units"] = df[BUILDING_PERMIT_COLUMNS].sum(axis="columns", numeric_only=True)
     df = df[
         (df["units"] > 0)
         # Exclude rows with a certificate of occupancy, because it's very unlikely

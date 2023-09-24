@@ -200,7 +200,7 @@ def aggregate_to_metros(df: pd.DataFrame) -> pd.DataFrame:
     df = (
         df.drop(columns=["place_name", "province_abbr", "province"])
         .groupby(["metro", "year", "metro_province_abbr"], as_index=False)
-        .sum()
+        .sum(numeric_only=True)
     )
     add_per_capita_columns(df, [DataSource.CANADA])
 
@@ -226,7 +226,7 @@ def aggregate_to_states(df: pd.DataFrame) -> pd.DataFrame:
     df = (
         df.drop(columns=["path_1", "path_2"])
         .groupby(["province", "year"], as_index=False)
-        .sum()
+        .sum(numeric_only=True)
     )
     add_per_capita_columns(df, [DataSource.CANADA])
 
