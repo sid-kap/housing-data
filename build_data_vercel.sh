@@ -11,8 +11,8 @@ curl https://pyenv.run | bash
 export PATH="$HOME/.pyenv/bin:$PATH"
 eval "$(pyenv init -)"
 
-pyenv install 3.10.13
-pyenv global 3.10.13
+pyenv install 3.11.5
+pyenv global 3.11.5
 
 pip3 install --user poetry
 cd python || exit
