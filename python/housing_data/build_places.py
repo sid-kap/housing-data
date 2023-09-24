@@ -286,6 +286,9 @@ def get_name_spelling(places_df: pd.DataFrame) -> pd.Series:
     ].str.contains("Parish")
     name = is_unincorporated.map({True: "Unincorporated ", False: ""}) + name
 
+    # Fix Jersey City, NJ
+    name[(name == "Jersey") & (places_df["state_code"] == 34)] = "Jersey City"
+
     return name
 
 
