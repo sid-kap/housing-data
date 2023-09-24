@@ -186,9 +186,10 @@ def _make_nyc_rows(raw_places_df: pd.DataFrame) -> pd.DataFrame:
         )
         & (raw_places_df["state_code"] == 36)
     ]
-    # TODO might need to add "month" to the groupby?
     nyc_rows = (
-        nyc_df.groupby("year")[get_numerical_columns(DataSource.BPS)]
+        nyc_df.groupby("year")[
+            get_numerical_columns(DataSource.BPS, totals=True, projected=True)
+        ]
         .sum()
         .reset_index()
     )
