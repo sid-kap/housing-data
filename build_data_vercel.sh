@@ -9,7 +9,7 @@ yum remove openssl openssl-devel
 yum update openssl11 openssl11-devel
 yum install -y openssl11 openssl11-devel
 
-yum install pyenv
+curl https://pyenv.run | bash
 pyenv install 3.10.13
 pyenv global 3.10.13
 
