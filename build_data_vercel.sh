@@ -10,6 +10,10 @@ yum update openssl11 openssl11-devel
 yum install -y openssl11 openssl11-devel
 
 curl https://pyenv.run | bash
+
+export PATH="$HOME/.pyenv/bin:$PATH"
+eval "$(pyenv init -)"
+
 pyenv install 3.10.13
 pyenv global 3.10.13
 
