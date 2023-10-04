@@ -73,8 +73,8 @@ function HideableNav({ logo, items, currentIndex }) {
   }
 
   const children = items.map((item, index) => (
-    <Link href={item.url} key={item.url}>
-      <a className={classes[index]}>{item.name}</a>
+    <Link href={item.url} key={item.url} className={classes[index]}>
+      {item.name}
     </Link>
   ))
 
@@ -115,12 +115,13 @@ function HideableNav({ logo, items, currentIndex }) {
 }
 
 const logo = (
-  <Link href="https://housingdata.app">
-    <a className="py-1 px-2 font-semibold text-xl tracking-tight">
-      <span className="text-blue-600">housing</span>
-      <span className="text-green-600">data</span>
-      <span className="text-gray-600">.app</span>
-    </a>
+  <Link
+    href="https://housingdata.app"
+    className="py-1 px-2 font-semibold text-xl tracking-tight"
+  >
+    <span className="text-blue-600">housing</span>
+    <span className="text-green-600">data</span>
+    <span className="text-gray-600">.app</span>
   </Link>
 )
 
