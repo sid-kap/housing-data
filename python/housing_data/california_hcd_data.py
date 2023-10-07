@@ -31,7 +31,7 @@ BUILDING_PERMIT_COLUMNS = [
 def load_california_hcd_data(
     data_path: Path,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    df = pd.read_csv(data_path / "data/apr/table-a2-2018-2022.csv.gz")
+    df = pd.read_csv(data_path / "data/apr/table-a2-combined.csv.gz")
 
     # BPS doesn't include mobile homes, so we shouldn't include them here either
     df = df[df["UNIT_CAT_DESC"] != "Mobile Home Unit"].copy()
