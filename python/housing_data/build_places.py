@@ -325,7 +325,10 @@ def load_places(
     places_df["path_2"] = name.str.replace("/", "-").str.replace(" ", "_")
     places_df = places_df.drop(columns=["place_name", "place_type"])
 
-    # Not sure why I have to do this
-    places_df = places_df[places_df["path_1"].notnull() & places_df["path_2"].notnull()]
+    not_null_rows = places_df["path_1"].notnull() & places_df["path_2"].notnull()
+    assert (
+        not_null_rows.all()
+    ), f"Found rows where path_1 or path_2 is null: {places_df[['path_1', 'path_2']]}"
+    places_df = places_df[not_null_rows]
 
     return raw_places_df, places_df

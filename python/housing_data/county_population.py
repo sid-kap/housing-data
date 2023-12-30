@@ -51,7 +51,7 @@ def get_county_populations_2000s(data_path: Path, data_repo_path: Path) -> pd.Da
             f"https://www2.census.gov/programs-surveys/popest/tables/2000-2010/"
             f"intercensal/county/co-est00int-01-{state.fips}.csv",
         )
-        for state in us.STATES_AND_TERRITORIES
+        for state in us.STATES_AND_TERRITORIES + [us.states.DC]
         if state.fips not in ["60", "66", "69", "72", "78"]  # exclude territories
     ]
 
@@ -83,7 +83,11 @@ def get_county_populations_2000s(data_path: Path, data_repo_path: Path) -> pd.Da
             engine="python",  # for skipfooter
         )
         df["state_code"] = state_code
-        df["County Name"] = df["County Name"].str.lstrip(".")
+
+        # In these CSV files, the total row looks like "Connecticut",
+        # while the rows for each county look like ".Fairfield County".
+        df = df[df["County Name"].str.startswith(".")]
+        df["County Name"] = df["County Name"].str.removeprefix(".")
 
         dfs.append(df)
 

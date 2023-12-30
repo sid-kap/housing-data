@@ -183,7 +183,15 @@ def get_state_abbrs(state_codes: pd.Series) -> pd.Series:
     :param state_codes: state_codes: pd.Series of int
     :return: pd.Series of state abbrs as str
     """
-    return state_codes.astype(str).str.zfill(2).map(us.states.mapping("fips", "abbr"))
+    # (see https://en.wikipedia.org/wiki/Federal_Information_Processing_Standard_state_code#FIPS_state_codes).
+    fips_to_abbr = us.states.mapping("fips", "abbr") | {
+        # DC is not in us.states.STATES_AND_TERRITORIES for some reason
+        "11": "DC",
+        # BPS uses alternate FIPS codes for Puerto Rico and Virgin Islands, idk why
+        "43": "PR",
+        "52": "VI",
+    }
+    return state_codes.astype(str).str.zfill(2).map(fips_to_abbr)
 
 
 def load_bps_all_years_plus_monthly(
