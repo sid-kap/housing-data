@@ -496,7 +496,11 @@ export default function Home(): JSX.Element {
         {perCapitaInput}
         {groupingInput}
         {selectedLocations.some((l) => l.has_ca_hcd_data) && preferHcdDataInput}
-        <DownloadData data={data} name="housing data comparisons.json" />
+        <DownloadData
+          data={data}
+          name="housing data comparisons.json"
+          selected={selectedLocations}
+        />
         {selectedLocations.some((l) => l.has_ca_hcd_data) && <HcdDataInfo />}
       </div>
     </Page>

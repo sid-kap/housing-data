@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react"
+
 import BarPlot from "lib/BarPlot"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
 import { useFetch } from "lib/queries"
@@ -42,9 +44,8 @@ export default function PlotsTemplate({
   jsonRoot: string
   countyList?: JSX.Element
 }): JSX.Element {
-  const { data } = useFetch(
-    selected != null ? jsonRoot + selected.value + ".json" : null
-  )
+  const url = selected != null ? jsonRoot + selected.value + ".json" : null
+  const { data } = useFetch(url)
 
   const { selectedUnits, unitsSelect } = useUnitsSelect()
 
@@ -81,7 +82,11 @@ export default function PlotsTemplate({
             {selected?.has_ca_hcd_data && <HcdDataInfo />}
           </div>
         </div>
-        <DownloadData data={data} name={selected?.name + ".json"} />
+        <DownloadData
+          data={data}
+          name={selected?.name + ".json"}
+          selected={url}
+        />
       </div>
     </div>
   )
@@ -90,13 +95,27 @@ export default function PlotsTemplate({
 export function DownloadData({
   data,
   name,
+  selected,
 }: {
   data: object
   name: string
+  selected: Any
 }): JSX.Element {
+  let url = useRef("#")
+  useEffect(() => {
+    url.current = URL.createObjectURL(
+      new Blob([JSON.stringify(data)], { type: "octet/stream" })
+    )
+    // Cleanup function
+    return () => {
+      if (url.current != "#" && typeof window !== "undefined") {
+        URL.revokeObjectURL(url.current)
+      }
+    }
+  }, [selected])
   return (
     <a
-      href={"data:application/json," + JSON.stringify(data)}
+      href={url.current}
       className="text-sm text-blue-500 hover:text-blue-300"
       download={name}
     >
