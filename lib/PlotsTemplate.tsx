@@ -102,6 +102,8 @@ export function DownloadData({
   selected: Any
 }): JSX.Element {
   let url = useRef("#")
+
+  // This runs every time selected changes
   useEffect(() => {
     url.current = URL.createObjectURL(
       new Blob([JSON.stringify(data)], { type: "octet/stream" })
