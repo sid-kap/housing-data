@@ -44,8 +44,9 @@ export default function PlotsTemplate({
   jsonRoot: string
   countyList?: JSX.Element
 }): JSX.Element {
-  const url = selected != null ? jsonRoot + selected.value + ".json" : null
-  const { data } = useFetch(url)
+  const { data } = useFetch(
+    selected != null ? jsonRoot + selected.value + ".json" : null
+  )
 
   const { selectedUnits, unitsSelect } = useUnitsSelect()
 
@@ -85,7 +86,7 @@ export default function PlotsTemplate({
         <DownloadData
           data={data}
           name={selected?.name + ".json"}
-          selected={url}
+          selected={selected?.name}
         />
       </div>
     </div>
