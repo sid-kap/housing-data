@@ -102,7 +102,7 @@ export function DownloadData({
   name: string
   selected: Any
 }): JSX.Element {
-  let url = useRef("#")
+  const url = useRef("#")
 
   // This runs every time selected changes
   useEffect(() => {
