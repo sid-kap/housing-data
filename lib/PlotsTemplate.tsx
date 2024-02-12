@@ -100,7 +100,7 @@ export function DownloadData({
 }: {
   data: object
   name: string
-  selected: Any
+  selected: any
 }): JSX.Element {
   const url = useRef("#")
 
