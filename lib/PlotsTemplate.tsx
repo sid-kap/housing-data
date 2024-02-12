@@ -71,13 +71,36 @@ export default function PlotsTemplate({
           preferHcdData={preferHcdData}
         />
       </div>
-      {perCapitaInput}
-      {selected?.has_ca_hcd_data && preferHcdDataInput}
-      {countyList ?? ""}
-      <div>
-        <CurrentYearExtrapolationInfo />
-        {selected?.has_ca_hcd_data && <HcdDataInfo />}
+      <div className="flex flex-row mx-auto flex-wrap">
+        <div className="align-center items-center justify-center flex flex-col max-w-3xl">
+          {perCapitaInput}
+          {selected?.has_ca_hcd_data && preferHcdDataInput}
+          {countyList ?? ""}
+          <div>
+            <CurrentYearExtrapolationInfo />
+            {selected?.has_ca_hcd_data && <HcdDataInfo />}
+          </div>
+        </div>
+        <DownloadData data={data} name={selected?.name + ".json"} />
       </div>
     </div>
+  )
+}
+
+export function DownloadData({
+  data,
+  name,
+}: {
+  data: object
+  name: string
+}): JSX.Element {
+  return (
+    <a
+      href={"data:application/json," + JSON.stringify(data)}
+      className="text-sm text-blue-500 hover:text-blue-300"
+      download={name}
+    >
+      download data
+    </a>
   )
 }

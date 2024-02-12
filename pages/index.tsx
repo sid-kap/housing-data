@@ -11,7 +11,7 @@ import { Transform } from "vega-lite/src/transform"
 
 import { makeMetroOptions } from "lib/MetroPlots"
 import MultiSelect from "lib/MultiSelect"
-import { makeOptions } from "lib/PlotsTemplate"
+import { DownloadData, makeOptions } from "lib/PlotsTemplate"
 import { Page } from "lib/common_elements"
 import { useFetch } from "lib/queries"
 import {
@@ -496,6 +496,7 @@ export default function Home(): JSX.Element {
         {perCapitaInput}
         {groupingInput}
         {selectedLocations.some((l) => l.has_ca_hcd_data) && preferHcdDataInput}
+        <DownloadData data={data} name="housing data comparisons.json" />
         {selectedLocations.some((l) => l.has_ca_hcd_data) && <HcdDataInfo />}
       </div>
     </Page>
