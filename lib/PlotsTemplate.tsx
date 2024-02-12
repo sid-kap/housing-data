@@ -115,6 +115,7 @@ export function DownloadData({
       }
     }
   }, [selected])
+
   return (
     <a
       href={url.current}
