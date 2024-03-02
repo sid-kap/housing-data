@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import BarPlot from "lib/BarPlot"
 import { CurrentYearExtrapolationInfo } from "lib/projections"
@@ -83,11 +83,7 @@ export default function PlotsTemplate({
             {selected?.has_ca_hcd_data && <HcdDataInfo />}
           </div>
         </div>
-        <DownloadData
-          data={data}
-          name={selected?.name + ".json"}
-          selected={selected?.name}
-        />
+        <DownloadData data={data} name={selected?.name + ".json"} />
       </div>
     </div>
   )
@@ -96,30 +92,27 @@ export default function PlotsTemplate({
 export function DownloadData({
   data,
   name,
-  selected,
 }: {
   data: object
   name: string
-  selected: any
 }): JSX.Element {
-  const url = useRef("#")
+  const [url, setUrl] = useState("#")
 
-  // This runs every time selected changes
+  // This runs every time data changes
   useEffect(() => {
-    url.current = URL.createObjectURL(
-      new Blob([JSON.stringify(data)], { type: "octet/stream" })
-    )
-    // Cleanup function
-    return () => {
-      if (url.current != "#" && typeof window !== "undefined") {
-        URL.revokeObjectURL(url.current)
-      }
+    if (url != "#") {
+      URL.revokeObjectURL(url)
     }
-  }, [selected])
+    setUrl(
+      URL.createObjectURL(
+        new Blob([JSON.stringify(data)], { type: "application/json" })
+      )
+    )
+  }, [data])
 
   return (
     <a
-      href={url.current}
+      href={url}
       className="text-sm text-blue-500 hover:text-blue-300"
       download={name}
     >
