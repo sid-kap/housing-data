@@ -4,7 +4,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from housing_data.build_data_utils import impute_2023_population
+from housing_data.build_data_utils import impute_2023_and_2024_population
 from housing_data.data_loading_helpers import get_path, get_url_text
 
 
@@ -432,7 +432,7 @@ def get_place_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
         ),
     )
     df = _melt_df(df, years=list(range(2020, 2023)))
-    df = impute_2023_population(df)
+    df = impute_2023_and_2024_population(df)
     return df
 
 

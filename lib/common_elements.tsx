@@ -135,7 +135,7 @@ const navItems = [
     name: "States",
   },
   {
-    url: "/metros/Bakersfield_CA",
+    url: "/metros/Abilene_TX",
     name: "Metros",
   },
   {

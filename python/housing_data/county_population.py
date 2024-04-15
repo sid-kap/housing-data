@@ -4,8 +4,8 @@ from typing import Optional
 
 import pandas as pd
 import us
-from housing_data.build_data_utils import impute_2023_population
-from housing_data.data_loading_helpers import get_path, get_url_text
+from housing_data.build_data_utils import impute_2024_population
+from housing_data.data_loading_helpers import get_url_text
 from housing_data.fips_crosswalk import load_fips_crosswalk
 
 
@@ -21,36 +21,21 @@ def _melt_df(df: pd.DataFrame, years: list[int]) -> pd.DataFrame:
 
 
 def get_county_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
-    df = pd.read_csv(
-        get_path(
-            "https://www2.census.gov/programs-surveys/popest/datasets/2020-2022/counties/totals/co-est2022-alldata.csv",
-            data_path,
-        ),
-    )
+    df = pd.read_csv(data_path / "co-est2023-alldata.csv", encoding="latin_1")
 
-    df = _melt_df(df, list(range(2020, 2023)))
-    return impute_2023_population(df)
+    df = _melt_df(df, list(range(2020, 2024)))
+    return impute_2024_population(df)
 
 
 def get_county_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
-    df = pd.read_csv(
-        get_path(
-            "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/counties/totals/co-est2020-alldata.csv",
-            data_path,
-        ),
-        encoding="latin_1",
-    )
+    df = pd.read_csv(data_path / "co-est2020-alldata.csv", encoding="latin_1")
 
     return _melt_df(df, list(range(2010, 2020)))
 
 
 def get_county_populations_2000s(data_path: Path, data_repo_path: Path) -> pd.DataFrame:
-    urls = [
-        (
-            state.fips,
-            f"https://www2.census.gov/programs-surveys/popest/tables/2000-2010/"
-            f"intercensal/county/co-est00int-01-{state.fips}.csv",
-        )
+    paths = [
+        (state.fips, f"co-est00int-01-{state.fips}.csv")
         for state in us.STATES_AND_TERRITORIES + [us.states.DC]
         if state.fips not in ["60", "66", "69", "72", "78"]  # exclude territories
     ]
@@ -73,9 +58,9 @@ def get_county_populations_2000s(data_path: Path, data_repo_path: Path) -> pd.Da
     ]
 
     dfs = []
-    for state_code, url in urls:
+    for state_code, path in paths:
         df = pd.read_csv(
-            get_path(url, data_path),
+            data_path / path,
             names=col_names,
             skiprows=4,
             skipfooter=8,
@@ -190,13 +175,7 @@ def get_county_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
 def get_county_populations_1980s(data_path: Optional[Path]) -> pd.DataFrame:
     dfs = []
     for year in range(1980, 1990):
-        df = pd.read_excel(
-            get_path(
-                f"https://www2.census.gov/programs-surveys/popest/tables/1980-1990/counties/asrh/pe-02-{year}.xls",
-                data_path,
-            ),
-            skiprows=5,
-        )
+        df = pd.read_excel(data_path / f"pe-02-{year}.xls", skiprows=5)
         df = df.rename(
             columns={
                 "Year of Estimate": "year",

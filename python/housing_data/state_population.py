@@ -4,7 +4,7 @@ from typing import Optional
 
 import pandas as pd
 import us
-from housing_data.build_data_utils import impute_2023_population
+from housing_data.build_data_utils import impute_2024_population
 from housing_data.data_loading_helpers import get_path, get_url_text
 
 DIVISIONS = {
@@ -119,10 +119,7 @@ def _get_counties_population_table_1990s(
     assert 1990 <= year <= 1999
 
     df = pd.read_csv(
-        get_path(
-            f"https://www2.census.gov/programs-surveys/popest/tables/1990-2000/intercensal/st-co/stch-icen{year}.txt",
-            data_path,
-        ),
+        data_path / f"stch-icen{year}.txt",
         delim_whitespace=True,
         names=[
             "year",
@@ -223,15 +220,10 @@ def get_state_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
 
 
 def get_state_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
-    df = pd.read_csv(
-        get_path(
-            "https://www2.census.gov/programs-surveys/popest/datasets/2020-2022/state/totals/NST-EST2022-ALLDATA.csv",
-            data_path,
-        )
-    )
+    df = pd.read_csv(data_path / "NST-EST2023-ALLDATA.csv")
 
-    df = _melt_df(df, list(range(2020, 2023)))
-    return impute_2023_population(df)
+    df = _melt_df(df, list(range(2020, 2024)))
+    return impute_2024_population(df)
 
 
 def get_state_population_estimates(data_path: Optional[Path]) -> pd.DataFrame:
