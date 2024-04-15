@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 from housing_data import state_population
@@ -26,11 +25,11 @@ NON_STATE_FIPS = {
 }
 
 
-def load_states(data_repo_path: Optional[Path]) -> pd.DataFrame:
+def load_states(data_repo_path: Path) -> pd.DataFrame:
     states_df = load_bps_all_years_plus_monthly(data_repo_path, "state")
 
     population_df = state_population.get_state_population_estimates(
-        data_repo_path / STATE_POPULATION_DIR if data_repo_path else None
+        data_repo_path / STATE_POPULATION_DIR
     )
 
     states_df = states_df.merge(

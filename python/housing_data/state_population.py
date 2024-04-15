@@ -1,6 +1,5 @@
 from io import StringIO
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 import us
@@ -75,7 +74,7 @@ def _line_to_cols(row: str) -> list[str]:
     return [s.strip() for s in row.split()]
 
 
-def get_state_populations_1980s(data_path: Optional[Path]) -> pd.DataFrame:
+def get_state_populations_1980s(data_path: Path) -> pd.DataFrame:
     states_80s_text = get_url_text(
         "https://www2.census.gov/programs-surveys/popest/tables/1980-1990/state/asrh/st8090ts.txt",
         data_path,
@@ -113,9 +112,7 @@ def get_state_populations_1980s(data_path: Optional[Path]) -> pd.DataFrame:
     return df.melt(id_vars="state", var_name="year", value_name="population")
 
 
-def _get_counties_population_table_1990s(
-    year: int, data_path: Optional[Path]
-) -> pd.DataFrame:
+def _get_counties_population_table_1990s(year: int, data_path: Path) -> pd.DataFrame:
     assert 1990 <= year <= 1999
 
     df = pd.read_csv(
@@ -145,7 +142,7 @@ def _get_counties_population_table_1990s(
     return df
 
 
-def get_state_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
+def get_state_populations_1990s(data_path: Path) -> pd.DataFrame:
     df = pd.concat(
         [
             _get_counties_population_table_1990s(year, data_path)
@@ -169,7 +166,7 @@ def get_state_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
     )
 
 
-def get_state_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
+def get_state_populations_2000s(data_path: Path) -> pd.DataFrame:
     df = pd.read_excel(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/tables/2000-2010/intercensal/state/st-est00int-01.xls",
@@ -208,7 +205,7 @@ def _melt_df(df: pd.DataFrame, years: list[int]) -> pd.DataFrame:
     )
 
 
-def get_state_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
+def get_state_populations_2010s(data_path: Path) -> pd.DataFrame:
     df = pd.read_csv(
         get_path(
             "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/state/totals/nst-est2020-alldata.csv",
@@ -219,14 +216,14 @@ def get_state_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
     return _melt_df(df, list(range(2010, 2020)))
 
 
-def get_state_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
+def get_state_populations_2020s(data_path: Path) -> pd.DataFrame:
     df = pd.read_csv(data_path / "NST-EST2023-ALLDATA.csv")
 
     df = _melt_df(df, list(range(2020, 2024)))
     return impute_2024_population(df)
 
 
-def get_state_population_estimates(data_path: Optional[Path]) -> pd.DataFrame:
+def get_state_population_estimates(data_path: Path) -> pd.DataFrame:
     print("Loading 1980s data...")
     df_1980s = get_state_populations_1980s(data_path)
 
