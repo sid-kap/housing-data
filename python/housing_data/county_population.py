@@ -1,6 +1,5 @@
 from io import StringIO
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 import us
@@ -20,14 +19,14 @@ def _melt_df(df: pd.DataFrame, years: list[int]) -> pd.DataFrame:
     )
 
 
-def get_county_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
+def get_county_populations_2020s(data_path: Path) -> pd.DataFrame:
     df = pd.read_csv(data_path / "co-est2023-alldata.csv", encoding="latin_1")
 
     df = _melt_df(df, list(range(2020, 2024)))
     return impute_2024_population(df)
 
 
-def get_county_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
+def get_county_populations_2010s(data_path: Path) -> pd.DataFrame:
     df = pd.read_csv(data_path / "co-est2020-alldata.csv", encoding="latin_1")
 
     return _melt_df(df, list(range(2010, 2020)))
@@ -119,7 +118,7 @@ def get_county_fips_crosswalk(data_repo_path: Path) -> pd.DataFrame:
     return df
 
 
-def get_county_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
+def get_county_populations_1990s(data_path: Path) -> pd.DataFrame:
     table_text = get_url_text(
         "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/counties/totals/99c8_00.txt",
         data_path,
@@ -172,7 +171,7 @@ def get_county_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
     return df
 
 
-def get_county_populations_1980s(data_path: Optional[Path]) -> pd.DataFrame:
+def get_county_populations_1980s(data_path: Path) -> pd.DataFrame:
     dfs = []
     for year in range(1980, 1990):
         df = pd.read_excel(data_path / f"pe-02-{year}.xls", skiprows=5)
