@@ -72,7 +72,7 @@ export function usePreferHcdDataInput(): {
         checked={preferHcdData}
         onChange={() => setPreferHcdData(!preferHcdData)}
       />
-      <span className="ml-1">Prefer California HCD data for 2018–2022†</span>
+      <span className="ml-1">Prefer California HCD data for 2018–2023†</span>
     </label>
   )
 
