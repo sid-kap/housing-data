@@ -38,9 +38,8 @@ function getYearRanges(grouping: string): [Array<[number, number]>, number] {
         [2005, 2009],
         [2010, 2014],
         [2015, 2019],
-        [2020, 2023],
       ],
-      2024,
+      2020,
     ]
   } else {
     throw new Error(`Grouping type ${grouping} unknown`)
@@ -68,7 +67,7 @@ function makeYearBuckets(
       })
     }
   }
-  for (let year = firstNonRangeYear; year <= 2024; year++) {
+  for (let year = firstNonRangeYear; year <= 2023; year++) {
     yearBuckets.push({
       year: year,
       binned_year: year,
@@ -82,7 +81,7 @@ function getYearTickValues(grouping) {
   if (grouping === "none") {
     return null
   } else if (grouping === "five_years") {
-    return [1982, 1987, 1992, 1997, 2002, 2007, 2012, 2017, 2021.5]
+    return [1982, 1987, 1992, 1997, 2002, 2007, 2012, 2017]
   }
 }
 
@@ -144,7 +143,6 @@ function spec(
       }
     }
   }
-  console.log(makeYearBuckets(grouping))
   transforms.push(
     ...[
       {
@@ -170,14 +168,6 @@ function spec(
           fields: ["binned_year"],
         },
         default: 2023,
-      },
-      {
-        aggregate: [
-          {
-            op: "mean",
-            field: [""],
-          },
-        ],
       },
     ]
   )
@@ -247,7 +237,7 @@ function spec(
         encoding: {
           x: { aggregate: "max", field: "binned_year" },
           y: { aggregate: { argmax: "binned_year" }, field: yField },
-          text: { aggregate: { argmax: "binned_year" }, field: "year" }, // field: "name"
+          text: { aggregate: { argmax: "binned_year" }, field: "name" },
         },
       },
     ],
