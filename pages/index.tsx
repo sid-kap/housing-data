@@ -41,23 +41,17 @@ function getYearRanges(grouping: string): [Array<[number, number]>, number] {
       ],
       2020,
     ]
-  } else if (grouping === "five_years_old") {
-    return [
-      [
-        [1980, 1984],
-        [1985, 1989],
-        [1990, 1994],
-        [1995, 1999],
-        [2000, 2004],
-        [2005, 2009],
-      ],
-      2010,
-    ]
   } else {
     throw new Error(`Grouping type ${grouping} unknown`)
   }
 }
 
+/**
+ * If grouping == "five_years", returns a mapping from each year to
+ * the middle year of the bucket the year gets mapped to.
+ *
+ * If grouping == "none", returns a mapping from each year to itself.
+ */
 function makeYearBuckets(
   grouping: string
 ): Array<{ year: Date; binned_year: Date }> {
@@ -73,7 +67,7 @@ function makeYearBuckets(
       })
     }
   }
-  for (let year = firstNonRangeYear; year <= 2022; year++) {
+  for (let year = firstNonRangeYear; year <= 2023; year++) {
     yearBuckets.push({
       year: year,
       binned_year: year,
@@ -83,15 +77,11 @@ function makeYearBuckets(
   return yearBuckets
 }
 
-const midYearDatesThrough2010 = [1982, 1987, 1992, 1997, 2002, 2007]
-
 function getYearTickValues(grouping) {
   if (grouping === "none") {
     return null
   } else if (grouping === "five_years") {
-    return midYearDatesThrough2010.concat([2012, 2017, 2020])
-  } else if (grouping === "five_years_old") {
-    return midYearDatesThrough2010.concat([2010, 2012, 2014, 2016, 2018, 2020])
+    return [1982, 1987, 1992, 1997, 2002, 2007, 2012, 2017, 2020]
   }
 }
 
@@ -109,16 +99,10 @@ function makeYearToRangeStringMapping(grouping: string): Map<number, string> {
 }
 
 const yearRangeAllMapping = makeYearToRangeStringMapping("five_years")
-const yearRangeOldMapping = makeYearToRangeStringMapping("five_years_old")
 
 /*eslint @typescript-eslint/no-unused-vars: ["error", { "argsIgnorePattern": "^_" }]*/
 expressionFunction("yearRangeAllFormat", function (datum, _) {
   return yearRangeAllMapping[datum] || datum.toString()
-})
-
-/*eslint @typescript-eslint/no-unused-vars: ["error", { "argsIgnorePattern": "^_" }]*/
-expressionFunction("yearRangeOldFormat", function (datum, _) {
-  return yearRangeOldMapping[datum] || datum.toString()
 })
 
 /*eslint @typescript-eslint/no-unused-vars: ["error", { "argsIgnorePattern": "^_" }]*/
@@ -131,7 +115,6 @@ function spec(
   height: number,
   perCapita: boolean,
   preferHcdData: boolean,
-  interpolate: boolean,
   grouping: string,
   isWide: boolean
 ): TopLevelSpec {
@@ -161,6 +144,9 @@ function spec(
         calculate: "1000 * datum['total_units_per_capita']",
         as: "total_units_per_capita_per_1000",
       },
+      // Look up "binned_year" for each year.
+      // i.e. if grouping == "five_years", the middle year of the 5-year range,
+      // if grouping == "none", the year itself.
       {
         lookup: "year",
         from: {
@@ -176,7 +162,7 @@ function spec(
           key: "year",
           fields: ["binned_year"],
         },
-        default: 2022,
+        default: 2023,
       },
     ]
   )
@@ -198,7 +184,6 @@ function spec(
           grid: false,
           formatType: {
             five_years: "yearRangeAllFormat",
-            five_years_old: "yearRangeOldFormat",
             none: "yearFormat",
           }[grouping],
           values: getYearTickValues(grouping),
@@ -233,7 +218,6 @@ function spec(
       {
         mark: {
           type: "line",
-          interpolate: interpolate ? "monotone" : "linear",
           clip: true,
           point: true,
           tooltip: true,
@@ -358,7 +342,7 @@ function getData(path: string): object {
 function combineDatas(datas) {
   const data = datas
     .flatMap((d) => d.data ?? [])
-    .filter((d) => d.year != "2023")
+    .filter((d) => d.year != "2024")
 
   return data
 }
@@ -422,16 +406,6 @@ export default function Home(): JSX.Element {
 
   const { preferHcdData, preferHcdDataInput } = usePreferHcdDataInput()
 
-  // const [interpolate, setInterpolate] = useState(false)
-  // const interpolateInput = (
-  //   <div>
-  //     <input type='radio' checked={!interpolate} id='no_smoothing' onChange={() => setInterpolate(false)} />
-  //     <label htmlFor='no_smoothing' className='ml-1 mr-3'>No smoothing</label>
-  //     <input type='radio' checked={interpolate} id='smoothing' onChange={() => setInterpolate(true)} />
-  //     <label htmlFor='smoothing' className='ml-1 mr-3'>Smoothing</label>
-  //   </div>
-  // )
-
   type Grouping = "five_years" | "none"
 
   const [grouping, setGrouping] = useState<Grouping>("five_years")
@@ -484,7 +458,6 @@ export default function Home(): JSX.Element {
                   height,
                   perCapita,
                   preferHcdData,
-                  false,
                   grouping,
                   isMediumOrWider
                 )}
