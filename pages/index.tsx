@@ -106,11 +106,6 @@ expressionFunction("yearRangeAllFormat", function (datum, _) {
 })
 
 /*eslint @typescript-eslint/no-unused-vars: ["error", { "argsIgnorePattern": "^_" }]*/
-expressionFunction("yearRangeOldFormat", function (datum, _) {
-  return yearRangeOldMapping[datum] || datum.toString()
-})
-
-/*eslint @typescript-eslint/no-unused-vars: ["error", { "argsIgnorePattern": "^_" }]*/
 expressionFunction("yearFormat", function (datum, _) {
   return datum.toString()
 })
