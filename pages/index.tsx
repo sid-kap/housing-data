@@ -81,7 +81,7 @@ function getYearTickValues(grouping) {
   if (grouping === "none") {
     return null
   } else if (grouping === "five_years") {
-    return [1982, 1987, 1992, 1997, 2002, 2007, 2012, 2017]
+    return [1982, 1987, 1992, 1997, 2002, 2007, 2012, 2017, 2020]
   }
 }
 
