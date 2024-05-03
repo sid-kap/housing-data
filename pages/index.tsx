@@ -171,6 +171,14 @@ function spec(
         },
         default: 2023,
       },
+      {
+        aggregate: [
+          {
+            op: "mean",
+            field: [""],
+          },
+        ],
+      },
     ]
   )
 
@@ -239,7 +247,7 @@ function spec(
         encoding: {
           x: { aggregate: "max", field: "binned_year" },
           y: { aggregate: { argmax: "binned_year" }, field: yField },
-          text: { aggregate: { argmax: "binned_year" }, field: "name" },
+          text: { aggregate: { argmax: "binned_year" }, field: "year" }, // field: "name"
         },
       },
     ],
