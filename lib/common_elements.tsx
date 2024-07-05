@@ -158,7 +158,7 @@ export function Nav({ currentIndex }) {
   )
 }
 
-function Favicons() {
+export function Favicons() {
   // code and files generated at https://realfavicongenerator.net/favicon_result?file_id=p1eqe14ktav9g1bnv1v22dbm1lb26
   return (
     <>
@@ -196,16 +196,15 @@ function Favicons() {
 
 export function Page({ title, navIndex, children }) {
   return (
-    <div>
+    <>
       <Head>
-        <title>{title}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <Favicons />
+        <title>{title}</title>
       </Head>
 
       <Nav currentIndex={navIndex} />
       {children}
       <GitHubFooter />
-    </div>
+    </>
   )
 }

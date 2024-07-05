@@ -9,10 +9,10 @@ export default function DataSources(): JSX.Element {
   const para = "mb-2"
 
   return (
-    <div>
+    <>
       <Head>
-        <title>Data Sources/FAQs</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Data Sources/FAQs</title>
       </Head>
       <Nav currentIndex={5} />
       <div className="max-w-2xl mx-auto mb-10 align-center flex flex-col justify-center">
@@ -156,6 +156,6 @@ export default function DataSources(): JSX.Element {
         </pre>
       </div>
       <GitHubFooter />
-    </div>
+    </>
   )
 }
