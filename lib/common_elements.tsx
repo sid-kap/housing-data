@@ -28,7 +28,7 @@ export function GitHubFooter(): JSX.Element {
           US Census Building Permits Survey
         </a>
         . Created by{" "}
-        <a className={linkClasses} href="http://twitter.com/sidkap_">
+        <a className={linkClasses} href="https://x.com/sidkap_">
           Sid Kapur
         </a>
         .
