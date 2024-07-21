@@ -37,6 +37,7 @@ def load_california_hcd_data(
     df = df[df["UNIT_CAT_DESC"] != "Mobile Home Unit"].copy()
 
     df["units"] = df[BUILDING_PERMIT_COLUMNS].sum(axis="columns", numeric_only=True)
+
     df = df[
         (df["units"] > 0)
         # Exclude rows with a certificate of occupancy, because it's very unlikely
@@ -45,7 +46,7 @@ def load_california_hcd_data(
         # permit anyway.
         # NB: I only looked at LA data to validate this assumption. The data looks
         # _way_ more accurate when we drop these rows.
-        & df["CO_ISSUE_DT1"].isnull()
+        & (df["CO_ISSUE_DT1"].isnull() | ((df["BP_ISSUE_DT1"] == df["CO_ISSUE_DT1"])))
     ].copy()
 
     df["building_type"] = np.select(
