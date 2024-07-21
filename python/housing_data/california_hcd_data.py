@@ -37,6 +37,7 @@ def load_california_hcd_data(
     df = df[df["UNIT_CAT_DESC"] != "Mobile Home Unit"].copy()
 
     df["units"] = df[BUILDING_PERMIT_COLUMNS].sum(axis="columns", numeric_only=True)
+
     df = df[
         (df["units"] > 0)
         # Exclude rows with a certificate of occupancy, because it's very unlikely
@@ -45,7 +46,7 @@ def load_california_hcd_data(
         # permit anyway.
         # NB: I only looked at LA data to validate this assumption. The data looks
         # _way_ more accurate when we drop these rows.
-        & df["CO_ISSUE_DT1"].isnull()
+        & (df["CO_ISSUE_DT1"].isnull() | ((df["BP_ISSUE_DT1"] == df["CO_ISSUE_DT1"])))
     ].copy()
 
     df["building_type"] = np.select(
@@ -121,13 +122,18 @@ def _aggregate_to_geography(
         assert (wide_df[["JURS_NAME", "year"]].value_counts() == 1).all()
         wide_df = wide_df.drop(columns=["CNTY_NAME"])
     if level == "place":
-        old_rows = len(wide_df)
+        old_wide_df = wide_df
         # Add place_or_county_code
         wide_df = wide_df.merge(
             _load_fips_crosswalk(data_path), left_on="JURS_NAME", right_on="name"
         ).drop(columns=["name", "county_code"])
-        new_rows = len(wide_df)
-        assert old_rows == new_rows, f"{old_rows=} != {new_rows=}"
+        if len(old_wide_df) != len(wide_df):
+            dropped_cities = set(old_wide_df["JURS_NAME"]) - set(wide_df["JURS_NAME"])
+            added_cities = set(wide_df["JURS_NAME"]) - set(old_wide_df["JURS_NAME"])
+            raise ValueError(
+                f"wide_df had {len(old_wide_df)} rows before merge and {len(wide_df)} rows after merge. "
+                f"{dropped_cities=} {added_cities=}"
+            )
     elif level == "county":
         # Add county_code
         old_rows = len(wide_df)
@@ -167,6 +173,11 @@ def _load_fips_crosswalk(data_path: Path) -> pd.DataFrame:
                 "Carmel-by-the-Sea": "CARMEL",
                 "La Cañada Flintridge": "LA CANADA FLINTRIDGE",
                 "Angels": "ANGELS CAMP",
+                # The crosswalk has a city called "Amador City city".
+                # I think the BPS data cleaning code messes this city up and shortens it to just "Amador".
+                # This is wrong/we should probably fix it like we fixed Jersey City, but for now
+                # let's just change it "AMADOR" to fix the "rows dropped in merge" error
+                "Amador City": "AMADOR",
             }
         )
         .str.upper()
