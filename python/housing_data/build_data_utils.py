@@ -80,7 +80,7 @@ CANADA_CROSSWALK_DIR = Path("data", "canada-crosswalk")
 CANADA_POPULATION_DIR = Path("data", "canada-population")
 
 # Last year and month for which monthly BPS data is available (and is cloned to housing-data-data).
-LATEST_MONTH = (2024, 11)
+LATEST_MONTH = (2024, 12)
 LAST_YEAR_ANNUAL_DATA_RELEASED = True
 
 
