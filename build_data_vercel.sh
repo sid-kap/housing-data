@@ -1,8 +1,9 @@
 #! /usr/bin/env bash
 
 curl -LsSf https://astral.sh/uv/install.sh | sh
-# shellcheck source=.local/bin/env
-source .local/bin/env
+
+# shellcheck disable=SC1091
+source "$HOME/.local/bin/env"
 
 cd python || exit
 
