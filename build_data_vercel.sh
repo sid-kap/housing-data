@@ -1,5 +1,6 @@
 #! /usr/bin/env bash
 
+echo "$HOME/.local/bin/env"
 curl -LsSf https://astral.sh/uv/install.sh | sh
 # shellcheck source=$HOME/.local/bin/env
 source "$HOME/.local/bin/env"
