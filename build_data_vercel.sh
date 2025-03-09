@@ -1,17 +1,11 @@
 #! /usr/bin/env bash
 
-curl https://pyenv.run | bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-export PATH="$HOME/.pyenv/bin:$PATH"
-eval "$(pyenv init -)"
+# shellcheck disable=SC1091
+source "$HOME/.local/bin/env"
 
-pyenv install 3.11.5
-pyenv global 3.11.5
-
-pip3 install --user poetry
 cd python || exit
-export PATH=$PATH:$HOME/.local/bin
-poetry install --no-dev
 
 git clone https://github.com/sid-kap/housing-data-data ../housing-data-data
-poetry run build_data --data-repo-path ../housing-data-data
+uv run python -m housing_data.build_data --data-repo-path ../housing-data-data
