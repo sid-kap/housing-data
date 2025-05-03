@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 import us
-from housing_data.build_data_utils import impute_2024_population
+from housing_data.build_data_utils import impute_2024_and_2025_population
 from housing_data.data_loading_helpers import get_path, get_url_text
 
 DIVISIONS = {
@@ -220,7 +220,7 @@ def get_state_populations_2020s(data_path: Path) -> pd.DataFrame:
     df = pd.read_csv(data_path / "NST-EST2023-ALLDATA.csv")
 
     df = _melt_df(df, list(range(2020, 2024)))
-    return impute_2024_population(df)
+    return impute_2024_and_2025_population(df)
 
 
 def get_state_population_estimates(data_path: Path) -> pd.DataFrame:

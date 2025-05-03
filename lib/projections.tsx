@@ -1,4 +1,4 @@
-const currentYear = "2024"
+const currentYear = "2025"
 export const projectedUnitsLabel = `Projected units, ${currentYear}*`
 
 const months = {
@@ -17,7 +17,7 @@ const months = {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-const latestMonth: number = 12
+const latestMonth: number = 3
 const glueWord = latestMonth == 2 ? "and" : "through"
 const observedMonths =
   latestMonth == 1

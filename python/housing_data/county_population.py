@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 import us
-from housing_data.build_data_utils import impute_2024_population
+from housing_data.build_data_utils import impute_2024_and_2025_population
 from housing_data.data_loading_helpers import get_url_text
 from housing_data.fips_crosswalk import load_fips_crosswalk
 
@@ -23,7 +23,7 @@ def get_county_populations_2020s(data_path: Path) -> pd.DataFrame:
     df = pd.read_csv(data_path / "co-est2023-alldata.csv", encoding="latin_1")
 
     df = _melt_df(df, list(range(2020, 2024)))
-    return impute_2024_population(df)
+    return impute_2024_and_2025_population(df)
 
 
 def get_county_populations_2010s(data_path: Path) -> pd.DataFrame:
