@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
   "jupyterlab~=3.4.5"
 ]

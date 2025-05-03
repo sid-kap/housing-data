@@ -330,14 +330,13 @@ dependencies = [
     { name = "xlrd" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "jupyterlab" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "jupyterlab", marker = "extra == 'dev'", specifier = "~=3.4.5" },
     { name = "openpyxl", specifier = "~=3.1.2" },
     { name = "pandas", specifier = "~=2.1.1" },
     { name = "pyarrow", specifier = "~=13.0.0" },
@@ -346,7 +345,9 @@ requires-dist = [
     { name = "us", specifier = "~=3.1.1" },
     { name = "xlrd", specifier = "~=2.0.1" },
 ]
-provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "jupyterlab", specifier = "~=3.4.5" }]
 
 [[package]]
 name = "idna"
