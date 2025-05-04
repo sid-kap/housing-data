@@ -314,5 +314,6 @@ def impute_2024_and_2025_population(df_2020s: pd.DataFrame) -> pd.DataFrame:
         [
             df_2020s,
             df_2020s[df_2020s["year"] == "2023"].assign(year="2024"),
+            df_2020s[df_2020s["year"] == "2023"].assign(year="2025"),
         ]
     )
