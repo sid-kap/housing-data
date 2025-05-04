@@ -21,6 +21,8 @@ import {
 } from "lib/selects"
 import { scoreFnWithPopulation } from "lib/utils"
 
+const MAX_YEAR = 2024
+
 /**
  * Returns a pair (year ranges, first year not in a range)
  */
@@ -67,7 +69,7 @@ function makeYearBuckets(
       })
     }
   }
-  for (let year = firstNonRangeYear; year <= 2023; year++) {
+  for (let year = firstNonRangeYear; year <= MAX_YEAR; year++) {
     yearBuckets.push({
       year: year,
       binned_year: year,
@@ -81,7 +83,7 @@ function getYearTickValues(grouping) {
   if (grouping === "none") {
     return null
   } else if (grouping === "five_years") {
-    return [1982, 1987, 1992, 1997, 2002, 2007, 2012, 2017, 2020]
+    return [1982, 1987, 1992, 1997, 2002, 2007, 2012, 2017, 2020, 2024]
   }
 }
 
@@ -162,7 +164,7 @@ function spec(
           key: "year",
           fields: ["binned_year"],
         },
-        default: 2023,
+        default: MAX_YEAR,
       },
     ]
   )
@@ -342,7 +344,7 @@ function getData(path: string): object {
 function combineDatas(datas) {
   const data = datas
     .flatMap((d) => d.data ?? [])
-    .filter((d) => d.year != "2024")
+    .filter((d) => parseInt(d.year) <= MAX_YEAR)
 
   return data
 }
