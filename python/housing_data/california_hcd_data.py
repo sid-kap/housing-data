@@ -31,10 +31,15 @@ BUILDING_PERMIT_COLUMNS = [
 def load_california_hcd_data(
     data_path: Path,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    df = pd.read_csv(data_path / "data/apr/table-a2-combined.csv.gz")
+    df = pd.read_csv(data_path / "data/apr/tablea2.csv.gz")
 
     # BPS doesn't include mobile homes, so we shouldn't include them here either
-    df = df[df["UNIT_CAT_DESC"] != "Mobile Home Unit"].copy()
+    df = df[df["UNIT_CAT"] != "MH"].copy()
+
+    # Has some values that are not numbers (e.g. "2020-08-02")
+    df["BP_ABOVE_MOD_INCOME"] = pd.to_numeric(
+        df["BP_ABOVE_MOD_INCOME"], errors="coerce"
+    )
 
     df["units"] = df[BUILDING_PERMIT_COLUMNS].sum(axis="columns", numeric_only=True)
 
@@ -51,19 +56,16 @@ def load_california_hcd_data(
 
     df["building_type"] = np.select(
         [
-            df["UNIT_CAT_DESC"] == "Accessory Dwelling Unit",
-            df["UNIT_CAT_DESC"].isin(
-                ["Single-Family Detached Unit", "Single-Family Attached Unit"]
-            ),
-            (df["UNIT_CAT_DESC"] == "2-, 3-, and 4-Plex Units per Structure")
-            & df["units"].isin([1, 2]),
+            df["UNIT_CAT"] == "ADU",
+            df["UNIT_CAT"].isin(["SFD", "SFA"]),
+            (df["UNIT_CAT"] == "2 to 4") & df["units"].isin([1, 2]),
             # If there are 3, 4, or more units in the project, assume it's 3 or 4.
             # TBH my prior is that 2-plexes are way more common than 3- or 4-plexes.
             # But for simplicity let's just put them in 3-to-4.
             # From 2018 to 2022, there are only ~2400 units worth of 2/3/4 unit projects
             # with >4 units in the project. So misclassifying these is not a big deal.
-            df["UNIT_CAT_DESC"] == "2-, 3-, and 4-Plex Units per Structure",
-            df["UNIT_CAT_DESC"] == "5 or More Units Per Structure",
+            df["UNIT_CAT"] == "2 to 4",
+            df["UNIT_CAT"] == "5+",
         ],
         [
             "adu",
@@ -96,7 +98,7 @@ def _aggregate_to_geography(
     df["bldgs"] = 1
 
     if level == "place":
-        index_cols = ["JURS_NAME", "CNTY_NAME", "year"]
+        index_cols = ["JURIS_NAME", "CNTY_NAME", "year"]
     elif level == "county":
         index_cols = ["CNTY_NAME", "year"]
     elif level == "state":
@@ -119,17 +121,17 @@ def _aggregate_to_geography(
 
     if level == "place":
         # Confirm that we can drop county because in California, a city can't span multiple counties
-        assert (wide_df[["JURS_NAME", "year"]].value_counts() == 1).all()
+        assert (wide_df[["JURIS_NAME", "year"]].value_counts() == 1).all()
         wide_df = wide_df.drop(columns=["CNTY_NAME"])
     if level == "place":
         old_wide_df = wide_df
         # Add place_or_county_code
         wide_df = wide_df.merge(
-            _load_fips_crosswalk(data_path), left_on="JURS_NAME", right_on="name"
+            _load_fips_crosswalk(data_path), left_on="JURIS_NAME", right_on="name"
         ).drop(columns=["name", "county_code"])
         if len(old_wide_df) != len(wide_df):
-            dropped_cities = set(old_wide_df["JURS_NAME"]) - set(wide_df["JURS_NAME"])
-            added_cities = set(wide_df["JURS_NAME"]) - set(old_wide_df["JURS_NAME"])
+            dropped_cities = set(old_wide_df["JURIS_NAME"]) - set(wide_df["JURIS_NAME"])
+            added_cities = set(wide_df["JURIS_NAME"]) - set(old_wide_df["JURIS_NAME"])
             raise ValueError(
                 f"wide_df had {len(old_wide_df)} rows before merge and {len(wide_df)} rows after merge. "
                 f"{dropped_cities=} {added_cities=}"
@@ -137,7 +139,7 @@ def _aggregate_to_geography(
     elif level == "county":
         # Add county_code
         old_rows = len(wide_df)
-        wide_df["name"] = wide_df["CNTY_NAME"] + " COUNTY"
+        wide_df["name"] = wide_df["CNTY_NAME"].str.upper() + " COUNTY"
         wide_df = wide_df.merge(_load_fips_crosswalk(data_path), on="name").drop(
             columns=["CNTY_NAME", "name", "place_or_county_code"]
         )
