@@ -293,7 +293,7 @@ def get_name_spelling(places_df: pd.DataFrame) -> pd.Series:
 
 
 def load_places(
-    data_repo_path: Optional[Path], counties_population_df: pd.DataFrame = None
+    data_repo_path: Path, counties_population_df: pd.DataFrame = None
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     raw_places_df = pd.concat(
         [
@@ -310,7 +310,7 @@ def load_places(
     raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
     place_populations_df = place_population.get_place_population_estimates(
-        data_path=data_repo_path / PLACE_POPULATION_DIR if data_repo_path else None
+        data_path=data_repo_path / PLACE_POPULATION_DIR
     )
     place_populations_df = fix_nyc_boroughs_population(
         place_populations_df, counties_population_df

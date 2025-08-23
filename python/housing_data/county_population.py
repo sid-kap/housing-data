@@ -4,7 +4,6 @@ from pathlib import Path
 import pandas as pd
 import us
 from housing_data.build_data_utils import impute_2025_population
-from housing_data.data_loading_helpers import get_url_text
 from housing_data.fips_crosswalk import load_fips_crosswalk
 
 
@@ -119,11 +118,7 @@ def get_county_fips_crosswalk(data_repo_path: Path) -> pd.DataFrame:
 
 
 def get_county_populations_1990s(data_path: Path) -> pd.DataFrame:
-    table_text = get_url_text(
-        "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/counties/totals/99c8_00.txt",
-        data_path,
-        encoding="latin_1",
-    )
+    table_text = (data_path / "99c8_00.txt").read_text(encoding="latin_1")
 
     table_text = table_text[: table_text.index("Block 2")].strip()
 
