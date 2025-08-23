@@ -5,15 +5,10 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from housing_data.build_data_utils import impute_2025_population
-from housing_data.data_loading_helpers import get_path, get_url_text
 
 
 def _get_places_crosswalk_df(data_path: Optional[Path] = None) -> pd.DataFrame:
-    df = pd.read_fwf(
-        get_path(
-            "https://www2.census.gov/geo/tiger/PREVGENZ/pl/us_places.txt", data_path
-        )
-    )
+    df = pd.read_fwf(data_path / "us_places.txt")
 
     df["State Code"] = df["CENSUS"] // 10000
     df["Place Code"] = df["CENSUS"] % 10000
@@ -147,12 +142,8 @@ def get_place_populations_1980(data_path: Optional[Path]) -> pd.DataFrame:
     return df
 
 
-def _load_raw_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
-    tables = get_url_text(
-        "https://www2.census.gov/programs-surveys/popest/tables/1990-2000/"
-        "2000-subcounties-evaluation-estimates/sc2000f_us.txt",
-        data_path,
-    ).split("\f")
+def _load_raw_place_populations_1990s(data_path: Path) -> pd.DataFrame:
+    tables = (data_path / "sc2000f_us.txt").read_text().split("\f")
 
     common_cols = [
         "Block",
@@ -396,14 +387,8 @@ def _melt_df(
     )
 
 
-def get_place_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
-    df = pd.read_csv(
-        get_path(
-            "https://www2.census.gov/programs-surveys/popest/datasets/2000-2010/intercensal/cities/sub-est00int.csv",
-            data_path,
-        ),
-        encoding="latin_1",
-    )
+def get_place_populations_2000s(data_path: Path) -> pd.DataFrame:
+    df = pd.read_csv(data_path / "sub-est00int.csv", encoding="latin_1")
     return _melt_df(
         df,
         years=list(range(2000, 2011)),
@@ -412,26 +397,14 @@ def get_place_populations_2000s(data_path: Optional[Path]) -> pd.DataFrame:
     )
 
 
-def get_place_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
-    df = pd.read_csv(
-        get_path(
-            "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/cities/SUB-EST2020_ALL.csv",
-            data_path,
-        ),
-        encoding="latin_1",
-    )
+def get_place_populations_2010s(data_path: Path) -> pd.DataFrame:
+    df = pd.read_csv(data_path / "SUB-EST2020_ALL.csv", encoding="latin_1")
 
     return _melt_df(df, years=list(range(2010, 2021)))
 
 
 def get_place_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
-    df = pd.read_csv(
-        get_path(
-            "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/cities/sub-est2024.csv",
-            data_path,
-        ),
-        encoding="latin_1",
-    )
+    df = pd.read_csv(data_path / "sub-est2024.csv", encoding="latin_1")
     df = _melt_df(df, years=list(range(2020, 2025)))
     df = impute_2025_population(df)
     return df

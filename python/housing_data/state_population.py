@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import us
 from housing_data.build_data_utils import impute_2025_population
-from housing_data.data_loading_helpers import get_path, get_url_text
+from housing_data.data_loading_helpers import get_url_text
 
 DIVISIONS = {
     "New England": [
@@ -168,10 +168,7 @@ def get_state_populations_1990s(data_path: Path) -> pd.DataFrame:
 
 def get_state_populations_2000s(data_path: Path) -> pd.DataFrame:
     df = pd.read_excel(
-        get_path(
-            "https://www2.census.gov/programs-surveys/popest/tables/2000-2010/intercensal/state/st-est00int-01.xls",
-            data_path,
-        ),
+        data_path / "st-est00int-01.xls",
         skiprows=3,
         skipfooter=8,
     )
@@ -206,12 +203,7 @@ def _melt_df(df: pd.DataFrame, years: list[int]) -> pd.DataFrame:
 
 
 def get_state_populations_2010s(data_path: Path) -> pd.DataFrame:
-    df = pd.read_csv(
-        get_path(
-            "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/state/totals/nst-est2020-alldata.csv",
-            data_path,
-        )
-    )
+    df = pd.read_csv(data_path / "nst-est2020-alldata.csv")
 
     return _melt_df(df, list(range(2010, 2020)))
 
