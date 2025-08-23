@@ -4,7 +4,6 @@ from pathlib import Path
 import pandas as pd
 import us
 from housing_data.build_data_utils import impute_2025_population
-from housing_data.data_loading_helpers import get_url_text
 
 DIVISIONS = {
     "New England": [
@@ -75,10 +74,7 @@ def _line_to_cols(row: str) -> list[str]:
 
 
 def get_state_populations_1980s(data_path: Path) -> pd.DataFrame:
-    states_80s_text = get_url_text(
-        "https://www2.census.gov/programs-surveys/popest/tables/1980-1990/state/asrh/st8090ts.txt",
-        data_path,
-    )
+    states_80s_text = (data_path / "st8090ts.txt").read_text()
     handle = StringIO(states_80s_text)
 
     for _ in range(10):
