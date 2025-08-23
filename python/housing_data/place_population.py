@@ -7,7 +7,7 @@ import pandas as pd
 from housing_data.build_data_utils import impute_2025_population
 
 
-def _get_places_crosswalk_df(data_path: Optional[Path] = None) -> pd.DataFrame:
+def _get_places_crosswalk_df(data_path: Path) -> pd.DataFrame:
     df = pd.read_fwf(data_path / "us_places.txt")
 
     df["State Code"] = df["CENSUS"] // 10000
@@ -74,7 +74,7 @@ def get_unincorporated_places_populations_1980() -> pd.DataFrame:
     return remainder_df
 
 
-def get_place_populations_1980(data_path: Optional[Path]) -> pd.DataFrame:
+def get_place_populations_1980(data_path: Path) -> pd.DataFrame:
     # Assuming this is run from `python/`
     # For the header row, use the nice descriptive names that IPUMS provides rather than the code names
     df = pd.read_csv("../raw_data/nhgis0015_ds104_1980_place_070.csv", header=1)
@@ -269,7 +269,7 @@ def remove_duplicate_cities(df: pd.DataFrame) -> pd.DataFrame:
     return df[~place_state_tuples.isin(dupe_cities)]
 
 
-def get_place_populations_1990s(data_path: Optional[Path]) -> pd.DataFrame:
+def get_place_populations_1990s(data_path: Path) -> pd.DataFrame:
     combined_df = _load_raw_place_populations_1990s(data_path)
 
     city_rows = (
@@ -403,7 +403,7 @@ def get_place_populations_2010s(data_path: Path) -> pd.DataFrame:
     return _melt_df(df, years=list(range(2010, 2021)))
 
 
-def get_place_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
+def get_place_populations_2020s(data_path: Path) -> pd.DataFrame:
     df = pd.read_csv(data_path / "sub-est2024.csv", encoding="latin_1")
     df = _melt_df(df, years=list(range(2020, 2025)))
     df = impute_2025_population(df)
@@ -455,7 +455,7 @@ def interpolate_1980s_populations(
     return interp_df
 
 
-def get_place_population_estimates(data_path: Optional[Path] = None) -> pd.DataFrame:
+def get_place_population_estimates(data_path: Path) -> pd.DataFrame:
     """
     Returns a DataFrame with the columns:
     - state_code (int)
