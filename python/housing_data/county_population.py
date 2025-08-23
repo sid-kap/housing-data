@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 import us
-from housing_data.build_data_utils import impute_2024_and_2025_population
+from housing_data.build_data_utils import impute_2025_population
 from housing_data.data_loading_helpers import get_url_text
 from housing_data.fips_crosswalk import load_fips_crosswalk
 
@@ -20,10 +20,10 @@ def _melt_df(df: pd.DataFrame, years: list[int]) -> pd.DataFrame:
 
 
 def get_county_populations_2020s(data_path: Path) -> pd.DataFrame:
-    df = pd.read_csv(data_path / "co-est2023-alldata.csv", encoding="latin_1")
+    df = pd.read_csv(data_path / "co-est2024-alldata.csv", encoding="latin_1")
 
-    df = _melt_df(df, list(range(2020, 2024)))
-    return impute_2024_and_2025_population(df)
+    df = _melt_df(df, list(range(2020, 2025)))
+    return impute_2025_population(df)
 
 
 def get_county_populations_2010s(data_path: Path) -> pd.DataFrame:
@@ -106,12 +106,12 @@ def get_county_populations_2000s(data_path: Path, data_repo_path: Path) -> pd.Da
 
 def get_county_fips_crosswalk(data_repo_path: Path) -> pd.DataFrame:
     df = load_fips_crosswalk(data_repo_path)
-    df = df[df["County Code (FIPS)"] != 0]
+    df = df[df["County FIPS Code"] != 0]
 
     rename_cols = {
-        "State Code (FIPS)": "state_code",
-        "County Code (FIPS)": "county_code",
-        "Area Name (including legal/statistical area description)": "county_name",
+        "State FIPS Code": "state_code",
+        "County FIPS Code": "county_code",
+        "Area Name": "county_name",
     }
     df = df[rename_cols.keys()].rename(columns=rename_cols)
 

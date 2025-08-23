@@ -290,30 +290,13 @@ def add_current_year_projections(year_to_date_df: pd.DataFrame) -> pd.DataFrame:
     return year_to_date_df
 
 
-def impute_2023_to_2025_population(df_2020s: pd.DataFrame) -> pd.DataFrame:
+def impute_2025_population(df_2020s: pd.DataFrame) -> pd.DataFrame:
     """
-    Impute 2023 to 2025 with the 2022 population.
-    TODO: use a more recent population snapshot
-    """
-    return pd.concat(
-        [
-            df_2020s,
-            df_2020s[df_2020s["year"] == "2022"].assign(year="2023"),
-            df_2020s[df_2020s["year"] == "2022"].assign(year="2024"),
-            df_2020s[df_2020s["year"] == "2022"].assign(year="2025"),
-        ]
-    )
-
-
-def impute_2024_and_2025_population(df_2020s: pd.DataFrame) -> pd.DataFrame:
-    """
-    Impute 2024 and 2025 with the 2023 population
-    TODO: use a more recent population snapshot
+    Impute 2025 with the 2024 population
     """
     return pd.concat(
         [
             df_2020s,
-            df_2020s[df_2020s["year"] == "2023"].assign(year="2024"),
-            df_2020s[df_2020s["year"] == "2023"].assign(year="2025"),
+            df_2020s[df_2020s["year"] == "2024"].assign(year="2025"),
         ]
     )

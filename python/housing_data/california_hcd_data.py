@@ -155,15 +155,15 @@ def _aggregate_to_geography(
 def _load_fips_crosswalk(data_path: Path) -> pd.DataFrame:
     crosswalk_df = load_fips_crosswalk(data_path)
     crosswalk_df = crosswalk_df[
-        (crosswalk_df["State Code (FIPS)"] == 6)  # California rows
+        (crosswalk_df["State FIPS Code"] == 6)  # California rows
         & (
-            (crosswalk_df["Place Code (FIPS)"] != 0)
-            | (crosswalk_df["County Code (FIPS)"] != 0)
+            (crosswalk_df["Place FIPS Code"] != 0)
+            | (crosswalk_df["County FIPS Code"] != 0)
         )
-    ].rename(columns={"State Code (FIPS)": "state_code"})
+    ].rename(columns={"State FIPS Code": "state_code"})
 
     crosswalk_df["name"] = (
-        crosswalk_df["Area Name (including legal/statistical area description)"]
+        crosswalk_df["Area Name"]
         .str.removesuffix(" city")
         .str.removesuffix(" town")
         .replace(
@@ -186,9 +186,9 @@ def _load_fips_crosswalk(data_path: Path) -> pd.DataFrame:
     )
 
     crosswalk_df["place_or_county_code"] = np.where(
-        crosswalk_df["County Code (FIPS)"] != 0,
-        crosswalk_df["County Code (FIPS)"].astype(str) + "_county",
-        crosswalk_df["Place Code (FIPS)"].astype(str),
+        crosswalk_df["County FIPS Code"] != 0,
+        crosswalk_df["County FIPS Code"].astype(str) + "_county",
+        crosswalk_df["Place FIPS Code"].astype(str),
     )
-    crosswalk_df["county_code"] = crosswalk_df["County Code (FIPS)"]
+    crosswalk_df["county_code"] = crosswalk_df["County FIPS Code"]
     return crosswalk_df[["name", "place_or_county_code", "county_code", "state_code"]]

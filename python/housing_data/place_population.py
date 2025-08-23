@@ -4,7 +4,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from housing_data.build_data_utils import impute_2023_to_2025_population
+from housing_data.build_data_utils import impute_2025_population
 from housing_data.data_loading_helpers import get_path, get_url_text
 
 
@@ -427,12 +427,13 @@ def get_place_populations_2010s(data_path: Optional[Path]) -> pd.DataFrame:
 def get_place_populations_2020s(data_path: Optional[Path]) -> pd.DataFrame:
     df = pd.read_csv(
         get_path(
-            "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/cities/sub-est2022.csv",
+            "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/cities/sub-est2024.csv",
             data_path,
         ),
+        encoding="latin_1",
     )
-    df = _melt_df(df, years=list(range(2020, 2023)))
-    df = impute_2023_to_2025_population(df)
+    df = _melt_df(df, years=list(range(2020, 2025)))
+    df = impute_2025_population(df)
     return df
 
 
