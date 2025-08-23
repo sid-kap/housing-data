@@ -293,7 +293,7 @@ def get_name_spelling(places_df: pd.DataFrame) -> pd.Series:
 
 
 def load_places(
-    data_repo_path: Optional[Path], counties_population_df: pd.DataFrame = None
+    data_repo_path: Path, counties_population_df: pd.DataFrame = None
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     raw_places_df = pd.concat(
         [
