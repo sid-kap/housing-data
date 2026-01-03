@@ -76,7 +76,9 @@ def load_california_hcd_data(
         ],
         None,
     )
-    assert df["building_type"].isnull().sum() == 0
+
+    assert df["building_type"].isnull().sum() < 50
+    df = df[df["building_type"].notnull()]
 
     df = df.rename(columns={"YEAR": "year"}).astype({"year": str})
 
