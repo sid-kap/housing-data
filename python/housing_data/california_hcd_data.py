@@ -80,7 +80,11 @@ def load_california_hcd_data(
     assert df["building_type"].isnull().sum() < 50
     df = df[df["building_type"].notnull()]
 
-    df = df.rename(columns={"YEAR": "year"}).astype({"year": str})
+    # Drop rows where YEAR is not parseable as an int
+    df = df.rename(columns={"YEAR": "year"})
+    df["year"] = pd.to_numeric(df["year"], errors="coerce").replace({np.nan: None})
+    df = df.dropna(subset=["year"])
+    df["year"] = df["year"].astype(int).astype(str)
 
     places_df = _aggregate_to_geography(df, "place", data_path)
     counties_df = _aggregate_to_geography(df, "county", data_path)
