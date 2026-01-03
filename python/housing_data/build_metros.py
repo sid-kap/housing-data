@@ -5,7 +5,7 @@ from housing_data.build_data_utils import DataSource, get_numerical_columns
 
 
 def load_crosswalk_df(data_repo_path: Path) -> pd.DataFrame:
-    crosswalk_df = pd.read_csv(data_repo_path / "data/crosswalk/cbsa2fipsxw.csv")
+    crosswalk_df = pd.read_csv(data_repo_path / "data/crosswalk/cbsa2fipsxw_2023.csv")
 
     # Drop the μSAs, no one cares about them.
     # Most of them are just one county anyway, so showing the combined metro stats doesn't
