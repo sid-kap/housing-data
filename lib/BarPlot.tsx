@@ -254,6 +254,9 @@ function makeSpec(
           titleX: -50,
           titleY: -13,
           titleAlign: "left",
+          // Don't show increments of less than 1
+          // (Only affects per-capita plots. Units plots never have such small y-axis values.)
+          tickMinStep: 1,
         },
       },
       color: {
