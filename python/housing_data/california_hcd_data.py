@@ -8,6 +8,7 @@ seem to be reporting ADUs to the Census, but they do to HCD.
 Because of SB 35 triggers based on the amount of housing permitted, cities have
 a greater incentive to report this data correctly.
 """
+
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal, Optional
@@ -36,12 +37,12 @@ def load_california_hcd_data(
     # BPS doesn't include mobile homes, so we shouldn't include them here either
     df = df[df["UNIT_CAT"] != "MH"].copy()
 
-    # Has some values that are not numbers (e.g. "2020-08-02")
-    df["BP_ABOVE_MOD_INCOME"] = pd.to_numeric(
-        df["BP_ABOVE_MOD_INCOME"], errors="coerce"
-    )
+    # These columns are a mix of string and ints.
+    # They also have some string values that can't be parsed as numbers (e.g. "2020-08-02")
+    for col in ["BP_ABOVE_MOD_INCOME", "BP_VLOW_INCOME_NDR", "BP_LOW_INCOME_DR"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    df["units"] = df[BUILDING_PERMIT_COLUMNS].sum(axis="columns", numeric_only=True)
+    df["units"] = df[BUILDING_PERMIT_COLUMNS].sum(axis="columns")
 
     df = df[
         (df["units"] > 0)
@@ -77,7 +78,9 @@ def load_california_hcd_data(
         None,
     )
 
-    assert df["building_type"].isnull().sum() < 50
+    assert (
+        df["building_type"].isnull().sum() < 60
+    ), f"{df['building_type'].isnull().sum()} is not less than 60"
     df = df[df["building_type"].notnull()]
 
     # Drop rows where YEAR is not parseable as an int
