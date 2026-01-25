@@ -146,7 +146,7 @@ function makeTransforms(
 
   if (preferHcdData) {
     const hcdTransforms: Transform[] = []
-    for (const numUnits of NUM_UNITS) {
+    for (const numUnits of NUM_UNITS.concat(["total"])) {
       // We don't have value data in the HCD dataset, so only do the substitution for buildings and units.
       for (const type of ["bldgs", "units"]) {
         for (const suffix of ["", "_per_capita", "_per_capita_per_1000"]) {
