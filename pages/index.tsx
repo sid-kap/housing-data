@@ -21,7 +21,7 @@ import {
 } from "lib/selects"
 import { scoreFnWithPopulation } from "lib/utils"
 
-const MAX_YEAR = 2024
+const MAX_YEAR = 2025
 
 /**
  * Returns a pair (year ranges, first year not in a range)
