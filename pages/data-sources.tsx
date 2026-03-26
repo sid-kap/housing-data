@@ -114,36 +114,16 @@ export default function DataSources(): JSX.Element {
         </p>
         <ul className={para + " list-disc list-inside ml-2"}>
           <li>
-            <a
-              className={link}
-              href="https://housingdata.app/states_annual.parquet"
-            >
-              <code>https://housingdata.app/states_annual.parquet</code>
-            </a>
+            <code>https://housingdata.app/states_annual.parquet</code>
           </li>
           <li>
-            <a
-              className={link}
-              href="https://housingdata.app/metros_annual.parquet"
-            >
-              <code>https://housingdata.app/metros_annual.parquet</code>
-            </a>
+            <code>https://housingdata.app/metros_annual.parquet</code>
           </li>
           <li>
-            <a
-              className={link}
-              href="https://housingdata.app/counties_annual.parquet"
-            >
-              <code>https://housingdata.app/counties_annual.parquet</code>
-            </a>
+            <code>https://housingdata.app/counties_annual.parquet</code>
           </li>
           <li>
-            <a
-              className={link}
-              href="https://housingdata.app/places_annual.parquet"
-            >
-              <code>https://housingdata.app/places_annual.parquet</code>
-            </a>
+            <code>https://housingdata.app/places_annual.parquet</code>
           </li>
         </ul>
         <p className={para}>
