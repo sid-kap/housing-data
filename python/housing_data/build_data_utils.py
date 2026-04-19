@@ -167,7 +167,7 @@ def write_list_json(
 
 def add_per_capita_columns(df: pd.DataFrame, data_sources: list[DataSource]) -> None:
     # There are three cities (Sitka, Weeki Wachee, and Carlton Landing) that had population 0 in some years
-    population = df["population"].where(df["population"] != 0, 1)
+    population = df["population"].replace({0: pd.NA})
 
     cols = {
         col
