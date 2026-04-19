@@ -89,6 +89,11 @@ def load_california_hcd_data(
     df = df.dropna(subset=["year"])
     df["year"] = df["year"].astype(int).astype(str)
 
+    # Filter to years with complete data.
+    # (Different cities' APRs come online in Table A2 at different times, but all
+    # cities' data for the previous year isn't available until around July.)
+    df = df[df["year"] <= "2024"]
+
     places_df = _aggregate_to_geography(df, "place", data_path)
     counties_df = _aggregate_to_geography(df, "county", data_path)
     state_df = _aggregate_to_geography(df, "state", data_path)
