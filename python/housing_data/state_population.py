@@ -3,7 +3,10 @@ from pathlib import Path
 
 import pandas as pd
 import us
-from housing_data.build_data_utils import impute_2025_population
+from housing_data.build_data_utils import (
+    check_population_present_for_all_years,
+    impute_2025_and_2026_population,
+)
 
 DIVISIONS = {
     "New England": [
@@ -208,7 +211,7 @@ def get_state_populations_2020s(data_path: Path) -> pd.DataFrame:
     df = pd.read_csv(data_path / "NST-EST2024-ALLDATA.csv")
 
     df = _melt_df(df, list(range(2020, 2025)))
-    return impute_2025_population(df)
+    return impute_2025_and_2026_population(df)
 
 
 def get_state_population_estimates(data_path: Path) -> pd.DataFrame:
@@ -250,4 +253,6 @@ def get_state_population_estimates(data_path: Path) -> pd.DataFrame:
         .reset_index()
     )
 
-    return pd.concat([states_df, divisions_df, regions_df])
+    df = pd.concat([states_df, divisions_df, regions_df])
+    check_population_present_for_all_years(df)
+    return df

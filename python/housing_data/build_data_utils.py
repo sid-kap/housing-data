@@ -290,13 +290,22 @@ def add_current_year_projections(year_to_date_df: pd.DataFrame) -> pd.DataFrame:
     return year_to_date_df
 
 
-def impute_2025_population(df_2020s: pd.DataFrame) -> pd.DataFrame:
+def impute_2025_and_2026_population(df_2020s: pd.DataFrame) -> pd.DataFrame:
     """
-    Impute 2025 with the 2024 population
+    Impute 2025 and 2026 with the 2024 population
     """
     return pd.concat(
         [
             df_2020s,
             df_2020s[df_2020s["year"] == "2024"].assign(year="2025"),
+            df_2020s[df_2020s["year"] == "2024"].assign(year="2026"),
         ]
     )
+
+
+def check_population_present_for_all_years(df: pd.DataFrame) -> None:
+    missing_years = {str(year) for year in range(1980, LATEST_MONTH[0] + 1)} - set(
+        df["year"].drop_duplicates()
+    )
+    if missing_years:
+        raise ValueError(f"Population data missing for {missing_years}")

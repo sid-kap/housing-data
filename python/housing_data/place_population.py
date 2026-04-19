@@ -4,7 +4,10 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from housing_data.build_data_utils import impute_2025_population
+from housing_data.build_data_utils import (
+    check_population_present_for_all_years,
+    impute_2025_and_2026_population,
+)
 
 
 def _get_places_crosswalk_df(data_path: Path) -> pd.DataFrame:
@@ -406,7 +409,7 @@ def get_place_populations_2010s(data_path: Path) -> pd.DataFrame:
 def get_place_populations_2020s(data_path: Path) -> pd.DataFrame:
     df = pd.read_csv(data_path / "sub-est2024.csv", encoding="latin_1")
     df = _melt_df(df, years=list(range(2020, 2025)))
-    df = impute_2025_population(df)
+    df = impute_2025_and_2026_population(df)
     return df
 
 
@@ -494,4 +497,6 @@ def get_place_population_estimates(data_path: Path) -> pd.DataFrame:
     print("Interpolating 1980s populations...")
     interp_df = interpolate_1980s_populations(df_1980, df_1990s)
 
-    return pd.concat([interp_df, df_1990s, df_2000s, df_2010s, df_2020s])
+    df = pd.concat([interp_df, df_1990s, df_2000s, df_2010s, df_2020s])
+    check_population_present_for_all_years(df)
+    return df

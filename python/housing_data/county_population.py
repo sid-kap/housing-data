@@ -3,7 +3,10 @@ from pathlib import Path
 
 import pandas as pd
 import us
-from housing_data.build_data_utils import impute_2025_population
+from housing_data.build_data_utils import (
+    check_population_present_for_all_years,
+    impute_2025_and_2026_population,
+)
 from housing_data.fips_crosswalk import load_fips_crosswalk
 
 
@@ -22,7 +25,7 @@ def get_county_populations_2020s(data_path: Path) -> pd.DataFrame:
     df = pd.read_csv(data_path / "co-est2024-alldata.csv", encoding="latin_1")
 
     df = _melt_df(df, list(range(2020, 2025)))
-    return impute_2025_population(df)
+    return impute_2025_and_2026_population(df)
 
 
 def get_county_populations_2010s(data_path: Path) -> pd.DataFrame:
@@ -222,5 +225,7 @@ def get_county_population_estimates(
 
     # Check for dupes
     assert (df.groupby(["county_code", "state_code", "year"]).size() == 1).all()
+
+    check_population_present_for_all_years(df)
 
     return df
