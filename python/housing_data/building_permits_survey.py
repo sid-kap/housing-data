@@ -200,7 +200,7 @@ def get_data_path(
 def read_bps_formatted_csv(
     csv_contents: str, scale: Scale, year: int, region: Optional[Region] = None
 ) -> pd.DataFrame:
-    print(csv_contents)
+    # print(csv_contents)
     """
     Given the contents of a CSV file from the BPS dataset, parses it as a DataFrame.
     Takes into account several quirks in the way they format their files.
