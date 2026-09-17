@@ -116,7 +116,7 @@ def _get_counties_population_table_1990s(year: int, data_path: Path) -> pd.DataF
 
     df = pd.read_csv(
         data_path / f"stch-icen{year}.txt",
-        delim_whitespace=True,
+        sep=r"\s+",
         names=[
             "year",
             "state_county_code",
