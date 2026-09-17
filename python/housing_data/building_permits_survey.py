@@ -207,7 +207,9 @@ def read_bps_formatted_csv(
     result = (
         csv_contents
         # OMG so dumb that they didn't wrap with quotations
-        .replace("Bristol, VA", '"Bristol, VA"').replace("Bristol, TN", '"Bristol, TN"')
+        .replace("Bristol, VA", '"Bristol, VA"')
+        .replace("Bristol, TN", '"Bristol, TN"')
+        .replace("\x1a", "")
     )
 
     csv_handle = StringIO(result)
