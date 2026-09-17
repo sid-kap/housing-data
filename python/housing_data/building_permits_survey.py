@@ -413,7 +413,7 @@ def parse_number_column(col: pd.Series) -> pd.Series:
     # pd.Series(['1', None]).astype('Int64') fails with the error:
     #   TypeError: object cannot be converted to an IntegerDtype.
     # So I need to convert via float
-    return col.astype(float).astype("Int64")
+    return pd.to_numeric(col, errors="coerce").astype("Int64")
 
 
 def place_cleanup(df: pd.DataFrame, year: int) -> pd.DataFrame:

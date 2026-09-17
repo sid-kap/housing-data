@@ -3,13 +3,13 @@ name = "housing-data"
 version = "0.1.0"
 description = ""
 readme = ""
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 dependencies = [
-  "pandas~=2.1.1",
+  "pandas>=3.0.5",
   "requests~=2.31.0",
-  "pyarrow~=13.0.0",
+  "pyarrow>=25.0.1",
   "tqdm~=4.66.0",
-  "us~=3.1.1",
+  "us>=3.2.0",
   "xlrd~=2.0.1",
   "openpyxl~=3.1.2",
 ]
@@ -17,7 +17,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-  "jupyterlab~=3.4.5"
+  "jupyterlab>=4",
+  "jupyterlab-vim>=4.1.4",
+  "notebook>=7",
 ]
 
 [tool.mypy]
