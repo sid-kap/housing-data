@@ -3,7 +3,7 @@ name = "housing-data"
 version = "0.1.0"
 description = ""
 readme = ""
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 dependencies = [
   "pandas~=2.1.1",
   "requests~=2.31.0",
