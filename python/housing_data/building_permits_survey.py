@@ -257,7 +257,7 @@ def load_data(
     if ERROR_STRING in text:
         raise ValueError(f"Path {path} is not valid")
 
-    print(text, scale, year, region)
+    print(scale, year, region)
     df = read_bps_formatted_csv(text, scale, year, region)
 
     if scale == "state":
