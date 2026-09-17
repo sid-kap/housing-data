@@ -17,7 +17,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-  "jupyterlab~=3.4.5"
+  "jupyterlab>=4",
+  "jupyterlab-vim>=4.1.4",
+  "notebook>=7",
 ]
 
 [tool.mypy]
