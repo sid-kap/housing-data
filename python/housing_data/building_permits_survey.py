@@ -200,7 +200,6 @@ def get_data_path(
 def read_bps_formatted_csv(
     csv_contents: str, scale: Scale, year: int, region: Optional[Region] = None
 ) -> pd.DataFrame:
-    # print(csv_contents)
     """
     Given the contents of a CSV file from the BPS dataset, parses it as a DataFrame.
     Takes into account several quirks in the way they format their files.
@@ -255,11 +254,11 @@ def load_data(
     if ERROR_STRING in text:
         raise ValueError(f"Path {path} is not valid")
 
-    print(scale, year, region)
-    print("\x1a" in text)
-    print(r"\x1a" in text)
-    print(sorted(set(text)))
-    print(text)
+    # print(scale, year, region)
+    # print("\x1a" in text)
+    # print(r"\x1a" in text)
+    # print(sorted(set(text)))
+    # print(text)
     df = read_bps_formatted_csv(text, scale, year, region)
 
     if scale == "state":
@@ -419,7 +418,7 @@ def parse_number_column(col: pd.Series) -> pd.Series:
     # pd.Series(['1', None]).astype('Int64') fails with the error:
     #   TypeError: object cannot be converted to an IntegerDtype.
     # So I need to convert via float
-    print(col)
+    # print(col)
     return pd.to_numeric(col, errors="coerce").astype("Int64")
 
 
