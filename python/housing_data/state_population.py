@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 import us
+
 from housing_data.build_data_utils import (
     check_population_present_for_all_years,
     impute_2025_and_2026_population,
@@ -18,7 +19,13 @@ DIVISIONS = {
         "Vermont",
     ],
     "Middle Atlantic": ["New Jersey", "New York", "Pennsylvania"],
-    "East North Central": ["Illinois", "Indiana", "Michigan", "Ohio", "Wisconsin"],
+    "East North Central": [
+        "Illinois",
+        "Indiana",
+        "Michigan",
+        "Ohio",
+        "Wisconsin",
+    ],
     "West North Central": [
         "Iowa",
         "Kansas",

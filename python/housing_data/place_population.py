@@ -1,9 +1,9 @@
 from io import StringIO
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
+
 from housing_data.build_data_utils import (
     check_population_present_for_all_years,
     impute_2025_and_2026_population,
@@ -99,7 +99,9 @@ def get_place_populations_1980(data_path: Path) -> pd.DataFrame:
     crosswalk_df = _get_places_crosswalk_df(data_path)
     old_len = len(df)
     df = df.merge(
-        crosswalk_df.drop(columns=["NAME"]), how="left", on=["Place Code", "State Code"]
+        crosswalk_df.drop(columns=["NAME"]),
+        how="left",
+        on=["Place Code", "State Code"],
     )
     assert len(df) == old_len
 
@@ -304,7 +306,13 @@ def get_place_populations_1990s(data_path: Path) -> pd.DataFrame:
     combined_df = (
         combined_df.drop(columns=["county_fips", "subcounty_fips"])
         .groupby(
-            ["place", "state_abbr", "state_fips", "place_fips", "place_or_county_code"],
+            [
+                "place",
+                "state_abbr",
+                "state_fips",
+                "place_fips",
+                "place_or_county_code",
+            ],
             dropna=False,
         )
         .sum(numeric_only=True)
@@ -341,7 +349,7 @@ def get_place_populations_1990s(data_path: Path) -> pd.DataFrame:
 def _melt_df(
     df: pd.DataFrame,
     years: list[int],
-    encoding: Optional[str] = None,
+    encoding: str | None = None,
     has_consolidated_cities: bool = True,
 ) -> pd.DataFrame:
     """

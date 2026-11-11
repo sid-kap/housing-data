@@ -1,12 +1,12 @@
 import shutil
 from enum import Enum, auto
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 import us
-from housing_data import building_permits_survey as bps
 from tqdm import tqdm
+
+from housing_data import building_permits_survey as bps
 
 _COMMON_PREFIXES = ["1_unit", "2_units", "3_to_4_units", "5_plus_units"]
 
@@ -102,7 +102,10 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
                 # doesn't matter if we pass projected=True here, since projected columns
                 # aren't present in CA HCD data. But just passing for consistency.
                 get_numerical_columns(
-                    DataSource.CA_HCD, totals=True, projected=True, per_capitas=True
+                    DataSource.CA_HCD,
+                    totals=True,
+                    projected=True,
+                    per_capitas=True,
                 )
             ]
             .isnull()
@@ -127,8 +130,8 @@ LIST_COLUMNS = ["name", "path_1", "path_2", "alt_name"]
 def write_list_json(
     df: pd.DataFrame,
     output_path: Path,
-    unhashable_columns: Optional[list[str]] = None,
-    extra_columns: Optional[list[str]] = None,
+    unhashable_columns: list[str] | None = None,
+    extra_columns: list[str] | None = None,
 ) -> None:
     """
     Writes the /public/{geography}_list.json file, which is a list of places
@@ -195,9 +198,9 @@ def get_state_abbrs(state_codes: pd.Series) -> pd.Series:
 
 
 def load_bps_all_years_plus_monthly(
-    data_repo_path: Optional[Path],
+    data_repo_path: Path | None,
     scale: bps.Scale,
-    region: Optional[bps.Region] = None,
+    region: bps.Region | None = None,
     start_year: int = 1980,
     extrapolate_rest_of_year: bool = True,
 ) -> pd.DataFrame:

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 import us
+
 from housing_data.build_data_utils import (
     check_population_present_for_all_years,
     impute_2025_and_2026_population,
@@ -17,7 +18,9 @@ def _melt_df(df: pd.DataFrame, years: list[int]) -> pd.DataFrame:
 
     df = df[rename_cols.keys()].rename(columns=rename_cols)
     return df.melt(
-        id_vars=["county_code", "state_code"], var_name="year", value_name="population"
+        id_vars=["county_code", "state_code"],
+        var_name="year",
+        value_name="population",
     )
 
 
@@ -83,7 +86,9 @@ def get_county_populations_2000s(data_path: Path, data_repo_path: Path) -> pd.Da
     df["state_code"] = df["state_code"].astype(int)
 
     df = df.melt(
-        id_vars=["county_name", "state_code"], var_name="year", value_name="population"
+        id_vars=["county_name", "state_code"],
+        var_name="year",
+        value_name="population",
     )
 
     df = df.merge(
@@ -154,7 +159,9 @@ def get_county_populations_1990s(data_path: Path) -> pd.DataFrame:
     df = df.drop(columns=["idk", "full_county_code", "1990-04-01", "county_name"])
 
     df = df.melt(
-        id_vars=["county_code", "state_code"], var_name="year", value_name="population"
+        id_vars=["county_code", "state_code"],
+        var_name="year",
+        value_name="population",
     )
 
     df["population"] = (

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+
 from housing_data.build_data_utils import (
     CANADA_BPER_DIR,
     CANADA_CROSSWALK_DIR,
@@ -120,13 +121,16 @@ def load_raw_bper(data_repo_path: Path) -> pd.DataFrame:
 def fix_montreal(df: pd.DataFrame) -> None:
     # Map arrondissements/boroughs of Montreal to the city SGC code
     df.loc[
-        df["SGC"].str.startswith("2466A") | df["SGC"].str.startswith("2466a"), "SGC"
+        df["SGC"].str.startswith("2466A") | df["SGC"].str.startswith("2466a"),
+        "SGC",
     ] = "2466023"
 
 
 def pivot_and_add_geos(df: pd.DataFrame, data_repo_path: Path) -> pd.DataFrame:
     df = df.merge(
-        load_crosswalk(data_repo_path / CANADA_CROSSWALK_DIR), how="left", on="SGC"
+        load_crosswalk(data_repo_path / CANADA_CROSSWALK_DIR),
+        how="left",
+        on="SGC",
     )
 
     df["units"] = df["UnitsCategory"].map(UNITS_CATEGORIES)

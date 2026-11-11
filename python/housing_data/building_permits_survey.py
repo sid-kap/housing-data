@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from io import StringIO
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 from urllib.parse import quote
 
 import pandas as pd
+
 from housing_data.data_loading_helpers import get_url_text
 
 Region = Literal["west", "midwest", "south", "northeast"]
@@ -34,19 +35,19 @@ def _validate_load_data_inputs(
     scale: Scale,
     time_scale: TimeScale,
     year: int,
-    month: Optional[int],
-    region: Optional[Region],
+    month: int | None,
+    region: Region | None,
 ) -> None:
     if scale not in ["county", "metro", "place", "state"]:
-        raise ValueError("Unknown scale: {}".format(scale))
+        raise ValueError(f"Unknown scale: {scale}")
     if time_scale not in ["monthly_current", "monthly_year_to_date", "annual"]:
-        raise ValueError("Unknown time_scale: {}".format(time_scale))
-    if scale == "place":
-        if region is None:
-            raise ValueError("If scale is 'place', region must be provided.")
-    if time_scale == "monthly_current" or time_scale == "monthly_year_to_date":
-        if month is None:
-            raise ValueError("If time_scale is month, month must be provided.")
+        raise ValueError(f"Unknown time_scale: {time_scale}")
+    if scale == "place" and region is None:
+        raise ValueError("If scale is 'place', region must be provided.")
+    if (
+        time_scale == "monthly_current" or time_scale == "monthly_year_to_date"
+    ) and month is None:
+        raise ValueError("If time_scale is month, month must be provided.")
     if time_scale == "annual" and month is not None:
         raise ValueError("If time_scale is 'annual', month must be None.")
 
@@ -104,7 +105,9 @@ def _merge_column_names(header_row_0: list[str], header_row_1: list[str]) -> pd.
 
 
 def _fix_column_names(
-    header_row_0: list[str], header_row_1: list[str], fix_row_lengths: bool = True
+    header_row_0: list[str],
+    header_row_1: list[str],
+    fix_row_lengths: bool = True,
 ) -> pd.Series:
     if fix_row_lengths:
         assert len(header_row_1) == len(header_row_0) + 1
@@ -144,8 +147,8 @@ def get_data_path(
     scale: Scale,
     time_scale: TimeScale,
     year: int,
-    month: Optional[int] = None,
-    region: Optional[Region] = None,
+    month: int | None = None,
+    region: Region | None = None,
 ) -> str:
     _validate_load_data_inputs(scale, time_scale, year, month, region)
 
@@ -169,7 +172,7 @@ def get_data_path(
             "midwest": "mw",
         }  # type: ignore
         filename_part_1 = region_mapping[region]  # type: ignore
-        extra_path: Optional[str] = region.capitalize() + " Region"  # type: ignore
+        extra_path: str | None = region.capitalize() + " Region"  # type: ignore
     elif scale == "county":
         if region is not None:
             raise ValueError("region must be None in since scale = 'county'")
@@ -198,7 +201,7 @@ def get_data_path(
 
 
 def read_bps_formatted_csv(
-    csv_contents: str, scale: Scale, year: int, region: Optional[Region] = None
+    csv_contents: str, scale: Scale, year: int, region: Region | None = None
 ) -> pd.DataFrame:
     """
     Given the contents of a CSV file from the BPS dataset, parses it as a DataFrame.
@@ -236,9 +239,9 @@ def load_data(
     scale: Scale,
     time_scale: TimeScale,
     year: int,
-    month: Optional[int] = None,
-    region: Optional[Region] = None,
-    data_path: Optional[Path] = None,
+    month: int | None = None,
+    region: Region | None = None,
+    data_path: Path | None = None,
     drop_useless_fields: bool = True,
 ) -> pd.DataFrame:
     """
@@ -497,14 +500,13 @@ def split_place_type(place_names: pd.Series, year: int) -> tuple[pd.Series, pd.S
     title_place_types = [s.title() for s in place_types]
 
     new_place_names = []
-    extracted_place_types: list[Optional[str]] = []
+    extracted_place_types: list[str | None] = []
     for name in place_names:
         for place_type, title_place_type in zip(place_types, title_place_types):
-            if isinstance(name, str):
-                if name.endswith(place_type) or name.endswith(title_place_type):
-                    new_place_names.append(name[: -len(place_type)])
-                    extracted_place_types.append(place_type[1:])
-                    break
+            if isinstance(name, str) and name.endswith((place_type, title_place_type)):
+                new_place_names.append(name[: -len(place_type)])
+                extracted_place_types.append(place_type[1:])
+                break
         else:
             new_place_names.append(name)
             extracted_place_types.append(None)

@@ -1,7 +1,7 @@
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
+
 from housing_data.build_data_utils import (
     DataSource,
     get_numerical_columns,
@@ -11,7 +11,7 @@ from housing_data.build_data_utils import (
 
 
 def load_counties(
-    data_repo_path: Optional[Path],
+    data_repo_path: Path | None,
     places_df: pd.DataFrame,
     population_df: pd.DataFrame,
 ) -> pd.DataFrame:

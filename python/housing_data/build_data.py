@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
+
 from housing_data.build_counties import load_counties
 from housing_data.build_data_utils import (
     COUNTY_POPULATION_DIR,

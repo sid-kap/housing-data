@@ -1,7 +1,7 @@
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
+
 from housing_data import place_population
 from housing_data.build_data_utils import (
     PLACE_POPULATION_DIR,
@@ -27,7 +27,13 @@ def make_bps_fips_mapping(
     # Some years will have the same BPS 6-digit ID, so we can join roughly 1992 to present using that.
     # From 1980-1991 BPS has different FIPS codes, so it becomes a little trickier.
     mapping = places_df[places_df["year"] == "2019"][
-        ["place_name", "fips place_code", "county_code", "state_code", "6_digit_id"]
+        [
+            "place_name",
+            "fips place_code",
+            "county_code",
+            "state_code",
+            "6_digit_id",
+        ]
     ].copy()
 
     assert (mapping.groupby(["6_digit_id", "state_code"]).size() == 1).all()
@@ -36,7 +42,8 @@ def make_bps_fips_mapping(
     county_code_str = mapping["county_code"].astype(str).replace("<NA>", "")
 
     mapping["place_or_county_code"] = fips_place_code_str.where(
-        ~mapping["fips place_code"].isin([0, 99990]), county_code_str + "_county"
+        ~mapping["fips place_code"].isin([0, 99990]),
+        county_code_str + "_county",
     )
 
     # Fix NYC boroughs: we don't want to use the whole city population as the denominator in per-capita calculations
@@ -129,7 +136,10 @@ def add_place_population_data(
     )
 
     merged_df = places_df.merge(
-        bps_fips_mapping, how="left", on=["6_digit_id", "state_code"], indicator=True
+        bps_fips_mapping,
+        how="left",
+        on=["6_digit_id", "state_code"],
+        indicator=True,
     )
     assert len(merged_df) == len(places_df)
     print(
@@ -218,14 +228,14 @@ def add_alt_names(raw_places_df: pd.DataFrame) -> None:
     nyc_rows = (raw_places_df["place_name"] == "New York City") & (
         raw_places_df["state_code"] == 36
     )
-    raw_places_df.loc[
-        nyc_rows, "alt_name"
-    ] = "Manhattan Bronx Brooklyn Queens Staten Island"
+    raw_places_df.loc[nyc_rows, "alt_name"] = (
+        "Manhattan Bronx Brooklyn Queens Staten Island"
+    )
 
 
 def get_place_name_spellings(
     df: pd.DataFrame,
-) -> dict[tuple[str, Optional[str], int], str]:
+) -> dict[tuple[str, str | None, int], str]:
     """
     :param df: A DataFrame with columns place_name, place_type, and state_code.
 
@@ -328,9 +338,9 @@ def load_places(
     places_df = places_df.drop(columns=["place_name", "place_type"])
 
     not_null_rows = places_df["path_1"].notnull() & places_df["path_2"].notnull()
-    assert (
-        not_null_rows.all()
-    ), f"Found rows where path_1 or path_2 is null: {places_df[['path_1', 'path_2']]}"
+    assert not_null_rows.all(), (
+        f"Found rows where path_1 or path_2 is null: {places_df[['path_1', 'path_2']]}"
+    )
     places_df = places_df[not_null_rows]
 
     return raw_places_df, places_df
