@@ -56,7 +56,7 @@ jobs:
       # Run Linter against code base #
       ################################
       - name: Lint Code Base
-        uses: github/super-linter/slim@v9
+        uses: github/super-linter/slim@v9.0.0
         env:
           VALIDATE_ALL_CODEBASE: true
           DEFAULT_BRANCH: master
