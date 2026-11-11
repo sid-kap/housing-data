@@ -36,8 +36,5 @@ module = [
 ]
 ignore_missing_imports = true
 
-[tool.ruff]
-line-length = 80
-
 [tool.ruff.lint]
 ignore = ["RUF015"]

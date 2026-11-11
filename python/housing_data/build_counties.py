@@ -74,9 +74,7 @@ def impute_pre_1990_counties(
         .reset_index()
     )
 
-    imputed_counties_df = summed_places_df[
-        summed_places_df["year"] < "1990"
-    ].copy()
+    imputed_counties_df = summed_places_df[summed_places_df["year"] < "1990"].copy()
     imputed_counties_df["imputed"] = True
     imputed_counties_df = imputed_counties_df.rename(
         columns={"county_code": "fips_county", "state_code": "fips_state"}

@@ -38,9 +38,7 @@ def make_bps_fips_mapping(
 
     assert (mapping.groupby(["6_digit_id", "state_code"]).size() == 1).all()
 
-    fips_place_code_str = (
-        mapping["fips place_code"].astype(str).replace("<NA>", "")
-    )
+    fips_place_code_str = mapping["fips place_code"].astype(str).replace("<NA>", "")
     county_code_str = mapping["county_code"].astype(str).replace("<NA>", "")
 
     mapping["place_or_county_code"] = fips_place_code_str.where(
@@ -149,9 +147,7 @@ def add_place_population_data(
             (merged_df["_merge"] == "both").mean()
         )
     )
-    merged_rows = merged_df[merged_df["_merge"] == "both"].drop(
-        columns=["_merge"]
-    )
+    merged_rows = merged_df[merged_df["_merge"] == "both"].drop(columns=["_merge"])
     unmerged_rows = merged_df[merged_df["_merge"] == "left_only"].drop(
         columns=["_merge", "place_or_county_code"]
     )
@@ -251,9 +247,7 @@ def get_place_name_spellings(
     Returns a mapping from (place name, place type)
     """
     mapping = {}
-    for (place_name, state_code), group in df.groupby(
-        ["place_name", "state_code"]
-    ):
+    for (place_name, state_code), group in df.groupby(["place_name", "state_code"]):
         place_types = group["place_type"].unique()
         if len(place_types) == 1:
             mapping[(place_name, place_types[0], state_code)] = place_name
@@ -297,16 +291,14 @@ def get_name_spelling(places_df: pd.DataFrame) -> pd.Series:
     ).map(name_spelling)
 
     # Add name for comparison plots
-    is_unincorporated = places_df["place_name"].str.contains(
-        "County"
-    ) | places_df["place_name"].str.contains("Parish")
+    is_unincorporated = places_df["place_name"].str.contains("County") | places_df[
+        "place_name"
+    ].str.contains("Parish")
     name = is_unincorporated.map({True: "Unincorporated ", False: ""}) + name
 
     # Fix cities that have "City" in the name
     name[(name == "Jersey") & (places_df["state_code"] == 34)] = "Jersey City"
-    name[(name == "Atlantic") & (places_df["state_code"] == 34)] = (
-        "Atlantic City"
-    )
+    name[(name == "Atlantic") & (places_df["state_code"] == 34)] = "Atlantic City"
     name[(name == "Culver") & (places_df["state_code"] == 6)] = "Culver City"
 
     return name
@@ -317,9 +309,7 @@ def load_places(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     raw_places_df = pd.concat(
         [
-            load_bps_all_years_plus_monthly(
-                data_repo_path, "place", region=region
-            )
+            load_bps_all_years_plus_monthly(data_repo_path, "place", region=region)
             for region in REGIONS
         ]
     )
@@ -329,9 +319,7 @@ def load_places(
 
     add_alt_names(raw_places_df)
 
-    raw_places_df.to_parquet(
-        PUBLIC_DIR / "places_annual_without_population.parquet"
-    )
+    raw_places_df.to_parquet(PUBLIC_DIR / "places_annual_without_population.parquet")
 
     place_populations_df = place_population.get_place_population_estimates(
         data_path=data_repo_path / PLACE_POPULATION_DIR
@@ -349,9 +337,7 @@ def load_places(
     places_df["path_2"] = name.str.replace("/", "-").str.replace(" ", "_")
     places_df = places_df.drop(columns=["place_name", "place_type"])
 
-    not_null_rows = (
-        places_df["path_1"].notnull() & places_df["path_2"].notnull()
-    )
+    not_null_rows = places_df["path_1"].notnull() & places_df["path_2"].notnull()
     assert not_null_rows.all(), (
         f"Found rows where path_1 or path_2 is null: {places_df[['path_1', 'path_2']]}"
     )

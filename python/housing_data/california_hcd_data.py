@@ -57,10 +57,7 @@ def load_california_hcd_data(
         # permit anyway.
         # NB: I only looked at LA data to validate this assumption. The data looks
         # _way_ more accurate when we drop these rows.
-        & (
-            df["CO_ISSUE_DT1"].isnull()
-            | (df["BP_ISSUE_DT1"] == df["CO_ISSUE_DT1"])
-        )
+        & (df["CO_ISSUE_DT1"].isnull() | (df["BP_ISSUE_DT1"] == df["CO_ISSUE_DT1"]))
     ].copy()
 
     df["building_type"] = np.select(
@@ -93,9 +90,7 @@ def load_california_hcd_data(
 
     # Drop rows where YEAR is not parseable as an int
     df = df.rename(columns={"YEAR": "year"})
-    df["year"] = pd.to_numeric(df["year"], errors="coerce").replace(
-        {np.nan: None}
-    )
+    df["year"] = pd.to_numeric(df["year"], errors="coerce").replace({np.nan: None})
     df = df.dropna(subset=["year"])
     df["year"] = df["year"].astype(int).astype(str)
 
@@ -156,12 +151,8 @@ def _aggregate_to_geography(
             right_on="name",
         ).drop(columns=["name", "county_code"])
         if len(old_wide_df) != len(wide_df):
-            dropped_cities = set(old_wide_df["JURIS_NAME"]) - set(
-                wide_df["JURIS_NAME"]
-            )
-            added_cities = set(wide_df["JURIS_NAME"]) - set(
-                old_wide_df["JURIS_NAME"]
-            )
+            dropped_cities = set(old_wide_df["JURIS_NAME"]) - set(wide_df["JURIS_NAME"])
+            added_cities = set(wide_df["JURIS_NAME"]) - set(old_wide_df["JURIS_NAME"])
             raise ValueError(
                 f"wide_df had {len(old_wide_df)} rows before merge and {len(wide_df)} rows after merge. "
                 f"{dropped_cities=} {added_cities=}"
@@ -170,9 +161,9 @@ def _aggregate_to_geography(
         # Add county_code
         old_rows = len(wide_df)
         wide_df["name"] = wide_df["CNTY_NAME"].str.upper() + " COUNTY"
-        wide_df = wide_df.merge(
-            _load_fips_crosswalk(data_path), on="name"
-        ).drop(columns=["CNTY_NAME", "name", "place_or_county_code"])
+        wide_df = wide_df.merge(_load_fips_crosswalk(data_path), on="name").drop(
+            columns=["CNTY_NAME", "name", "place_or_county_code"]
+        )
         new_rows = len(wide_df)
         assert old_rows == new_rows, f"{old_rows=} != {new_rows=}"
     elif level == "state":
@@ -221,6 +212,4 @@ def _load_fips_crosswalk(data_path: Path) -> pd.DataFrame:
         crosswalk_df["Place FIPS Code"].astype(str),
     )
     crosswalk_df["county_code"] = crosswalk_df["County FIPS Code"]
-    return crosswalk_df[
-        ["name", "place_or_county_code", "county_code", "state_code"]
-    ]
+    return crosswalk_df[["name", "place_or_county_code", "county_code", "state_code"]]

@@ -6,9 +6,7 @@ from housing_data.build_data_utils import DataSource, get_numerical_columns
 
 
 def load_crosswalk_df(data_repo_path: Path) -> pd.DataFrame:
-    crosswalk_df = pd.read_csv(
-        data_repo_path / "data/crosswalk/cbsa2fipsxw_2023.csv"
-    )
+    crosswalk_df = pd.read_csv(data_repo_path / "data/crosswalk/cbsa2fipsxw_2023.csv")
 
     # Drop the μSAs, no one cares about them.
     # Most of them are just one county anyway, so showing the combined metro stats doesn't
@@ -21,9 +19,7 @@ def load_crosswalk_df(data_repo_path: Path) -> pd.DataFrame:
     # Could also get county name from 'countycountyequivalent' in crosswalk_df...
     # I'm indifferent, just using the one from counties_df for now.
     crosswalk_df = (
-        crosswalk_df[
-            ["fipsstatecode", "fipscountycode", "csatitle", "cbsatitle"]
-        ]
+        crosswalk_df[["fipsstatecode", "fipscountycode", "csatitle", "cbsatitle"]]
         .rename(
             columns={
                 "fipsstatecode": "fips_state",
@@ -38,9 +34,7 @@ def load_crosswalk_df(data_repo_path: Path) -> pd.DataFrame:
         ]
     )
 
-    crosswalk_df = crosswalk_df.astype(
-        {"fips_state": "Int64", "fips_county": "Int64"}
-    )
+    crosswalk_df = crosswalk_df.astype({"fips_state": "Int64", "fips_county": "Int64"})
 
     return crosswalk_df
 
@@ -73,9 +67,9 @@ def combine_metro_rows(
         .assign(metro_type=metro_type)
     )
 
-    combined_df["metro_name_with_suffix"] = combined_df[
-        "metro_name"
-    ].str.replace(",", " " + metro_name_suffix + ",")
+    combined_df["metro_name_with_suffix"] = combined_df["metro_name"].str.replace(
+        ",", " " + metro_name_suffix + ","
+    )
 
     # Only keep a metros in 2021 if all of its counties were observed.
     # Most counties are actually not observed (yet) in 2021, because lots of cities are only surveyed
@@ -95,9 +89,7 @@ def combine_metro_rows(
         | (combined_df["num_observed_counties"] == combined_df["num_counties"])
     ]
 
-    combined_df = combined_df.drop(
-        columns=["num_observed_counties", "num_counties"]
-    )
+    combined_df = combined_df.drop(columns=["num_observed_counties", "num_counties"])
 
     return combined_df
 
@@ -107,9 +99,7 @@ def get_aggregate_functions() -> dict[str, pd.NamedAgg]:
         col: pd.NamedAgg(column=col, aggfunc="sum")
         for col in set(
             get_numerical_columns(DataSource.BPS, totals=True, projected=True)
-            + get_numerical_columns(
-                DataSource.CA_HCD, totals=True, projected=True
-            )
+            + get_numerical_columns(DataSource.CA_HCD, totals=True, projected=True)
         )
     } | {
         "county_names": pd.NamedAgg(
@@ -123,9 +113,7 @@ def get_aggregate_functions() -> dict[str, pd.NamedAgg]:
     }
 
 
-def load_metros(
-    data_repo_path: Path, counties_df: pd.DataFrame
-) -> pd.DataFrame:
+def load_metros(data_repo_path: Path, counties_df: pd.DataFrame) -> pd.DataFrame:
     crosswalk_df = load_crosswalk_df(data_repo_path)
 
     merged_df = crosswalk_df.merge(

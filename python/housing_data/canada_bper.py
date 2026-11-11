@@ -84,9 +84,7 @@ def load_canada_bper(data_repo_path: Path) -> pd.DataFrame:
     fix_montreal(df)
 
     df = pivot_and_add_geos(df, data_repo_path)
-    df = df.merge(
-        load_populations(data_repo_path), how="left", on=["year", "SGC"]
-    )
+    df = df.merge(load_populations(data_repo_path), how="left", on=["year", "SGC"])
     df = df.drop(columns=["SGC"])
 
     places_df = load_places(df)
@@ -190,15 +188,11 @@ def load_places(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def aggregate_to_counties(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.groupby(
-        ["census_division", "year", "province_abbr"], as_index=False
-    ).sum()
+    df = df.groupby(["census_division", "year", "province_abbr"], as_index=False).sum()
     add_per_capita_columns(df, [DataSource.CANADA])
 
     df["path_1"] = df["province_abbr"]
-    df["path_2"] = df["census_division"].str.replace(
-        r"[ /\-\.]+", "_", regex=True
-    )
+    df["path_2"] = df["census_division"].str.replace(r"[ /\-\.]+", "_", regex=True)
     df["name"] = df["census_division"] + ", " + df["province_abbr"]
     df["year"] = df["year"].astype(str)
 

@@ -42,9 +42,7 @@ def main() -> None:
     )
 
     raw_places_df, places_df = load_places(data_repo_path, county_population_df)
-    counties_df = load_counties(
-        data_repo_path, raw_places_df, county_population_df
-    )
+    counties_df = load_counties(data_repo_path, raw_places_df, county_population_df)
 
     (
         california_places_df,
@@ -60,9 +58,9 @@ def main() -> None:
     )
 
     counties_df = counties_df.merge(
-        california_counties_df.assign(
-            state_code=6, has_ca_hcd_data=True
-        ).astype({"county_code": "Int64", "state_code": "Int64"}),
+        california_counties_df.assign(state_code=6, has_ca_hcd_data=True).astype(
+            {"county_code": "Int64", "state_code": "Int64"}
+        ),
         on=["county_code", "state_code", "year"],
         how="left",
     )
@@ -116,9 +114,7 @@ def generate_json(
     write_list_json(
         metros_df,
         PUBLIC_DIR / "metros_list.json",
-        unhashable_columns=[
-            "county_names"
-        ],  # can't merge on a list-valued column
+        unhashable_columns=["county_names"],  # can't merge on a list-valued column
         extra_columns=["metro_type", "county_names"],
     )
     write_to_json_directory(

@@ -69,18 +69,13 @@ REGIONS = {
 }
 
 STATE_TO_DIVISION = {
-    state: division
-    for division, states in DIVISIONS.items()
-    for state in states
+    state: division for division, states in DIVISIONS.items() for state in states
 }
 DIVISION_TO_REGION = {
-    division: region
-    for region, divisions in REGIONS.items()
-    for division in divisions
+    division: region for region, divisions in REGIONS.items() for division in divisions
 }
 STATE_TO_REGION = {
-    state: DIVISION_TO_REGION[division]
-    for state, division in STATE_TO_DIVISION.items()
+    state: DIVISION_TO_REGION[division] for state, division in STATE_TO_DIVISION.items()
 }
 
 
@@ -123,9 +118,7 @@ def get_state_populations_1980s(data_path: Path) -> pd.DataFrame:
     return df.melt(id_vars="state", var_name="year", value_name="population")
 
 
-def _get_counties_population_table_1990s(
-    year: int, data_path: Path
-) -> pd.DataFrame:
+def _get_counties_population_table_1990s(year: int, data_path: Path) -> pd.DataFrame:
     assert 1990 <= year <= 1999
 
     df = pd.read_csv(
@@ -148,9 +141,7 @@ def _get_counties_population_table_1990s(
     df["year"] = "19" + df["year"].astype(str)
 
     FIPS_NAME_MAPPING = {
-        int(k): v
-        for k, v in us.states.mapping("fips", "name").items()
-        if k is not None
+        int(k): v for k, v in us.states.mapping("fips", "name").items() if k is not None
     }
     df["state"] = df["state_code"].map(FIPS_NAME_MAPPING)
 

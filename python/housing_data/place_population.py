@@ -35,9 +35,7 @@ def get_unincorporated_places_populations_1980() -> pd.DataFrame:
     31 states that are present.
     """
     # TODO download programmatically, add header=1
-    counties_df = pd.read_csv(
-        "../raw_data/nhgis0015_ds104_1980_county.csv", header=1
-    )
+    counties_df = pd.read_csv("../raw_data/nhgis0015_ds104_1980_county.csv", header=1)
     counties_df = counties_df.rename(columns={"Total": "County Total"})[
         ["County Total", "County Code", "State Code", "County Name"]
     ]
@@ -46,9 +44,7 @@ def get_unincorporated_places_populations_1980() -> pd.DataFrame:
     )
     counties_df = counties_df.drop(columns=["County Name"])
 
-    places_df = pd.read_csv(
-        "../raw_data/nhgis0015_ds104_1980_place_070.csv", header=1
-    )
+    places_df = pd.read_csv("../raw_data/nhgis0015_ds104_1980_place_070.csv", header=1)
 
     # We can't simply add up the CDPs and "REMAINDER OF <county subdivision name>" rows and
     # assume that that equals the total unincorporated population... because it empirically
@@ -76,9 +72,7 @@ def get_unincorporated_places_populations_1980() -> pd.DataFrame:
         "County Cities Total"
     ].fillna(0)
 
-    remainder_df = remainder_df.drop(
-        columns=["County Total", "County Cities Total"]
-    )
+    remainder_df = remainder_df.drop(columns=["County Total", "County Cities Total"])
 
     return remainder_df
 
@@ -112,9 +106,7 @@ def get_place_populations_1980(data_path: Path) -> pd.DataFrame:
     assert len(df) == old_len
 
     # 9999 indicates balance of county. That makes this super easy, IPUMS is great!
-    unincorp_rows = (df["Place Code"] == 9999) | df["Area Name"].str.contains(
-        "CDP"
-    )
+    unincorp_rows = (df["Place Code"] == 9999) | df["Area Name"].str.contains("CDP")
     df = df[~unincorp_rows]
 
     df = df.drop(columns=["Area Name"])
@@ -123,9 +115,7 @@ def get_place_populations_1980(data_path: Path) -> pd.DataFrame:
 
     # Combine cities that are spread across multiple counties
     df = (
-        df.groupby(["Place Name", "place_or_county_code", "State Code"])[
-            ["Total"]
-        ]
+        df.groupby(["Place Name", "place_or_county_code", "State Code"])[["Total"]]
         .sum()
         .reset_index()
     )
@@ -150,9 +140,7 @@ def get_place_populations_1980(data_path: Path) -> pd.DataFrame:
     ]
 
     # Fix Miami-Dade County name and code
-    dade_county = (df["place_or_county_code"] == "25_county") & (
-        df["state_code"] == 12
-    )
+    dade_county = (df["place_or_county_code"] == "25_county") & (df["state_code"] == 12)
     df.loc[dade_county, "place_name"] = "Miami-Dade County"
     df.loc[dade_county, "place_or_county_code"] = "86_county"
 
@@ -290,8 +278,7 @@ def get_place_populations_1990s(data_path: Path) -> pd.DataFrame:
     combined_df = _load_raw_place_populations_1990s(data_path)
 
     city_rows = (
-        combined_df["subcounty_fips"].isnull()
-        & combined_df["place_fips"].notnull()
+        combined_df["subcounty_fips"].isnull() & combined_df["place_fips"].notnull()
     )
 
     # In our place dataset, county means the balance of the county.
@@ -370,15 +357,11 @@ def _melt_df(
     """
     if f"POPESTIMATE{years[0]}" not in df.columns:
         # POPESTIMATE2020 isn't present in the 2020s file
-        df = df.rename(
-            columns={f"ESTIMATESBASE{years[0]}": f"POPESTIMATE{years[0]}"}
-        )
+        df = df.rename(columns={f"ESTIMATESBASE{years[0]}": f"POPESTIMATE{years[0]}"})
 
     mask = (
         (
-            (
-                df["COUNTY"] == 0
-            )  # indicates total of a city across all counties it's in
+            (df["COUNTY"] == 0)  # indicates total of a city across all counties it's in
             | (df["PLACE"] == 99990)  # indicates a "Balance of county" record
         )
         & (df["COUSUB"] == 0)  # remove townships and shit (county subdivisions)
@@ -406,9 +389,7 @@ def _melt_df(
 
     df = remove_duplicate_cities(df)
 
-    df["place_name"] = df["place_name"].str.replace(
-        "^Balance of ", "", regex=True
-    )
+    df["place_name"] = df["place_name"].str.replace("^Balance of ", "", regex=True)
 
     return df.melt(
         id_vars=["place_name", "place_or_county_code", "state_code"],
@@ -447,9 +428,9 @@ def interpolate_1980s_populations(
     Since we don't have yearly intercensal estimates for the 1980s, linear interp the city populations
     for 1981-1989.
     """
-    start_df = df_1980[
-        ["state_code", "place_or_county_code", "population"]
-    ].rename(columns={"population": "1980"})
+    start_df = df_1980[["state_code", "place_or_county_code", "population"]].rename(
+        columns={"population": "1980"}
+    )
     end_df = df_1990s.query('year == "1990"')[
         ["state_code", "place_or_county_code", "population"]
     ].rename(columns={"population": "1990"})
@@ -470,9 +451,7 @@ def interpolate_1980s_populations(
     ).sort_values(["state_code", "place_or_county_code", "year"])
 
     # linear interpolate for now! but pandas has more options I could look into...
-    interp_df["population"] = (
-        interp_df["population"].astype(float).interpolate()
-    )
+    interp_df["population"] = interp_df["population"].astype(float).interpolate()
     interp_df = interp_df[interp_df["year"] != "1990"]
 
     # Add back place_name
