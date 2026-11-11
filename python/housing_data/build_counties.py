@@ -22,7 +22,9 @@ def load_counties(
     """
     # The county data only goes back to 1990 :(
     # To get 1980 to 1990, we have to sum up the cities + unincorporated areas in each county
-    counties_df = load_bps_all_years_plus_monthly(data_repo_path, "county", start_year=1990)
+    counties_df = load_bps_all_years_plus_monthly(
+        data_repo_path, "county", start_year=1990
+    )
 
     imputed_counties_df = impute_pre_1990_counties(counties_df, places_df)
     counties_df = pd.concat([counties_df, imputed_counties_df])
@@ -61,7 +63,9 @@ def load_counties(
     return counties_df
 
 
-def impute_pre_1990_counties(counties_df: pd.DataFrame, places_df: pd.DataFrame) -> pd.DataFrame:
+def impute_pre_1990_counties(
+    counties_df: pd.DataFrame, places_df: pd.DataFrame
+) -> pd.DataFrame:
     summed_places_df = (
         places_df.groupby(["county_code", "state_code", "year"])[
             get_numerical_columns(DataSource.BPS, totals=True)
@@ -70,7 +74,9 @@ def impute_pre_1990_counties(counties_df: pd.DataFrame, places_df: pd.DataFrame)
         .reset_index()
     )
 
-    imputed_counties_df = summed_places_df[summed_places_df["year"] < "1990"].copy()
+    imputed_counties_df = summed_places_df[
+        summed_places_df["year"] < "1990"
+    ].copy()
     imputed_counties_df["imputed"] = True
     imputed_counties_df = imputed_counties_df.rename(
         columns={"county_code": "fips_county", "state_code": "fips_state"}

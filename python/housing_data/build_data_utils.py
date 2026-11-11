@@ -46,7 +46,11 @@ def get_numerical_columns(
     Args:
         post_processing: Whether to include the "{}_per_capita" and "total_{}" columns
     """
-    cols = [prefix + suffix for prefix in PREFIXES[data_source] for suffix in SUFFIXES[data_source]]
+    cols = [
+        prefix + suffix
+        for prefix in PREFIXES[data_source]
+        for suffix in SUFFIXES[data_source]
+    ]
 
     if totals:
         cols += [f"total{suffix}" for suffix in SUFFIXES[data_source]]
@@ -85,7 +89,9 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
         shutil.rmtree(path)
     path.mkdir()
 
-    for (json_dir, json_name), group in tqdm(df.groupby(["path_1", "path_2"], dropna=False)):
+    for (json_dir, json_name), group in tqdm(
+        df.groupby(["path_1", "path_2"], dropna=False)
+    ):
         sub_path = path / json_dir if not pd.isnull(json_dir) else path
         sub_path.mkdir(exist_ok=True)
 
@@ -96,7 +102,10 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
                 # doesn't matter if we pass projected=True here, since projected columns
                 # aren't present in CA HCD data. But just passing for consistency.
                 get_numerical_columns(
-                    DataSource.CA_HCD, totals=True, projected=True, per_capitas=True
+                    DataSource.CA_HCD,
+                    totals=True,
+                    projected=True,
+                    per_capitas=True,
                 )
             ]
             .isnull()
@@ -107,7 +116,9 @@ def write_to_json_directory(df: pd.DataFrame, path: Path) -> None:
         if ca_only_columns:
             group = group.drop(columns=ca_only_columns)
 
-        group.reset_index(drop=True).to_json(sub_path / f"{json_name}.json", orient="records")
+        group.reset_index(drop=True).to_json(
+            sub_path / f"{json_name}.json", orient="records"
+        )
 
 
 # Columns to write to the "{geography}_list.json" file.
@@ -135,7 +146,9 @@ def write_list_json(
 
     # Refers to both the path of the json file (https://housingdata.app/places_data/{path}.json)
     # and the URL path (https://housingdata.app/places/{path})
-    subset_df["path"] = (subset_df["path_1"] + "/").fillna("") + subset_df["path_2"]
+    subset_df["path"] = (subset_df["path_1"] + "/").fillna("") + subset_df[
+        "path_2"
+    ]
 
     # Add population column
     latest_populations = (
@@ -143,7 +156,9 @@ def write_list_json(
         .sort_values("year")
         .drop_duplicates(subset=keys, keep="last")
     )
-    latest_populations["population"] = latest_populations["population"].fillna(0).astype(int)
+    latest_populations["population"] = (
+        latest_populations["population"].fillna(0).astype(int)
+    )
     subset_df = subset_df.merge(latest_populations, on=keys, how="left")
 
     # Add column indicating whether the place has CA HCD data
@@ -155,14 +170,18 @@ def write_list_json(
     subset_df.to_json(output_path, orient="records")
 
 
-def add_per_capita_columns(df: pd.DataFrame, data_sources: list[DataSource]) -> None:
+def add_per_capita_columns(
+    df: pd.DataFrame, data_sources: list[DataSource]
+) -> None:
     # There are three cities (Sitka, Weeki Wachee, and Carlton Landing) that had population 0 in some years
     population = df["population"].replace({0: pd.NA})
 
     cols = {
         col
         for data_source in data_sources
-        for col in get_numerical_columns(data_source, totals=True, projected=True)
+        for col in get_numerical_columns(
+            data_source, totals=True, projected=True
+        )
     }
     for col in cols:
         df[col + "_per_capita"] = df[col] / population
@@ -204,7 +223,11 @@ def load_bps_all_years_plus_monthly(
 
     # E.g. in early 2022, this will be 2020.
     # In mid/late-2022 (after the annual 2021 data is released) this will be 2021.
-    last_full_year = LATEST_MONTH[0] - 1 if LAST_YEAR_ANNUAL_DATA_RELEASED else LATEST_MONTH[0] - 2
+    last_full_year = (
+        LATEST_MONTH[0] - 1
+        if LAST_YEAR_ANNUAL_DATA_RELEASED
+        else LATEST_MONTH[0] - 2
+    )
 
     for year in range(start_year, last_full_year + 1):
         data = bps.load_data(
@@ -251,7 +274,11 @@ def load_bps_all_years_plus_monthly(
 
 def add_total_columns(df: pd.DataFrame, data_source: DataSource) -> None:
     for suffix in SUFFIXES[data_source]:
-        cols = [col for col in get_numerical_columns(data_source) if col.endswith(suffix)]
+        cols = [
+            col
+            for col in get_numerical_columns(data_source)
+            if col.endswith(suffix)
+        ]
         df[f"total{suffix}"] = df[cols].sum(axis=1)
 
 
@@ -266,7 +293,9 @@ def add_current_year_projections(year_to_date_df: pd.DataFrame) -> pd.DataFrame:
     """
     for suffix in SUFFIXES[DataSource.BPS]:
         # number of remaining months in the year / number of observed months
-        projected_units_ratio = (12 - year_to_date_df["month"]) / year_to_date_df["month"]
+        projected_units_ratio = (
+            12 - year_to_date_df["month"]
+        ) / year_to_date_df["month"]
         year_to_date_df[f"projected{suffix}"] = (
             projected_units_ratio * year_to_date_df[f"total{suffix}"]
         ).astype(int)
@@ -288,8 +317,8 @@ def impute_2025_and_2026_population(df_2020s: pd.DataFrame) -> pd.DataFrame:
 
 
 def check_population_present_for_all_years(df: pd.DataFrame) -> None:
-    missing_years = {str(year) for year in range(1980, LATEST_MONTH[0] + 1)} - set(
-        df["year"].drop_duplicates()
-    )
+    missing_years = {
+        str(year) for year in range(1980, LATEST_MONTH[0] + 1)
+    } - set(df["year"].drop_duplicates())
     if missing_years:
         raise ValueError(f"Population data missing for {missing_years}")

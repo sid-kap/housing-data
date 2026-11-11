@@ -42,7 +42,9 @@ def main() -> None:
     )
 
     raw_places_df, places_df = load_places(data_repo_path, county_population_df)
-    counties_df = load_counties(data_repo_path, raw_places_df, county_population_df)
+    counties_df = load_counties(
+        data_repo_path, raw_places_df, county_population_df
+    )
 
     (
         california_places_df,
@@ -58,9 +60,9 @@ def main() -> None:
     )
 
     counties_df = counties_df.merge(
-        california_counties_df.assign(state_code=6, has_ca_hcd_data=True).astype(
-            {"county_code": "Int64", "state_code": "Int64"}
-        ),
+        california_counties_df.assign(
+            state_code=6, has_ca_hcd_data=True
+        ).astype({"county_code": "Int64", "state_code": "Int64"}),
         on=["county_code", "state_code", "year"],
         how="left",
     )
@@ -68,7 +70,9 @@ def main() -> None:
     metros_df = load_metros(data_repo_path, counties_df)
 
     states_df = states_df.merge(
-        california_states_df.assign(has_ca_hcd_data=True).astype({"state_code": "Int64"}),
+        california_states_df.assign(has_ca_hcd_data=True).astype(
+            {"state_code": "Int64"}
+        ),
         on=["state_code", "year"],
         how="left",
     )
@@ -112,14 +116,20 @@ def generate_json(
     write_list_json(
         metros_df,
         PUBLIC_DIR / "metros_list.json",
-        unhashable_columns=["county_names"],  # can't merge on a list-valued column
+        unhashable_columns=[
+            "county_names"
+        ],  # can't merge on a list-valued column
         extra_columns=["metro_type", "county_names"],
     )
-    write_to_json_directory(metros_df.drop(columns=["county_names"]), PUBLIC_DIR / "metros_data")
+    write_to_json_directory(
+        metros_df.drop(columns=["county_names"]), PUBLIC_DIR / "metros_data"
+    )
 
     # Counties
     write_list_json(
-        counties_df.drop(columns=["state_code"]).rename(columns={"fips_state": "state_code"}),
+        counties_df.drop(columns=["state_code"]).rename(
+            columns={"fips_state": "state_code"}
+        ),
         PUBLIC_DIR / "counties_list.json",
     )
     write_to_json_directory(counties_df, PUBLIC_DIR / "counties_data")

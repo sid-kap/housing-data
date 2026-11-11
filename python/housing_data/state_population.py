@@ -19,7 +19,13 @@ DIVISIONS = {
         "Vermont",
     ],
     "Middle Atlantic": ["New Jersey", "New York", "Pennsylvania"],
-    "East North Central": ["Illinois", "Indiana", "Michigan", "Ohio", "Wisconsin"],
+    "East North Central": [
+        "Illinois",
+        "Indiana",
+        "Michigan",
+        "Ohio",
+        "Wisconsin",
+    ],
     "West North Central": [
         "Iowa",
         "Kansas",
@@ -62,12 +68,19 @@ REGIONS = {
     "West": ["Mountain", "Pacific"],
 }
 
-STATE_TO_DIVISION = {state: division for division, states in DIVISIONS.items() for state in states}
+STATE_TO_DIVISION = {
+    state: division
+    for division, states in DIVISIONS.items()
+    for state in states
+}
 DIVISION_TO_REGION = {
-    division: region for region, divisions in REGIONS.items() for division in divisions
+    division: region
+    for region, divisions in REGIONS.items()
+    for division in divisions
 }
 STATE_TO_REGION = {
-    state: DIVISION_TO_REGION[division] for state, division in STATE_TO_DIVISION.items()
+    state: DIVISION_TO_REGION[division]
+    for state, division in STATE_TO_DIVISION.items()
 }
 
 
@@ -110,7 +123,9 @@ def get_state_populations_1980s(data_path: Path) -> pd.DataFrame:
     return df.melt(id_vars="state", var_name="year", value_name="population")
 
 
-def _get_counties_population_table_1990s(year: int, data_path: Path) -> pd.DataFrame:
+def _get_counties_population_table_1990s(
+    year: int, data_path: Path
+) -> pd.DataFrame:
     assert 1990 <= year <= 1999
 
     df = pd.read_csv(
@@ -133,7 +148,9 @@ def _get_counties_population_table_1990s(year: int, data_path: Path) -> pd.DataF
     df["year"] = "19" + df["year"].astype(str)
 
     FIPS_NAME_MAPPING = {
-        int(k): v for k, v in us.states.mapping("fips", "name").items() if k is not None
+        int(k): v
+        for k, v in us.states.mapping("fips", "name").items()
+        if k is not None
     }
     df["state"] = df["state_code"].map(FIPS_NAME_MAPPING)
 
@@ -142,7 +159,10 @@ def _get_counties_population_table_1990s(year: int, data_path: Path) -> pd.DataF
 
 def get_state_populations_1990s(data_path: Path) -> pd.DataFrame:
     df = pd.concat(
-        [_get_counties_population_table_1990s(year, data_path) for year in range(1990, 2000)]
+        [
+            _get_counties_population_table_1990s(year, data_path)
+            for year in range(1990, 2000)
+        ]
     )
 
     return (
@@ -231,7 +251,9 @@ def get_state_population_estimates(data_path: Path) -> pd.DataFrame:
     states = us.states.mapping("name", "fips").keys()
     states_df = states_df[states_df["state"].isin(states)]
 
-    missing_states = set(states) - (set(STATE_TO_DIVISION.keys()) | set(STATE_TO_REGION.keys()))
+    missing_states = set(states) - (
+        set(STATE_TO_DIVISION.keys()) | set(STATE_TO_REGION.keys())
+    )
     print(f"Missing division/region mapping for states: {missing_states}")
 
     divisions_df = (

@@ -26,9 +26,7 @@ TimeScale = Literal["monthly_current", "monthly_year_to_date", "annual"]
 
 Scale = Literal["county", "metro", "place", "state"]
 
-ERROR_STRING = (
-    "Sorry, the page you requested has either been moved or is no longer available on this server."
-)
+ERROR_STRING = "Sorry, the page you requested has either been moved or is no longer available on this server."
 
 CENSUS_DATA_PATH = "https://www2.census.gov/econ/bps"
 
@@ -46,7 +44,9 @@ def _validate_load_data_inputs(
         raise ValueError(f"Unknown time_scale: {time_scale}")
     if scale == "place" and region is None:
         raise ValueError("If scale is 'place', region must be provided.")
-    if (time_scale == "monthly_current" or time_scale == "monthly_year_to_date") and month is None:
+    if (
+        time_scale == "monthly_current" or time_scale == "monthly_year_to_date"
+    ) and month is None:
         raise ValueError("If time_scale is month, month must be provided.")
     if time_scale == "annual" and month is not None:
         raise ValueError("If time_scale is 'annual', month must be None.")
@@ -69,7 +69,9 @@ def slugify(s: str) -> str:
     return s.lower().replace("-", "_").strip()
 
 
-def _merge_column_names(header_row_0: list[str], header_row_1: list[str]) -> pd.Series:
+def _merge_column_names(
+    header_row_0: list[str], header_row_1: list[str]
+) -> pd.Series:
     for i, col in enumerate(header_row_0.copy()):
         if "unit" in col:
             header_row_0[i - 1] = col
@@ -105,7 +107,9 @@ def _merge_column_names(header_row_0: list[str], header_row_1: list[str]) -> pd.
 
 
 def _fix_column_names(
-    header_row_0: list[str], header_row_1: list[str], fix_row_lengths: bool = True
+    header_row_0: list[str],
+    header_row_1: list[str],
+    fix_row_lengths: bool = True,
 ) -> pd.Series:
     if fix_row_lengths:
         assert len(header_row_1) == len(header_row_0) + 1
@@ -158,7 +162,9 @@ def get_data_path(
             "annual": "a",
         }[time_scale]
 
-        filename_part_2 = f"{year_last_digits:02d}{month:02d}{time_scale_letter}"
+        filename_part_2 = (
+            f"{year_last_digits:02d}{month:02d}{time_scale_letter}"
+        )
     else:
         filename_part_2 = f"{year:04d}a"
 
@@ -191,7 +197,9 @@ def get_data_path(
     scale_path = scale.capitalize()
 
     if extra_path is not None:
-        path = f"{scale_path}/{extra_path}/{filename_part_1}{filename_part_2}.txt"
+        path = (
+            f"{scale_path}/{extra_path}/{filename_part_1}{filename_part_2}.txt"
+        )
     else:
         path = f"{scale_path}/{filename_part_1}{filename_part_2}.txt"
 
@@ -208,7 +216,9 @@ def read_bps_formatted_csv(
     result = (
         csv_contents
         # OMG so dumb that they didn't wrap with quotations
-        .replace("Bristol, VA", '"Bristol, VA"').replace("Bristol, TN", '"Bristol, TN"')
+        .replace("Bristol, VA", '"Bristol, VA"').replace(
+            "Bristol, TN", '"Bristol, TN"'
+        )
     )
 
     csv_handle = StringIO(result)
@@ -223,10 +233,14 @@ def read_bps_formatted_csv(
     df = pd.read_csv(csv_handle, header=None, index_col=False)
 
     if scale == "county" and year >= 1990 and year <= 1998:
-        df.columns = _fix_column_names_old_county_level(header_row_1, header_row_2)
+        df.columns = _fix_column_names_old_county_level(
+            header_row_1, header_row_2
+        )
     else:
         fix_row_lengths = not (year == 1984 and region == "west")
-        df.columns = _fix_column_names(header_row_1, header_row_2, fix_row_lengths=fix_row_lengths)
+        df.columns = _fix_column_names(
+            header_row_1, header_row_2, fix_row_lengths=fix_row_lengths
+        )
 
     return df
 
@@ -309,7 +323,12 @@ def load_data(
 
 def fix_state(s: Any) -> Any:
     if isinstance(s, str):
-        return s.replace("Division", "").replace("Divisi", "").replace("Region", "").strip()
+        return (
+            s.replace("Division", "")
+            .replace("Divisi", "")
+            .replace("Region", "")
+            .strip()
+        )
     else:
         return s
 
@@ -452,9 +471,13 @@ def place_cleanup(df: pd.DataFrame, year: int) -> pd.DataFrame:
         df["central_city"] = df["central_city"].astype(str)
 
     df["uncleaned_place_name"] = df["place_name"]
-    df["place_name"], df["place_type"] = split_place_type(df["place_name"], year)
+    df["place_name"], df["place_type"] = split_place_type(
+        df["place_name"], year
+    )
 
-    df = df[df["place_name"].notnull() & ~df["place_name"].isin(PLACES_TO_REMOVE)].copy()
+    df = df[
+        df["place_name"].notnull() & ~df["place_name"].isin(PLACES_TO_REMOVE)
+    ].copy()
 
     # Miami-Dade County was called Dade County until 1997.
     # We need to fix the old rows to use the new name and new FIPS code (change 25 to 86).
@@ -472,7 +495,9 @@ def place_cleanup(df: pd.DataFrame, year: int) -> pd.DataFrame:
     return df
 
 
-def split_place_type(place_names: pd.Series, year: int) -> tuple[pd.Series, pd.Series]:
+def split_place_type(
+    place_names: pd.Series, year: int
+) -> tuple[pd.Series, pd.Series]:
     if year <= 1988:
         # Mostly only an issue from 1980 to 1987, but there are like 11 places that
         # still have the weird trailing dots in 1988 too.
@@ -485,14 +510,18 @@ def split_place_type(place_names: pd.Series, year: int) -> tuple[pd.Series, pd.S
 
     place_names = place_names.str.strip()
 
-    place_types = [" " + s for s in ["township", "town", "city", "village", "borough"]]
+    place_types = [
+        " " + s for s in ["township", "town", "city", "village", "borough"]
+    ]
     title_place_types = [s.title() for s in place_types]
 
     new_place_names = []
     extracted_place_types: list[str | None] = []
     for name in place_names:
         for place_type, title_place_type in zip(place_types, title_place_types):
-            if isinstance(name, str) and name.endswith((place_type, title_place_type)):
+            if isinstance(name, str) and name.endswith(
+                (place_type, title_place_type)
+            ):
                 new_place_names.append(name[: -len(place_type)])
                 extracted_place_types.append(place_type[1:])
                 break

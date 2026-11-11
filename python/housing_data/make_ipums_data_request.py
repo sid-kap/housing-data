@@ -39,7 +39,9 @@ def main() -> None:
     extract_number = list(extract_numbers)[0]
 
     if extract_number is None:
-        print("Failed, probably because of duplicate requests that are already being processed")
+        print(
+            "Failed, probably because of duplicate requests that are already being processed"
+        )
         return
 
     while True:

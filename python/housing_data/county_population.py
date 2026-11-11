@@ -17,7 +17,11 @@ def _melt_df(df: pd.DataFrame, years: list[int]) -> pd.DataFrame:
     }
 
     df = df[rename_cols.keys()].rename(columns=rename_cols)
-    return df.melt(id_vars=["county_code", "state_code"], var_name="year", value_name="population")
+    return df.melt(
+        id_vars=["county_code", "state_code"],
+        var_name="year",
+        value_name="population",
+    )
 
 
 def get_county_populations_2020s(data_path: Path) -> pd.DataFrame:
@@ -33,11 +37,14 @@ def get_county_populations_2010s(data_path: Path) -> pd.DataFrame:
     return _melt_df(df, list(range(2010, 2020)))
 
 
-def get_county_populations_2000s(data_path: Path, data_repo_path: Path) -> pd.DataFrame:
+def get_county_populations_2000s(
+    data_path: Path, data_repo_path: Path
+) -> pd.DataFrame:
     paths = [
         (state.fips, f"co-est00int-01-{state.fips}.csv")
         for state in us.STATES_AND_TERRITORIES + [us.states.DC]
-        if state.fips not in ["60", "66", "69", "72", "78"]  # exclude territories
+        if state.fips
+        not in ["60", "66", "69", "72", "78"]  # exclude territories
     ]
 
     col_names = [
@@ -81,7 +88,11 @@ def get_county_populations_2000s(data_path: Path, data_repo_path: Path) -> pd.Da
     df = df.drop(columns=["2000-04-01", "2010-04-01"])
     df["state_code"] = df["state_code"].astype(int)
 
-    df = df.melt(id_vars=["county_name", "state_code"], var_name="year", value_name="population")
+    df = df.melt(
+        id_vars=["county_name", "state_code"],
+        var_name="year",
+        value_name="population",
+    )
 
     df = df.merge(
         get_county_fips_crosswalk(data_repo_path),
@@ -91,7 +102,9 @@ def get_county_populations_2000s(data_path: Path, data_repo_path: Path) -> pd.Da
     df = df.drop(columns=["county_name"])
     df = df[df["county_code"].notnull()].copy()
 
-    df["population"] = df["population"].str.replace(",", "").astype("float").astype("Int64")
+    df["population"] = (
+        df["population"].str.replace(",", "").astype("float").astype("Int64")
+    )
     df["county_code"] = df["county_code"].astype("Int64")
 
     # Use 2010 from the 2010s dataset
@@ -146,9 +159,15 @@ def get_county_populations_1990s(data_path: Path) -> pd.DataFrame:
     df["state_code"] = df["full_county_code"].astype("Int64") // 1000
     df["county_code"] = df["full_county_code"].astype("Int64") % 1000
     df = df.dropna(subset=["state_code", "county_code"])
-    df = df.drop(columns=["idk", "full_county_code", "1990-04-01", "county_name"])
+    df = df.drop(
+        columns=["idk", "full_county_code", "1990-04-01", "county_name"]
+    )
 
-    df = df.melt(id_vars=["county_code", "state_code"], var_name="year", value_name="population")
+    df = df.melt(
+        id_vars=["county_code", "state_code"],
+        var_name="year",
+        value_name="population",
+    )
 
     df["population"] = (
         df["population"]
@@ -194,13 +213,17 @@ def get_county_populations_1980s(data_path: Path) -> pd.DataFrame:
     combined_df = combined_df.drop(columns=["combined_fips"])
 
     # Fix fips code for Miami-Dade County, since it changed
-    dade_county = (combined_df["state_code"] == 12) & (combined_df["county_code"] == 25)
+    dade_county = (combined_df["state_code"] == 12) & (
+        combined_df["county_code"] == 25
+    )
     combined_df.loc[dade_county, "county_code"] = 86
 
     return combined_df
 
 
-def get_county_population_estimates(data_path: Path, data_repo_path: Path) -> pd.DataFrame:
+def get_county_population_estimates(
+    data_path: Path, data_repo_path: Path
+) -> pd.DataFrame:
     print("Loading 1980 populations...")
     df_1980s = get_county_populations_1980s(data_path)
     print("Loading 1990s populations...")

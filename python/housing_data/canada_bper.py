@@ -84,7 +84,9 @@ def load_canada_bper(data_repo_path: Path) -> pd.DataFrame:
     fix_montreal(df)
 
     df = pivot_and_add_geos(df, data_repo_path)
-    df = df.merge(load_populations(data_repo_path), how="left", on=["year", "SGC"])
+    df = df.merge(
+        load_populations(data_repo_path), how="left", on=["year", "SGC"]
+    )
     df = df.drop(columns=["SGC"])
 
     places_df = load_places(df)
@@ -104,7 +106,9 @@ def load_raw_bper(data_repo_path: Path) -> pd.DataFrame:
     file_path = data_repo_path / CANADA_BPER_DIR / "Case1091138_revised.xlsx"
 
     old_df = pd.read_excel(file_path, sheet_name=0, skiprows=2)
-    old_df = old_df.rename(columns={"SGC": "Municipality Name", "Municipality Name": "SGC"})
+    old_df = old_df.rename(
+        columns={"SGC": "Municipality Name", "Municipality Name": "SGC"}
+    )
     old_df["SGC"] = old_df["SGC"].astype(str).apply(_fix_old_sgc)
 
     recent_df = pd.read_excel(file_path, sheet_name=1, skiprows=2)
@@ -118,11 +122,18 @@ def load_raw_bper(data_repo_path: Path) -> pd.DataFrame:
 
 def fix_montreal(df: pd.DataFrame) -> None:
     # Map arrondissements/boroughs of Montreal to the city SGC code
-    df.loc[df["SGC"].str.startswith("2466A") | df["SGC"].str.startswith("2466a"), "SGC"] = "2466023"
+    df.loc[
+        df["SGC"].str.startswith("2466A") | df["SGC"].str.startswith("2466a"),
+        "SGC",
+    ] = "2466023"
 
 
 def pivot_and_add_geos(df: pd.DataFrame, data_repo_path: Path) -> pd.DataFrame:
-    df = df.merge(load_crosswalk(data_repo_path / CANADA_CROSSWALK_DIR), how="left", on="SGC")
+    df = df.merge(
+        load_crosswalk(data_repo_path / CANADA_CROSSWALK_DIR),
+        how="left",
+        on="SGC",
+    )
 
     df["units"] = df["UnitsCategory"].map(UNITS_CATEGORIES)
     df = df.drop(columns=["UnitsCategory"])
@@ -147,7 +158,9 @@ def pivot_and_add_geos(df: pd.DataFrame, data_repo_path: Path) -> pd.DataFrame:
     ]
 
     df = (
-        pd.pivot_table(df, index=ids, columns="units", values="UnitsCreated", aggfunc="sum")
+        pd.pivot_table(
+            df, index=ids, columns="units", values="UnitsCreated", aggfunc="sum"
+        )
         .fillna(0)
         .reset_index()
     )
@@ -177,11 +190,15 @@ def load_places(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def aggregate_to_counties(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.groupby(["census_division", "year", "province_abbr"], as_index=False).sum()
+    df = df.groupby(
+        ["census_division", "year", "province_abbr"], as_index=False
+    ).sum()
     add_per_capita_columns(df, [DataSource.CANADA])
 
     df["path_1"] = df["province_abbr"]
-    df["path_2"] = df["census_division"].str.replace(r"[ /\-\.]+", "_", regex=True)
+    df["path_2"] = df["census_division"].str.replace(
+        r"[ /\-\.]+", "_", regex=True
+    )
     df["name"] = df["census_division"] + ", " + df["province_abbr"]
     df["year"] = df["year"].astype(str)
 
