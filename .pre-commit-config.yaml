@@ -11,10 +11,7 @@ repos:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.7.1
+  - repo: https://github.com/oxc-project/mirrors-oxfmt
+    rev: v0.78.0
     hooks:
-      - id: prettier
-        additional_dependencies:
-          - prettier@2.7.1
-          - "@trivago/prettier-plugin-sort-imports@3.3.0"
+      - id: oxfmt
