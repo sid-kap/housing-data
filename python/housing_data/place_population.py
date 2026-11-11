@@ -1,9 +1,9 @@
 from io import StringIO
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
+
 from housing_data.build_data_utils import (
     check_population_present_for_all_years,
     impute_2025_and_2026_population,
@@ -50,9 +50,7 @@ def get_unincorporated_places_populations_1980() -> pd.DataFrame:
     # assume that that equals the total unincorporated population... because it empirically
     # doesn't, if we compare against nhgis0015_ds104_1980_place_02398.csv.
     # This is why the county dataset is needed.
-    unincorp_rows = places_df["Area Name"].str.contains("CDP") | (
-        places_df["Place Code"] == 9999
-    )
+    unincorp_rows = places_df["Area Name"].str.contains("CDP") | (places_df["Place Code"] == 9999)
     county_cities_total_df = (
         places_df[~unincorp_rows]
         .groupby(["County Code", "State Code"])["Total"]
@@ -61,16 +59,10 @@ def get_unincorporated_places_populations_1980() -> pd.DataFrame:
         .reset_index()
     )
 
-    remainder_df = counties_df.merge(
-        county_cities_total_df, on=["County Code", "State Code"], how="left"
-    )
+    remainder_df = counties_df.merge(county_cities_total_df, on=["County Code", "State Code"], how="left")
 
-    remainder_df["place_or_county_code"] = (
-        remainder_df["County Code"].astype(str) + "_county"
-    )
-    remainder_df["Total"] = remainder_df["County Total"] - remainder_df[
-        "County Cities Total"
-    ].fillna(0)
+    remainder_df["place_or_county_code"] = remainder_df["County Code"].astype(str) + "_county"
+    remainder_df["Total"] = remainder_df["County Total"] - remainder_df["County Cities Total"].fillna(0)
 
     remainder_df = remainder_df.drop(columns=["County Total", "County Cities Total"])
 
@@ -98,9 +90,7 @@ def get_place_populations_1980(data_path: Path) -> pd.DataFrame:
     # Luckily, there is a crosswalk available that we can use to convert 1980 Census Place Codes to FIPS.
     crosswalk_df = _get_places_crosswalk_df(data_path)
     old_len = len(df)
-    df = df.merge(
-        crosswalk_df.drop(columns=["NAME"]), how="left", on=["Place Code", "State Code"]
-    )
+    df = df.merge(crosswalk_df.drop(columns=["NAME"]), how="left", on=["Place Code", "State Code"])
     assert len(df) == old_len
 
     # 9999 indicates balance of county. That makes this super easy, IPUMS is great!
@@ -112,11 +102,7 @@ def get_place_populations_1980(data_path: Path) -> pd.DataFrame:
     df["place_or_county_code"] = df["place_fips"].astype(str)
 
     # Combine cities that are spread across multiple counties
-    df = (
-        df.groupby(["Place Name", "place_or_county_code", "State Code"])[["Total"]]
-        .sum()
-        .reset_index()
-    )
+    df = df.groupby(["Place Name", "place_or_county_code", "State Code"])[["Total"]].sum().reset_index()
 
     df = pd.concat([df, get_unincorporated_places_populations_1980()])
 
@@ -133,8 +119,7 @@ def get_place_populations_1980(data_path: Path) -> pd.DataFrame:
 
     # A few rare dupes we found... I don't care about this for now
     df = df[
-        (df["place_or_county_code"] != "<NA>")
-        & ~((df["place_or_county_code"] == "69336") & (df["state_code"] == 42))
+        (df["place_or_county_code"] != "<NA>") & ~((df["place_or_county_code"] == "69336") & (df["state_code"] == 42))
     ]
 
     # Fix Miami-Dade County name and code
@@ -237,9 +222,7 @@ def _fix_place_names(place_names: pd.Series) -> pd.Series:
     suffixes = ["city", "village", "town", "township", "borough"]
 
     replace_strings = [(f" {suffix}$", " " + suffix) for suffix in suffixes]
-    replace_pt_strings = [
-        (f" {suffix} \\(pt.\\)$", " " + suffix) for suffix in suffixes
-    ]
+    replace_pt_strings = [(f" {suffix} \\(pt.\\)$", " " + suffix) for suffix in suffixes]
 
     for s1, s2 in replace_strings + replace_pt_strings:
         place_names = place_names.str.replace(s1, s2, regex=True)
@@ -261,23 +244,17 @@ def remove_duplicate_cities(df: pd.DataFrame) -> pd.DataFrame:
     """
     dupes = df.groupby(["place_name", "state_code"]).size().loc[lambda x: x > 1]
     dupe_cities = set(
-        dupes.reset_index()[["place_name", "state_code"]]
-        .drop_duplicates()
-        .itertuples(index=False, name=None)
+        dupes.reset_index()[["place_name", "state_code"]].drop_duplicates().itertuples(index=False, name=None)
     )
 
-    place_state_tuples = pd.Series(
-        list(zip(df["place_name"], df["state_code"])), index=df.index
-    )
+    place_state_tuples = pd.Series(list(zip(df["place_name"], df["state_code"])), index=df.index)
     return df[~place_state_tuples.isin(dupe_cities)]
 
 
 def get_place_populations_1990s(data_path: Path) -> pd.DataFrame:
     combined_df = _load_raw_place_populations_1990s(data_path)
 
-    city_rows = (
-        combined_df["subcounty_fips"].isnull() & combined_df["place_fips"].notnull()
-    )
+    city_rows = combined_df["subcounty_fips"].isnull() & combined_df["place_fips"].notnull()
 
     # In our place dataset, county means the balance of the county.
     # So only keep rows that either don't contain county, or contain balance of,
@@ -318,9 +295,7 @@ def get_place_populations_1990s(data_path: Path) -> pd.DataFrame:
 
     # First confirm that the only dupes (same place and state) is if they have different fips
     assert (
-        combined_df.groupby(
-            ["place_name", "state_code", "place_fips", "place_or_county_code"]
-        )
+        combined_df.groupby(["place_name", "state_code", "place_fips", "place_or_county_code"])
         .size()
         .loc[lambda x: x > 1]
         .size
@@ -341,7 +316,7 @@ def get_place_populations_1990s(data_path: Path) -> pd.DataFrame:
 def _melt_df(
     df: pd.DataFrame,
     years: list[int],
-    encoding: Optional[str] = None,
+    encoding: str | None = None,
     has_consolidated_cities: bool = True,
 ) -> pd.DataFrame:
     """
@@ -367,9 +342,7 @@ def _melt_df(
     df = df[mask].copy()
 
     df["place_or_county_code"] = (
-        df["PLACE"]
-        .astype(str)
-        .where(df["PLACE"] != 99990, df["COUNTY"].astype(str) + "_county")
+        df["PLACE"].astype(str).where(df["PLACE"] != 99990, df["COUNTY"].astype(str) + "_county")
     )
 
     cols = {
@@ -413,19 +386,15 @@ def get_place_populations_2020s(data_path: Path) -> pd.DataFrame:
     return df
 
 
-def interpolate_1980s_populations(
-    df_1980: pd.DataFrame, df_1990s: pd.DataFrame
-) -> pd.DataFrame:
+def interpolate_1980s_populations(df_1980: pd.DataFrame, df_1990s: pd.DataFrame) -> pd.DataFrame:
     """
     Since we don't have yearly intercensal estimates for the 1980s, linear interp the city populations
     for 1981-1989.
     """
-    start_df = df_1980[["state_code", "place_or_county_code", "population"]].rename(
-        columns={"population": "1980"}
+    start_df = df_1980[["state_code", "place_or_county_code", "population"]].rename(columns={"population": "1980"})
+    end_df = df_1990s.query('year == "1990"')[["state_code", "place_or_county_code", "population"]].rename(
+        columns={"population": "1990"}
     )
-    end_df = df_1990s.query('year == "1990"')[
-        ["state_code", "place_or_county_code", "population"]
-    ].rename(columns={"population": "1990"})
     assert start_df["1980"].notnull().all()
     assert end_df["1990"].notnull().all()
 
@@ -448,9 +417,7 @@ def interpolate_1980s_populations(
 
     # Add back place_name
     interp_df = interp_df.merge(
-        df_1990s[
-            ["state_code", "place_or_county_code", "place_name"]
-        ].drop_duplicates(),
+        df_1990s[["state_code", "place_or_county_code", "place_name"]].drop_duplicates(),
         on=["state_code", "place_or_county_code"],
         how="left",
     )

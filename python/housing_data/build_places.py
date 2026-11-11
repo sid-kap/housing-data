@@ -1,7 +1,7 @@
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
+
 from housing_data import place_population
 from housing_data.build_data_utils import (
     PLACE_POPULATION_DIR,
@@ -14,9 +14,7 @@ from housing_data.build_data_utils import (
 from housing_data.building_permits_survey import REGIONS
 
 
-def make_bps_fips_mapping(
-    places_df: pd.DataFrame, place_population_df: pd.DataFrame
-) -> pd.DataFrame:
+def make_bps_fips_mapping(places_df: pd.DataFrame, place_population_df: pd.DataFrame) -> pd.DataFrame:
     """
     Returns a DataFrame with columns:
     - 6_digit_id (str)
@@ -84,9 +82,7 @@ def make_place_name_fips_mapping(merged_rows: pd.DataFrame) -> pd.DataFrame:
     We should probably use the "town", "village", etc. designations for
     matching instead of throwing them away.
     """
-    mapping = merged_rows[
-        ["place_name", "state_code", "place_or_county_code"]
-    ].drop_duplicates()
+    mapping = merged_rows[["place_name", "state_code", "place_or_county_code"]].drop_duplicates()
 
     # Remove dupes ( (place_name, state_code) tuples for which there are multiple fips codes)
     # TODO: some of these are probably cases of a village and a township with the same name,
@@ -100,9 +96,7 @@ def make_place_name_fips_mapping(merged_rows: pd.DataFrame) -> pd.DataFrame:
     return mapping
 
 
-def add_place_population_data(
-    places_df: pd.DataFrame, place_population_df: pd.DataFrame
-) -> pd.DataFrame:
+def add_place_population_data(places_df: pd.DataFrame, place_population_df: pd.DataFrame) -> pd.DataFrame:
     """
     Tries to add a population column to as many rows in places_df as possible.
 
@@ -128,19 +122,11 @@ def add_place_population_data(
         )
     )
 
-    merged_df = places_df.merge(
-        bps_fips_mapping, how="left", on=["6_digit_id", "state_code"], indicator=True
-    )
+    merged_df = places_df.merge(bps_fips_mapping, how="left", on=["6_digit_id", "state_code"], indicator=True)
     assert len(merged_df) == len(places_df)
-    print(
-        "First mapping handled {:.1%} of rows!".format(
-            (merged_df["_merge"] == "both").mean()
-        )
-    )
+    print("First mapping handled {:.1%} of rows!".format((merged_df["_merge"] == "both").mean()))
     merged_rows = merged_df[merged_df["_merge"] == "both"].drop(columns=["_merge"])
-    unmerged_rows = merged_df[merged_df["_merge"] == "left_only"].drop(
-        columns=["_merge", "place_or_county_code"]
-    )
+    unmerged_rows = merged_df[merged_df["_merge"] == "left_only"].drop(columns=["_merge", "place_or_county_code"])
     assert len(merged_rows) + len(unmerged_rows) == len(places_df)
 
     # For earlier rows, we'll have to figure out the IDs by matching place name and state code.
@@ -154,11 +140,7 @@ def add_place_population_data(
         indicator=True,
     )
 
-    print(
-        "Second mapping handled {:.1%} of the remaining rows!".format(
-            (unmerged_rows_2["_merge"] == "both").mean()
-        )
-    )
+    print("Second mapping handled {:.1%} of the remaining rows!".format((unmerged_rows_2["_merge"] == "both").mean()))
     unmerged_rows_2 = unmerged_rows_2.drop(columns=["_merge"])
     places_with_fips_df = pd.concat([merged_rows, unmerged_rows_2])
 
@@ -170,28 +152,18 @@ def add_place_population_data(
         how="left",
     )
 
-    print(
-        "Final fraction of rows with population: {:.1%}".format(
-            final_places_df["population"].notnull().mean()
-        )
-    )
+    print("Final fraction of rows with population: {:.1%}".format(final_places_df["population"].notnull().mean()))
 
     return final_places_df
 
 
 def _make_nyc_rows(raw_places_df: pd.DataFrame) -> pd.DataFrame:
     nyc_df = raw_places_df[
-        raw_places_df["place_name"].isin(
-            ["Manhattan", "Bronx", "Brooklyn", "Queens", "Staten Island"]
-        )
+        raw_places_df["place_name"].isin(["Manhattan", "Bronx", "Brooklyn", "Queens", "Staten Island"])
         & (raw_places_df["state_code"] == 36)
     ]
     nyc_rows = (
-        nyc_df.groupby("year")[
-            get_numerical_columns(DataSource.BPS, totals=True, projected=True)
-        ]
-        .sum()
-        .reset_index()
+        nyc_df.groupby("year")[get_numerical_columns(DataSource.BPS, totals=True, projected=True)].sum().reset_index()
     )
 
     nyc_rows["fips place_code"] = 51000
@@ -215,17 +187,13 @@ def add_alt_names(raw_places_df: pd.DataFrame) -> None:
     ) & (raw_places_df["state_code"] == 36)
     raw_places_df.loc[nyc_borough_rows, "alt_name"] = "New York City"
 
-    nyc_rows = (raw_places_df["place_name"] == "New York City") & (
-        raw_places_df["state_code"] == 36
-    )
-    raw_places_df.loc[
-        nyc_rows, "alt_name"
-    ] = "Manhattan Bronx Brooklyn Queens Staten Island"
+    nyc_rows = (raw_places_df["place_name"] == "New York City") & (raw_places_df["state_code"] == 36)
+    raw_places_df.loc[nyc_rows, "alt_name"] = "Manhattan Bronx Brooklyn Queens Staten Island"
 
 
 def get_place_name_spellings(
     df: pd.DataFrame,
-) -> dict[tuple[str, Optional[str], int], str]:
+) -> dict[tuple[str, str | None, int], str]:
     """
     :param df: A DataFrame with columns place_name, place_type, and state_code.
 
@@ -244,9 +212,7 @@ def get_place_name_spellings(
         else:
             for place_type in place_types:
                 mapping[(place_name, place_type, state_code)] = (
-                    f"{place_name} {place_type}"
-                    if place_type is not None
-                    else place_name
+                    f"{place_name} {place_type}" if place_type is not None else place_name
                 )
 
     return mapping
@@ -262,9 +228,7 @@ def fix_nyc_boroughs_population(
             counties_population_df["county_code"].isin(nyc_counties)
             & (counties_population_df["state_code"] == 36)  # NY
         ].copy()
-        nyc_counties_df["place_or_county_code"] = (
-            nyc_counties_df["county_code"].astype(str) + "_county"
-        )
+        nyc_counties_df["place_or_county_code"] = nyc_counties_df["county_code"].astype(str) + "_county"
 
         return pd.concat([place_populations_df, nyc_counties_df])
     else:
@@ -274,16 +238,12 @@ def fix_nyc_boroughs_population(
 def get_name_spelling(places_df: pd.DataFrame) -> pd.Series:
     name_spelling = get_place_name_spellings(places_df)
     name = pd.Series(
-        places_df[["place_name", "place_type", "state_code"]].itertuples(
-            index=False, name=None
-        ),
+        places_df[["place_name", "place_type", "state_code"]].itertuples(index=False, name=None),
         index=places_df.index,
     ).map(name_spelling)
 
     # Add name for comparison plots
-    is_unincorporated = places_df["place_name"].str.contains("County") | places_df[
-        "place_name"
-    ].str.contains("Parish")
+    is_unincorporated = places_df["place_name"].str.contains("County") | places_df["place_name"].str.contains("Parish")
     name = is_unincorporated.map({True: "Unincorporated ", False: ""}) + name
 
     # Fix cities that have "City" in the name
@@ -294,14 +254,9 @@ def get_name_spelling(places_df: pd.DataFrame) -> pd.Series:
     return name
 
 
-def load_places(
-    data_repo_path: Path, counties_population_df: pd.DataFrame = None
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+def load_places(data_repo_path: Path, counties_population_df: pd.DataFrame = None) -> tuple[pd.DataFrame, pd.DataFrame]:
     raw_places_df = pd.concat(
-        [
-            load_bps_all_years_plus_monthly(data_repo_path, "place", region=region)
-            for region in REGIONS
-        ]
+        [load_bps_all_years_plus_monthly(data_repo_path, "place", region=region) for region in REGIONS]
     )
 
     nyc_rows = _make_nyc_rows(raw_places_df)
@@ -314,9 +269,7 @@ def load_places(
     place_populations_df = place_population.get_place_population_estimates(
         data_path=data_repo_path / PLACE_POPULATION_DIR
     )
-    place_populations_df = fix_nyc_boroughs_population(
-        place_populations_df, counties_population_df
-    )
+    place_populations_df = fix_nyc_boroughs_population(place_populations_df, counties_population_df)
 
     places_df = add_place_population_data(raw_places_df, place_populations_df)
 
@@ -328,9 +281,7 @@ def load_places(
     places_df = places_df.drop(columns=["place_name", "place_type"])
 
     not_null_rows = places_df["path_1"].notnull() & places_df["path_2"].notnull()
-    assert (
-        not_null_rows.all()
-    ), f"Found rows where path_1 or path_2 is null: {places_df[['path_1', 'path_2']]}"
+    assert not_null_rows.all(), f"Found rows where path_1 or path_2 is null: {places_df[['path_1', 'path_2']]}"
     places_df = places_df[not_null_rows]
 
     return raw_places_df, places_df

@@ -2,15 +2,14 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Optional, Union
 
 import requests
 
 
 def get_url_text(
-    url: Union[str, tuple[str, str]],
-    data_path: Optional[Path],
-    encoding: Optional[str] = None,
+    url: str | tuple[str, str],
+    data_path: Path | None,
+    encoding: str | None = None,
 ) -> str:
     """
     If data_path is not None, returns the file from that path

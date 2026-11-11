@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+
 from housing_data.build_data_utils import (
     CANADA_BPER_DIR,
     CANADA_CROSSWALK_DIR,
@@ -103,9 +104,7 @@ def load_raw_bper(data_repo_path: Path) -> pd.DataFrame:
     file_path = data_repo_path / CANADA_BPER_DIR / "Case1091138_revised.xlsx"
 
     old_df = pd.read_excel(file_path, sheet_name=0, skiprows=2)
-    old_df = old_df.rename(
-        columns={"SGC": "Municipality Name", "Municipality Name": "SGC"}
-    )
+    old_df = old_df.rename(columns={"SGC": "Municipality Name", "Municipality Name": "SGC"})
     old_df["SGC"] = old_df["SGC"].astype(str).apply(_fix_old_sgc)
 
     recent_df = pd.read_excel(file_path, sheet_name=1, skiprows=2)
@@ -119,15 +118,11 @@ def load_raw_bper(data_repo_path: Path) -> pd.DataFrame:
 
 def fix_montreal(df: pd.DataFrame) -> None:
     # Map arrondissements/boroughs of Montreal to the city SGC code
-    df.loc[
-        df["SGC"].str.startswith("2466A") | df["SGC"].str.startswith("2466a"), "SGC"
-    ] = "2466023"
+    df.loc[df["SGC"].str.startswith("2466A") | df["SGC"].str.startswith("2466a"), "SGC"] = "2466023"
 
 
 def pivot_and_add_geos(df: pd.DataFrame, data_repo_path: Path) -> pd.DataFrame:
-    df = df.merge(
-        load_crosswalk(data_repo_path / CANADA_CROSSWALK_DIR), how="left", on="SGC"
-    )
+    df = df.merge(load_crosswalk(data_repo_path / CANADA_CROSSWALK_DIR), how="left", on="SGC")
 
     df["units"] = df["UnitsCategory"].map(UNITS_CATEGORIES)
     df = df.drop(columns=["UnitsCategory"])
@@ -151,13 +146,7 @@ def pivot_and_add_geos(df: pd.DataFrame, data_repo_path: Path) -> pd.DataFrame:
         "metro_province_abbr",
     ]
 
-    df = (
-        pd.pivot_table(
-            df, index=ids, columns="units", values="UnitsCreated", aggfunc="sum"
-        )
-        .fillna(0)
-        .reset_index()
-    )
+    df = pd.pivot_table(df, index=ids, columns="units", values="UnitsCreated", aggfunc="sum").fillna(0).reset_index()
     df["total_units"] = sum(df[col] for col in set(UNITS_CATEGORIES.values()))
 
     return df
@@ -207,9 +196,7 @@ def aggregate_to_metros(df: pd.DataFrame) -> pd.DataFrame:
     metro = df["metro"].str.replace(" - ", "–")
     df["path_1"] = None
     df["path_2"] = (
-        metro.str.replace("–", "_").str.replace("/", "_").str.replace(" ", "_")
-        + "_"
-        + df["metro_province_abbr"]
+        metro.str.replace("–", "_").str.replace("/", "_").str.replace(" ", "_") + "_" + df["metro_province_abbr"]
     )
     df["name"] = metro + " CMA, " + df["metro_province_abbr"]
     df["year"] = df["year"].astype(str)
@@ -223,11 +210,7 @@ def aggregate_to_metros(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def aggregate_to_states(df: pd.DataFrame) -> pd.DataFrame:
-    df = (
-        df.drop(columns=["path_1", "path_2"])
-        .groupby(["province", "year"], as_index=False)
-        .sum(numeric_only=True)
-    )
+    df = df.drop(columns=["path_1", "path_2"]).groupby(["province", "year"], as_index=False).sum(numeric_only=True)
     add_per_capita_columns(df, [DataSource.CANADA])
 
     df["path_1"] = None

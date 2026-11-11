@@ -88,9 +88,7 @@ def get_place_name_spellings(
         else:
             for place_type in place_types:
                 mapping[(place_name, place_type, province)] = (
-                    f"{place_name} ({CSD_TYPES[place_type]})"
-                    if place_type is not None
-                    else place_name
+                    f"{place_name} ({CSD_TYPES[place_type]})" if place_type is not None else place_name
                 )
 
     return mapping
@@ -130,9 +128,7 @@ def load_crosswalk(data_path: Path) -> pd.DataFrame:
             on="PRuid",
         )
         .merge(
-            cma_df[["CMAcode", "CMAname", "PRuid"]].rename(
-                columns={"CMAcode": "CMAuid", "PRuid": "metro_province_id"}
-            ),
+            cma_df[["CMAcode", "CMAname", "PRuid"]].rename(columns={"CMAcode": "CMAuid", "PRuid": "metro_province_id"}),
             on="CMAuid",
             how="left",
         )
@@ -160,9 +156,7 @@ def load_crosswalk(data_path: Path) -> pd.DataFrame:
     df = df.drop(columns=["CDname", "CDtype"])
 
     spellings = get_place_name_spellings(df)
-    df["place_name"] = (
-        df[["place_name", "place_type", "province"]].apply(tuple, axis=1).map(spellings)
-    )
+    df["place_name"] = df[["place_name", "place_type", "province"]].apply(tuple, axis=1).map(spellings)
     df = df.drop(columns=["place_type", "metro_province"])
 
     return df

@@ -1,5 +1,6 @@
-import { Html, Head, Main, NextScript } from 'next/document'
-import { Favicons } from '../lib/common_elements'
+import { Head, Html, Main, NextScript } from "next/document"
+
+import { Favicons } from "../lib/common_elements"
 
 export default function Document(): JSX.Element {
   return (

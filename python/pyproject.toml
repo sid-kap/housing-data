@@ -35,3 +35,9 @@ module = [
   "requests.*",
 ]
 ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+ignore = ["RUF015"]

@@ -11,10 +11,11 @@ a greater incentive to report this data correctly.
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
 import pandas as pd
+
 from housing_data.build_data_utils import DataSource, add_total_columns
 from housing_data.fips_crosswalk import load_fips_crosswalk
 
@@ -52,7 +53,7 @@ def load_california_hcd_data(
         # permit anyway.
         # NB: I only looked at LA data to validate this assumption. The data looks
         # _way_ more accurate when we drop these rows.
-        & (df["CO_ISSUE_DT1"].isnull() | ((df["BP_ISSUE_DT1"] == df["CO_ISSUE_DT1"])))
+        & (df["CO_ISSUE_DT1"].isnull() | (df["BP_ISSUE_DT1"] == df["CO_ISSUE_DT1"]))
     ].copy()
 
     df["building_type"] = np.select(
@@ -78,9 +79,7 @@ def load_california_hcd_data(
         None,
     )
 
-    assert (
-        df["building_type"].isnull().sum() < 60
-    ), f"{df['building_type'].isnull().sum()} is not less than 60"
+    assert df["building_type"].isnull().sum() < 60, f"{df['building_type'].isnull().sum()} is not less than 60"
     df = df[df["building_type"].notnull()]
 
     # Drop rows where YEAR is not parseable as an int
@@ -104,7 +103,7 @@ def load_california_hcd_data(
 def _aggregate_to_geography(
     df: pd.DataFrame,
     level: Literal["place", "county", "state"],
-    data_path: Optional[Path],
+    data_path: Path | None,
 ) -> pd.DataFrame:
     # Sum 1 for every row in the APRs dataset, since we have 1 row per project/building.
     # (Technically this might not be true if a project has multiple buildings, e.g. a townhouse
@@ -126,10 +125,7 @@ def _aggregate_to_geography(
         aggfunc="sum",
     ).reset_index()
 
-    wide_df.columns = [
-        f"{level_1}_{level_0}_hcd" if level_1 else level_0
-        for level_0, level_1 in wide_df.columns
-    ]
+    wide_df.columns = [f"{level_1}_{level_0}_hcd" if level_1 else level_0 for level_0, level_1 in wide_df.columns]
 
     add_total_columns(wide_df, DataSource.CA_HCD)
 
@@ -140,9 +136,9 @@ def _aggregate_to_geography(
     if level == "place":
         old_wide_df = wide_df
         # Add place_or_county_code
-        wide_df = wide_df.merge(
-            _load_fips_crosswalk(data_path), left_on="JURIS_NAME", right_on="name"
-        ).drop(columns=["name", "county_code"])
+        wide_df = wide_df.merge(_load_fips_crosswalk(data_path), left_on="JURIS_NAME", right_on="name").drop(
+            columns=["name", "county_code"]
+        )
         if len(old_wide_df) != len(wide_df):
             dropped_cities = set(old_wide_df["JURIS_NAME"]) - set(wide_df["JURIS_NAME"])
             added_cities = set(wide_df["JURIS_NAME"]) - set(old_wide_df["JURIS_NAME"])
@@ -170,10 +166,7 @@ def _load_fips_crosswalk(data_path: Path) -> pd.DataFrame:
     crosswalk_df = load_fips_crosswalk(data_path)
     crosswalk_df = crosswalk_df[
         (crosswalk_df["State FIPS Code"] == 6)  # California rows
-        & (
-            (crosswalk_df["Place FIPS Code"] != 0)
-            | (crosswalk_df["County FIPS Code"] != 0)
-        )
+        & ((crosswalk_df["Place FIPS Code"] != 0) | (crosswalk_df["County FIPS Code"] != 0))
     ].rename(columns={"State FIPS Code": "state_code"})
 
     crosswalk_df["name"] = (

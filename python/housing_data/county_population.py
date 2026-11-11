@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 import us
+
 from housing_data.build_data_utils import (
     check_population_present_for_all_years,
     impute_2025_and_2026_population,
@@ -16,9 +17,7 @@ def _melt_df(df: pd.DataFrame, years: list[int]) -> pd.DataFrame:
     }
 
     df = df[rename_cols.keys()].rename(columns=rename_cols)
-    return df.melt(
-        id_vars=["county_code", "state_code"], var_name="year", value_name="population"
-    )
+    return df.melt(id_vars=["county_code", "state_code"], var_name="year", value_name="population")
 
 
 def get_county_populations_2020s(data_path: Path) -> pd.DataFrame:
@@ -82,9 +81,7 @@ def get_county_populations_2000s(data_path: Path, data_repo_path: Path) -> pd.Da
     df = df.drop(columns=["2000-04-01", "2010-04-01"])
     df["state_code"] = df["state_code"].astype(int)
 
-    df = df.melt(
-        id_vars=["county_name", "state_code"], var_name="year", value_name="population"
-    )
+    df = df.melt(id_vars=["county_name", "state_code"], var_name="year", value_name="population")
 
     df = df.merge(
         get_county_fips_crosswalk(data_repo_path),
@@ -94,9 +91,7 @@ def get_county_populations_2000s(data_path: Path, data_repo_path: Path) -> pd.Da
     df = df.drop(columns=["county_name"])
     df = df[df["county_code"].notnull()].copy()
 
-    df["population"] = (
-        df["population"].str.replace(",", "").astype("float").astype("Int64")
-    )
+    df["population"] = df["population"].str.replace(",", "").astype("float").astype("Int64")
     df["county_code"] = df["county_code"].astype("Int64")
 
     # Use 2010 from the 2010s dataset
@@ -153,9 +148,7 @@ def get_county_populations_1990s(data_path: Path) -> pd.DataFrame:
     df = df.dropna(subset=["state_code", "county_code"])
     df = df.drop(columns=["idk", "full_county_code", "1990-04-01", "county_name"])
 
-    df = df.melt(
-        id_vars=["county_code", "state_code"], var_name="year", value_name="population"
-    )
+    df = df.melt(id_vars=["county_code", "state_code"], var_name="year", value_name="population")
 
     df["population"] = (
         df["population"]
@@ -207,9 +200,7 @@ def get_county_populations_1980s(data_path: Path) -> pd.DataFrame:
     return combined_df
 
 
-def get_county_population_estimates(
-    data_path: Path, data_repo_path: Path
-) -> pd.DataFrame:
+def get_county_population_estimates(data_path: Path, data_repo_path: Path) -> pd.DataFrame:
     print("Loading 1980 populations...")
     df_1980s = get_county_populations_1980s(data_path)
     print("Loading 1990s populations...")

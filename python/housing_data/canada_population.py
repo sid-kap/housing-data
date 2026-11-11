@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+
 from housing_data.build_data_utils import CANADA_POPULATION_DIR
 
 

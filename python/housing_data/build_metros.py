@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+
 from housing_data.build_data_utils import DataSource, get_numerical_columns
 
 
@@ -10,10 +11,7 @@ def load_crosswalk_df(data_repo_path: Path) -> pd.DataFrame:
     # Drop the μSAs, no one cares about them.
     # Most of them are just one county anyway, so showing the combined metro stats doesn't
     # (in most cases) provide any value beyond what's in the county view.
-    crosswalk_df = crosswalk_df[
-        crosswalk_df["metropolitanmicropolitanstatis"]
-        == "Metropolitan Statistical Area"
-    ]
+    crosswalk_df = crosswalk_df[crosswalk_df["metropolitanmicropolitanstatis"] == "Metropolitan Statistical Area"]
 
     # Could also get county name from 'countycountyequivalent' in crosswalk_df...
     # I'm indifferent, just using the one from counties_df for now.
@@ -28,9 +26,7 @@ def load_crosswalk_df(data_repo_path: Path) -> pd.DataFrame:
                 "cbsatitle": "msa_name",
             }
         )
-        .dropna(subset=["msa_name"])[
-            ["fips_state", "fips_county", "csa_name", "msa_name"]
-        ]
+        .dropna(subset=["msa_name"])[["fips_state", "fips_county", "csa_name", "msa_name"]]
     )
 
     crosswalk_df = crosswalk_df.astype({"fips_state": "Int64", "fips_county": "Int64"})
@@ -38,9 +34,7 @@ def load_crosswalk_df(data_repo_path: Path) -> pd.DataFrame:
     return crosswalk_df
 
 
-def combine_metro_rows(
-    df: pd.DataFrame, metro_type: str, crosswalk_df: pd.DataFrame
-) -> pd.DataFrame:
+def combine_metro_rows(df: pd.DataFrame, metro_type: str, crosswalk_df: pd.DataFrame) -> pd.DataFrame:
     """
     :param metro_type: 'msa' or 'csa'
     """
@@ -66,9 +60,7 @@ def combine_metro_rows(
         .assign(metro_type=metro_type)
     )
 
-    combined_df["metro_name_with_suffix"] = combined_df["metro_name"].str.replace(
-        ",", " " + metro_name_suffix + ","
-    )
+    combined_df["metro_name_with_suffix"] = combined_df["metro_name"].str.replace(",", " " + metro_name_suffix + ",")
 
     # Only keep a metros in 2021 if all of its counties were observed.
     # Most counties are actually not observed (yet) in 2021, because lots of cities are only surveyed
@@ -79,13 +71,10 @@ def combine_metro_rows(
         .reset_index(name="num_counties")
         .rename(columns={metro_col: "metro_name"})
     )
-    combined_df = combined_df.merge(
-        num_counties_in_each_metro, on="metro_name", how="left"
-    )
+    combined_df = combined_df.merge(num_counties_in_each_metro, on="metro_name", how="left")
 
     combined_df = combined_df[
-        (combined_df["year"] != "2021")
-        | (combined_df["num_observed_counties"] == combined_df["num_counties"])
+        (combined_df["year"] != "2021") | (combined_df["num_observed_counties"] == combined_df["num_counties"])
     ]
 
     combined_df = combined_df.drop(columns=["num_observed_counties", "num_counties"])
@@ -101,9 +90,7 @@ def get_aggregate_functions() -> dict[str, pd.NamedAgg]:
             + get_numerical_columns(DataSource.CA_HCD, totals=True, projected=True)
         )
     } | {
-        "county_names": pd.NamedAgg(
-            column="name", aggfunc=lambda counties: counties.tolist()
-        ),
+        "county_names": pd.NamedAgg(column="name", aggfunc=lambda counties: counties.tolist()),
         "population": pd.NamedAgg(column="population", aggfunc="sum"),
         # So that we can check if all the counties in a metro were observed in that year
         "num_observed_counties": pd.NamedAgg(column="name", aggfunc="count"),
@@ -115,9 +102,9 @@ def get_aggregate_functions() -> dict[str, pd.NamedAgg]:
 def load_metros(data_repo_path: Path, counties_df: pd.DataFrame) -> pd.DataFrame:
     crosswalk_df = load_crosswalk_df(data_repo_path)
 
-    merged_df = crosswalk_df.merge(
-        counties_df, on=["fips_state", "fips_county"], how="left"
-    ).drop(columns=["fips_state", "fips_county"])
+    merged_df = crosswalk_df.merge(counties_df, on=["fips_state", "fips_county"], how="left").drop(
+        columns=["fips_state", "fips_county"]
+    )
 
     msas_df = combine_metro_rows(merged_df, "msa", crosswalk_df)
     csas_df = combine_metro_rows(merged_df, "csa", crosswalk_df)
@@ -126,11 +113,7 @@ def load_metros(data_repo_path: Path, counties_df: pd.DataFrame) -> pd.DataFrame
 
     metros_df["path_1"] = None
     metros_df["path_2"] = (
-        metros_df["metro_name"]
-        .str.replace("/", "_")
-        .str.replace("-", "_")
-        .str.replace(" ", "_")
-        .str.replace(",", "")
+        metros_df["metro_name"].str.replace("/", "_").str.replace("-", "_").str.replace(" ", "_").str.replace(",", "")
     )
 
     # This field is only used in comparison plots in the plotting code.
