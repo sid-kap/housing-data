@@ -59,10 +59,14 @@ def get_unincorporated_places_populations_1980() -> pd.DataFrame:
         .reset_index()
     )
 
-    remainder_df = counties_df.merge(county_cities_total_df, on=["County Code", "State Code"], how="left")
+    remainder_df = counties_df.merge(
+        county_cities_total_df, on=["County Code", "State Code"], how="left"
+    )
 
     remainder_df["place_or_county_code"] = remainder_df["County Code"].astype(str) + "_county"
-    remainder_df["Total"] = remainder_df["County Total"] - remainder_df["County Cities Total"].fillna(0)
+    remainder_df["Total"] = remainder_df["County Total"] - remainder_df[
+        "County Cities Total"
+    ].fillna(0)
 
     remainder_df = remainder_df.drop(columns=["County Total", "County Cities Total"])
 
@@ -102,7 +106,11 @@ def get_place_populations_1980(data_path: Path) -> pd.DataFrame:
     df["place_or_county_code"] = df["place_fips"].astype(str)
 
     # Combine cities that are spread across multiple counties
-    df = df.groupby(["Place Name", "place_or_county_code", "State Code"])[["Total"]].sum().reset_index()
+    df = (
+        df.groupby(["Place Name", "place_or_county_code", "State Code"])[["Total"]]
+        .sum()
+        .reset_index()
+    )
 
     df = pd.concat([df, get_unincorporated_places_populations_1980()])
 
@@ -119,7 +127,8 @@ def get_place_populations_1980(data_path: Path) -> pd.DataFrame:
 
     # A few rare dupes we found... I don't care about this for now
     df = df[
-        (df["place_or_county_code"] != "<NA>") & ~((df["place_or_county_code"] == "69336") & (df["state_code"] == 42))
+        (df["place_or_county_code"] != "<NA>")
+        & ~((df["place_or_county_code"] == "69336") & (df["state_code"] == 42))
     ]
 
     # Fix Miami-Dade County name and code
@@ -244,7 +253,9 @@ def remove_duplicate_cities(df: pd.DataFrame) -> pd.DataFrame:
     """
     dupes = df.groupby(["place_name", "state_code"]).size().loc[lambda x: x > 1]
     dupe_cities = set(
-        dupes.reset_index()[["place_name", "state_code"]].drop_duplicates().itertuples(index=False, name=None)
+        dupes.reset_index()[["place_name", "state_code"]]
+        .drop_duplicates()
+        .itertuples(index=False, name=None)
     )
 
     place_state_tuples = pd.Series(list(zip(df["place_name"], df["state_code"])), index=df.index)
@@ -391,10 +402,12 @@ def interpolate_1980s_populations(df_1980: pd.DataFrame, df_1990s: pd.DataFrame)
     Since we don't have yearly intercensal estimates for the 1980s, linear interp the city populations
     for 1981-1989.
     """
-    start_df = df_1980[["state_code", "place_or_county_code", "population"]].rename(columns={"population": "1980"})
-    end_df = df_1990s.query('year == "1990"')[["state_code", "place_or_county_code", "population"]].rename(
-        columns={"population": "1990"}
+    start_df = df_1980[["state_code", "place_or_county_code", "population"]].rename(
+        columns={"population": "1980"}
     )
+    end_df = df_1990s.query('year == "1990"')[
+        ["state_code", "place_or_county_code", "population"]
+    ].rename(columns={"population": "1990"})
     assert start_df["1980"].notnull().all()
     assert end_df["1990"].notnull().all()
 

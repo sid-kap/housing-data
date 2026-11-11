@@ -63,13 +63,17 @@ def load_counties(
 
 def impute_pre_1990_counties(counties_df: pd.DataFrame, places_df: pd.DataFrame) -> pd.DataFrame:
     summed_places_df = (
-        places_df.groupby(["county_code", "state_code", "year"])[get_numerical_columns(DataSource.BPS, totals=True)]
+        places_df.groupby(["county_code", "state_code", "year"])[
+            get_numerical_columns(DataSource.BPS, totals=True)
+        ]
         .sum()
         .reset_index()
     )
 
     imputed_counties_df = summed_places_df[summed_places_df["year"] < "1990"].copy()
     imputed_counties_df["imputed"] = True
-    imputed_counties_df = imputed_counties_df.rename(columns={"county_code": "fips_county", "state_code": "fips_state"})
+    imputed_counties_df = imputed_counties_df.rename(
+        columns={"county_code": "fips_county", "state_code": "fips_state"}
+    )
 
     return imputed_counties_df

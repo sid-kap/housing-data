@@ -26,7 +26,9 @@ TimeScale = Literal["monthly_current", "monthly_year_to_date", "annual"]
 
 Scale = Literal["county", "metro", "place", "state"]
 
-ERROR_STRING = "Sorry, the page you requested has either been moved or is no longer available on this server."
+ERROR_STRING = (
+    "Sorry, the page you requested has either been moved or is no longer available on this server."
+)
 
 CENSUS_DATA_PATH = "https://www2.census.gov/econ/bps"
 
@@ -102,7 +104,9 @@ def _merge_column_names(header_row_0: list[str], header_row_1: list[str]) -> pd.
     return columns
 
 
-def _fix_column_names(header_row_0: list[str], header_row_1: list[str], fix_row_lengths: bool = True) -> pd.Series:
+def _fix_column_names(
+    header_row_0: list[str], header_row_1: list[str], fix_row_lengths: bool = True
+) -> pd.Series:
     if fix_row_lengths:
         assert len(header_row_1) == len(header_row_0) + 1
         header_row_0.append("")
@@ -110,7 +114,9 @@ def _fix_column_names(header_row_0: list[str], header_row_1: list[str], fix_row_
     return _merge_column_names(header_row_0, header_row_1)
 
 
-def _fix_column_names_old_county_level(header_row_0: list[str], header_row_1: list[str]) -> pd.Series:
+def _fix_column_names_old_county_level(
+    header_row_0: list[str], header_row_1: list[str]
+) -> pd.Series:
     """
     For the very early county-level data between 1990 and 1998 (county doesn't exist before 1990),
     the number of columns in the first two rows is inconsistent and needs to be fixed.
@@ -192,7 +198,9 @@ def get_data_path(
     return path
 
 
-def read_bps_formatted_csv(csv_contents: str, scale: Scale, year: int, region: Region | None = None) -> pd.DataFrame:
+def read_bps_formatted_csv(
+    csv_contents: str, scale: Scale, year: int, region: Region | None = None
+) -> pd.DataFrame:
     """
     Given the contents of a CSV file from the BPS dataset, parses it as a DataFrame.
     Takes into account several quirks in the way they format their files.
@@ -453,7 +461,11 @@ def place_cleanup(df: pd.DataFrame, year: int) -> pd.DataFrame:
     #
     # Also, for some reason, 1999 to 2001 data has the old county name, but the new FIPS code.
     # (So we need to check for both 25 and 86.)
-    dade_county_rows = df["county_code"].isin([25, 86]) & (df["state_code"] == 12) & (df["place_name"] == "Dade County")
+    dade_county_rows = (
+        df["county_code"].isin([25, 86])
+        & (df["state_code"] == 12)
+        & (df["place_name"] == "Dade County")
+    )
     df.loc[dade_county_rows, "place_name"] = "Miami-Dade County"
     df.loc[dade_county_rows, "county_code"] = 86
 

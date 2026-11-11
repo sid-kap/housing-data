@@ -79,7 +79,9 @@ def load_california_hcd_data(
         None,
     )
 
-    assert df["building_type"].isnull().sum() < 60, f"{df['building_type'].isnull().sum()} is not less than 60"
+    assert df["building_type"].isnull().sum() < 60, (
+        f"{df['building_type'].isnull().sum()} is not less than 60"
+    )
     df = df[df["building_type"].notnull()]
 
     # Drop rows where YEAR is not parseable as an int
@@ -125,7 +127,9 @@ def _aggregate_to_geography(
         aggfunc="sum",
     ).reset_index()
 
-    wide_df.columns = [f"{level_1}_{level_0}_hcd" if level_1 else level_0 for level_0, level_1 in wide_df.columns]
+    wide_df.columns = [
+        f"{level_1}_{level_0}_hcd" if level_1 else level_0 for level_0, level_1 in wide_df.columns
+    ]
 
     add_total_columns(wide_df, DataSource.CA_HCD)
 
@@ -136,9 +140,9 @@ def _aggregate_to_geography(
     if level == "place":
         old_wide_df = wide_df
         # Add place_or_county_code
-        wide_df = wide_df.merge(_load_fips_crosswalk(data_path), left_on="JURIS_NAME", right_on="name").drop(
-            columns=["name", "county_code"]
-        )
+        wide_df = wide_df.merge(
+            _load_fips_crosswalk(data_path), left_on="JURIS_NAME", right_on="name"
+        ).drop(columns=["name", "county_code"])
         if len(old_wide_df) != len(wide_df):
             dropped_cities = set(old_wide_df["JURIS_NAME"]) - set(wide_df["JURIS_NAME"])
             added_cities = set(wide_df["JURIS_NAME"]) - set(old_wide_df["JURIS_NAME"])

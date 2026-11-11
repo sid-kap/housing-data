@@ -63,8 +63,12 @@ REGIONS = {
 }
 
 STATE_TO_DIVISION = {state: division for division, states in DIVISIONS.items() for state in states}
-DIVISION_TO_REGION = {division: region for region, divisions in REGIONS.items() for division in divisions}
-STATE_TO_REGION = {state: DIVISION_TO_REGION[division] for state, division in STATE_TO_DIVISION.items()}
+DIVISION_TO_REGION = {
+    division: region for region, divisions in REGIONS.items() for division in divisions
+}
+STATE_TO_REGION = {
+    state: DIVISION_TO_REGION[division] for state, division in STATE_TO_DIVISION.items()
+}
 
 
 def _line_to_cols(row: str) -> list[str]:
@@ -128,14 +132,18 @@ def _get_counties_population_table_1990s(year: int, data_path: Path) -> pd.DataF
 
     df["year"] = "19" + df["year"].astype(str)
 
-    FIPS_NAME_MAPPING = {int(k): v for k, v in us.states.mapping("fips", "name").items() if k is not None}
+    FIPS_NAME_MAPPING = {
+        int(k): v for k, v in us.states.mapping("fips", "name").items() if k is not None
+    }
     df["state"] = df["state_code"].map(FIPS_NAME_MAPPING)
 
     return df
 
 
 def get_state_populations_1990s(data_path: Path) -> pd.DataFrame:
-    df = pd.concat([_get_counties_population_table_1990s(year, data_path) for year in range(1990, 2000)])
+    df = pd.concat(
+        [_get_counties_population_table_1990s(year, data_path) for year in range(1990, 2000)]
+    )
 
     return (
         df.drop(

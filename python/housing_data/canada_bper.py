@@ -146,7 +146,11 @@ def pivot_and_add_geos(df: pd.DataFrame, data_repo_path: Path) -> pd.DataFrame:
         "metro_province_abbr",
     ]
 
-    df = pd.pivot_table(df, index=ids, columns="units", values="UnitsCreated", aggfunc="sum").fillna(0).reset_index()
+    df = (
+        pd.pivot_table(df, index=ids, columns="units", values="UnitsCreated", aggfunc="sum")
+        .fillna(0)
+        .reset_index()
+    )
     df["total_units"] = sum(df[col] for col in set(UNITS_CATEGORIES.values()))
 
     return df
@@ -196,7 +200,9 @@ def aggregate_to_metros(df: pd.DataFrame) -> pd.DataFrame:
     metro = df["metro"].str.replace(" - ", "–")
     df["path_1"] = None
     df["path_2"] = (
-        metro.str.replace("–", "_").str.replace("/", "_").str.replace(" ", "_") + "_" + df["metro_province_abbr"]
+        metro.str.replace("–", "_").str.replace("/", "_").str.replace(" ", "_")
+        + "_"
+        + df["metro_province_abbr"]
     )
     df["name"] = metro + " CMA, " + df["metro_province_abbr"]
     df["year"] = df["year"].astype(str)
@@ -210,7 +216,11 @@ def aggregate_to_metros(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def aggregate_to_states(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.drop(columns=["path_1", "path_2"]).groupby(["province", "year"], as_index=False).sum(numeric_only=True)
+    df = (
+        df.drop(columns=["path_1", "path_2"])
+        .groupby(["province", "year"], as_index=False)
+        .sum(numeric_only=True)
+    )
     add_per_capita_columns(df, [DataSource.CANADA])
 
     df["path_1"] = None
